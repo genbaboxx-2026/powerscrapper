@@ -47,6 +47,8 @@ export async function getOrCreateUser(
         ...(linePictureUrl && { linePictureUrl }),
         // 再度友だちになった場合はアクティブに
         isActive: true,
+        // 管理者リストに含まれていればadminに更新
+        ...(isAdmin && { role: 'admin' }),
       },
       create: {
         lineUserId,
