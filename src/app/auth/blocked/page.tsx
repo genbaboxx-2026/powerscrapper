@@ -2,9 +2,7 @@
 
 export default function BlockedPage() {
   const handleAddFriend = () => {
-    // LINE公式アカウントの友だち追加URL（環境変数で設定）
-    const lineOfficialUrl = process.env.NEXT_PUBLIC_LINE_OFFICIAL_URL || 'https://lin.ee/';
-    window.location.href = lineOfficialUrl;
+    window.location.href = 'https://line.me/R/ti/p/@517yajzb';
   };
 
   return (
