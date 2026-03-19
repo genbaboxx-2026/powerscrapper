@@ -2,9 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthGuard } from '@/components/AuthGuard';
-import { useLiff } from '@/components/LiffProvider';
-import { authFetch } from '@/lib/api';
+import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 import {
   RECRUITMENT_TYPE_LABELS,
   STRUCTURE_TYPE_LABELS,
@@ -56,7 +54,6 @@ type Props = {
 export default function AdminProjectDetailPage({ params }: Props) {
   const { id: projectId } = use(params);
   const router = useRouter();
-  const { userId, role } = useLiff();
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,23 +61,11 @@ export default function AdminProjectDetailPage({ params }: Props) {
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
 
-  // 管理者でない場合はリダイレクト
-  useEffect(() => {
-    if (role !== null && role !== 'admin') {
-      router.replace('/projects');
-    }
-  }, [role, router]);
-
   // 案件を取得
   useEffect(() => {
     const fetchProject = async () => {
-      if (!userId || role !== 'admin') return;
-
       try {
-        const res = await authFetch(
-          `/api/admin/projects/${projectId}/review`,
-          userId
-        );
+        const res = await fetch(`/api/admin/projects/${projectId}/review`);
 
         if (!res.ok) {
           const data = await res.json();
@@ -97,26 +82,28 @@ export default function AdminProjectDetailPage({ params }: Props) {
     };
 
     fetchProject();
-  }, [projectId, userId, role]);
+  }, [projectId]);
+
+  const handleLogout = async () => {
+    await fetch('/api/admin/auth', { method: 'DELETE' });
+    router.push('/admin/login');
+  };
 
   const handleReview = async (action: 'approve' | 'reject') => {
-    if (!userId || !project) return;
+    if (!project) return;
 
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const res = await authFetch(
-        `/api/admin/projects/${projectId}/review`,
-        userId,
-        {
-          method: 'POST',
-          body: {
-            action,
-            rejectionReason: action === 'reject' ? rejectionReason : undefined,
-          },
-        }
-      );
+      const res = await fetch(`/api/admin/projects/${projectId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          rejectionReason: action === 'reject' ? rejectionReason : undefined,
+        }),
+      });
 
       if (!res.ok) {
         const data = await res.json();
@@ -137,37 +124,24 @@ export default function AdminProjectDetailPage({ params }: Props) {
     return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
   };
 
-  if (role !== 'admin') {
-    return (
-      <AuthGuard>
-        <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F6E56] mx-auto"></div>
-            <p className="mt-4 text-[#73726C]">読み込み中...</p>
-          </div>
-        </div>
-      </AuthGuard>
-    );
-  }
-
   if (isLoading) {
     return (
-      <AuthGuard>
+      <AdminAuthGuard>
         <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F6E56] mx-auto"></div>
             <p className="mt-4 text-[#73726C]">読み込み中...</p>
           </div>
         </div>
-      </AuthGuard>
+      </AdminAuthGuard>
     );
   }
 
   if (error && !project) {
     return (
-      <AuthGuard>
+      <AdminAuthGuard>
         <div className="min-h-screen bg-[#F4F3F0]">
-          <header className="bg-[#0F6E56] text-white px-4 py-3">
+          <header className="bg-[#0F6E56] text-white px-4 py-3 flex items-center justify-between">
             <button
               onClick={() => router.back()}
               className="flex items-center gap-1"
@@ -187,12 +161,18 @@ export default function AdminProjectDetailPage({ params }: Props) {
               </svg>
               戻る
             </button>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-white/80 hover:text-white"
+            >
+              ログアウト
+            </button>
           </header>
           <div className="p-4 text-center">
             <p className="text-[#E24B4A]">{error}</p>
           </div>
         </div>
-      </AuthGuard>
+      </AdminAuthGuard>
     );
   }
 
@@ -201,10 +181,10 @@ export default function AdminProjectDetailPage({ params }: Props) {
   const isPending = project.status === 'pending';
 
   return (
-    <AuthGuard>
+    <AdminAuthGuard>
       <div className="min-h-screen bg-[#F4F3F0]">
         {/* ヘッダー */}
-        <header className="bg-[#0F6E56] text-white px-4 py-3 sticky top-0 z-10">
+        <header className="bg-[#0F6E56] text-white px-4 py-3 sticky top-0 z-10 flex items-center justify-between">
           <button
             onClick={() => router.back()}
             className="flex items-center gap-1"
@@ -223,6 +203,12 @@ export default function AdminProjectDetailPage({ params }: Props) {
               />
             </svg>
             案件一覧
+          </button>
+          <button
+            onClick={handleLogout}
+            className="text-sm text-white/80 hover:text-white"
+          >
+            ログアウト
           </button>
         </header>
 
@@ -421,6 +407,6 @@ export default function AdminProjectDetailPage({ params }: Props) {
           </div>
         )}
       </div>
-    </AuthGuard>
+    </AdminAuthGuard>
   );
 }

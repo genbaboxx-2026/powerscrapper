@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
 import {
   pushMessage,
   multicastMessage,
@@ -12,32 +13,25 @@ type Params = {
 };
 
 /**
+ * 管理者セッションを検証
+ */
+async function verifyAdminSession(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const session = cookieStore.get('admin_session');
+  return !!session?.value;
+}
+
+/**
  * GET /api/admin/projects/[id]/review - 案件詳細取得（管理者用）
  */
 export async function GET(request: NextRequest, { params }: Params) {
   try {
     const { id: projectId } = await params;
 
-    // 認証チェック
-    const lineUserId = request.headers.get('x-line-userid');
-    if (!lineUserId) {
+    // 管理者セッション認証
+    const isAuthenticated = await verifyAdminSession();
+    if (!isAuthenticated) {
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
-    }
-
-    // ユーザーを取得して管理者チェック
-    const user = await prisma.user.findUnique({
-      where: { lineUserId },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'ユーザーが見つかりません' }, { status: 404 });
-    }
-
-    if (user.role !== 'admin') {
-      return NextResponse.json(
-        { error: '管理者権限が必要です' },
-        { status: 403 }
-      );
     }
 
     // 案件を取得
@@ -80,26 +74,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   try {
     const { id: projectId } = await params;
 
-    // 認証チェック
-    const lineUserId = request.headers.get('x-line-userid');
-    if (!lineUserId) {
+    // 管理者セッション認証
+    const isAuthenticated = await verifyAdminSession();
+    if (!isAuthenticated) {
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
-    }
-
-    // ユーザーを取得して管理者チェック
-    const admin = await prisma.user.findUnique({
-      where: { lineUserId },
-    });
-
-    if (!admin) {
-      return NextResponse.json({ error: 'ユーザーが見つかりません' }, { status: 404 });
-    }
-
-    if (admin.role !== 'admin') {
-      return NextResponse.json(
-        { error: '管理者権限が必要です' },
-        { status: 403 }
-      );
     }
 
     // リクエストボディを解析
@@ -139,7 +117,6 @@ export async function POST(request: NextRequest, { params }: Params) {
       data: {
         status: newStatus,
         rejectionReason: action === 'reject' ? rejectionReason || null : null,
-        reviewedById: admin.id,
         reviewedAt: new Date(),
       },
     });

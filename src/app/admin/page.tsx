@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AuthGuard } from '@/components/AuthGuard';
-import { useLiff } from '@/components/LiffProvider';
-import { authFetch } from '@/lib/api';
+import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 import {
   RECRUITMENT_TYPE_LABELS,
   BUSINESS_TYPE_LABELS,
@@ -44,30 +42,17 @@ const STATUS_TABS = [
 
 export default function AdminPage() {
   const router = useRouter();
-  const { userId, role } = useLiff();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('pending');
 
-  // 管理者でない場合はリダイレクト
-  useEffect(() => {
-    if (role !== null && role !== 'admin') {
-      router.replace('/projects');
-    }
-  }, [role, router]);
-
   // 案件一覧を取得
   useEffect(() => {
     const fetchProjects = async () => {
-      if (!userId || role !== 'admin') return;
-
       setIsLoading(true);
       try {
-        const res = await authFetch(
-          `/api/admin/projects?status=${activeTab}`,
-          userId
-        );
+        const res = await fetch(`/api/admin/projects?status=${activeTab}`);
 
         if (!res.ok) {
           const data = await res.json();
@@ -84,32 +69,30 @@ export default function AdminPage() {
     };
 
     fetchProjects();
-  }, [userId, role, activeTab]);
+  }, [activeTab]);
+
+  const handleLogout = async () => {
+    await fetch('/api/admin/auth', { method: 'DELETE' });
+    router.push('/admin/login');
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
   };
 
-  if (role !== 'admin') {
-    return (
-      <AuthGuard>
-        <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F6E56] mx-auto"></div>
-            <p className="mt-4 text-[#73726C]">読み込み中...</p>
-          </div>
-        </div>
-      </AuthGuard>
-    );
-  }
-
   return (
-    <AuthGuard>
+    <AdminAuthGuard>
       <div className="min-h-screen bg-[#F4F3F0]">
         {/* ヘッダー */}
-        <header className="bg-[#0F6E56] text-white px-4 py-3">
+        <header className="bg-[#0F6E56] text-white px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-bold">管理者ダッシュボード</h1>
+          <button
+            onClick={handleLogout}
+            className="text-sm text-white/80 hover:text-white"
+          >
+            ログアウト
+          </button>
         </header>
 
         {/* タブ */}
@@ -224,6 +207,6 @@ export default function AdminPage() {
           </Link>
         </div>
       </div>
-    </AuthGuard>
+    </AdminAuthGuard>
   );
 }

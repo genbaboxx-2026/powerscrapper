@@ -51,6 +51,15 @@ export function LiffProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // /admin配下のページではLIFF初期化をスキップ
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+      }));
+      return;
+    }
+
     const initializeLiff = async () => {
       try {
         const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
