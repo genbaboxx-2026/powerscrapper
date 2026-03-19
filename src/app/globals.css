@@ -88,6 +88,11 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+.card-own {
+  background-color: #E8F4FD;
+  border-color: #B8D4E8;
+}
+
 /* バッジスタイル */
 .badge {
   display: inline-flex;
