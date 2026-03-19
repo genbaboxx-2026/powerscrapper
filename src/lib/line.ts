@@ -346,10 +346,52 @@ export function createProjectNotification(
 export function createBidNotification(
   projectTitle: string,
   bidderCompanyName: string,
-  bidAmount: number,
+  availableFrom: string,
   projectId: string
 ) {
   const liffId = process.env.NEXT_PUBLIC_LIFF_ID || '';
+
+  const bodyContents = [
+    {
+      type: 'text',
+      text: '新しい入札がありました',
+      color: '#0F6E56',
+      size: 'sm',
+      weight: 'bold',
+    },
+    {
+      type: 'text',
+      text: projectTitle,
+      weight: 'bold',
+      size: 'lg',
+      wrap: true,
+      margin: 'md',
+    },
+    {
+      type: 'box',
+      layout: 'vertical',
+      margin: 'lg',
+      spacing: 'sm',
+      contents: [
+        {
+          type: 'text',
+          text: `入札者: ${bidderCompanyName}`,
+          size: 'sm',
+          color: '#2C2C2A',
+        },
+        ...(availableFrom
+          ? [
+              {
+                type: 'text',
+                text: `対応可能時期: ${availableFrom}`,
+                size: 'sm',
+                color: '#2C2C2A',
+              },
+            ]
+          : []),
+      ],
+    },
+  ];
 
   return {
     type: 'flex',
@@ -359,44 +401,7 @@ export function createBidNotification(
       body: {
         type: 'box',
         layout: 'vertical',
-        contents: [
-          {
-            type: 'text',
-            text: '新しい入札がありました',
-            color: '#0F6E56',
-            size: 'sm',
-            weight: 'bold',
-          },
-          {
-            type: 'text',
-            text: projectTitle,
-            weight: 'bold',
-            size: 'lg',
-            wrap: true,
-            margin: 'md',
-          },
-          {
-            type: 'box',
-            layout: 'vertical',
-            margin: 'lg',
-            spacing: 'sm',
-            contents: [
-              {
-                type: 'text',
-                text: `入札者: ${bidderCompanyName}`,
-                size: 'sm',
-                color: '#2C2C2A',
-              },
-              {
-                type: 'text',
-                text: `入札金額: ${bidAmount.toLocaleString()}円`,
-                size: 'sm',
-                color: '#2C2C2A',
-                weight: 'bold',
-              },
-            ],
-          },
-        ],
+        contents: bodyContents,
       },
       footer: {
         type: 'box',

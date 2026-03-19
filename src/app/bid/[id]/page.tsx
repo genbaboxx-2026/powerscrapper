@@ -2,14 +2,17 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { AuthGuard } from '@/components/AuthGuard';
 import { useLiff } from '@/components/LiffProvider';
 import { authFetch } from '@/lib/api';
 import {
   RECRUITMENT_TYPE_LABELS,
   STRUCTURE_TYPE_LABELS,
+  BUSINESS_TYPE_LABELS,
   type RecruitmentType,
   type StructureType,
+  type BusinessType,
 } from '@/types';
 
 type Project = {
@@ -27,6 +30,14 @@ type Project = {
   deadline: string;
 };
 
+type UserProfile = {
+  companyName: string;
+  businessType: string;
+  coverageAreas: string[];
+  licenses: string[];
+  companyDescription: string;
+};
+
 type Props = {
   params: Promise<{ id: string }>;
 };
@@ -36,25 +47,28 @@ export default function BidPage({ params }: Props) {
   const router = useRouter();
   const { userId, profileCompleted } = useLiff();
   const [project, setProject] = useState<Project | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'input' | 'confirm'>('input');
 
   const [formData, setFormData] = useState({
+    availableFrom: '',
     message: '',
   });
 
-  // 案件情報を取得
+  // 案件情報とプロフィールを取得
   useEffect(() => {
-    const fetchProject = async () => {
+    const fetchData = async () => {
       if (!userId) return;
 
       try {
-        const res = await authFetch(`/api/projects/${projectId}`, userId);
+        // 案件情報を取得
+        const projectRes = await authFetch(`/api/projects/${projectId}`, userId);
 
-        if (!res.ok) {
-          if (res.status === 404) {
+        if (!projectRes.ok) {
+          if (projectRes.status === 404) {
             setError('案件が見つかりません');
           } else {
             setError('エラーが発生しました');
@@ -62,29 +76,42 @@ export default function BidPage({ params }: Props) {
           return;
         }
 
-        const data = await res.json();
+        const projectData = await projectRes.json();
 
         // 自分の案件の場合
-        if (data.isOwner) {
+        if (projectData.isOwner) {
           setError('自分の案件には入札できません');
           return;
         }
 
         // 既に入札済みの場合
-        if (data.hasBid) {
+        if (projectData.hasBid) {
           setError('既にこの案件に入札しています');
           return;
         }
 
         // 募集期限切れの場合
-        if (new Date(data.deadline) < new Date()) {
+        if (new Date(projectData.deadline) < new Date()) {
           setError('この案件は募集期限を過ぎています');
           return;
         }
 
-        setProject(data);
+        setProject(projectData);
+
+        // プロフィール情報を取得
+        const profileRes = await authFetch('/api/profile', userId);
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          setProfile({
+            companyName: profileData.companyName || '',
+            businessType: profileData.businessType || '',
+            coverageAreas: profileData.coverageAreas || [],
+            licenses: profileData.licenses || [],
+            companyDescription: profileData.companyDescription || '',
+          });
+        }
       } catch (err) {
-        console.error('Failed to fetch project:', err);
+        console.error('Failed to fetch data:', err);
         setError('エラーが発生しました');
       } finally {
         setIsLoading(false);
@@ -92,7 +119,7 @@ export default function BidPage({ params }: Props) {
     };
 
     if (userId) {
-      fetchProject();
+      fetchData();
     }
   }, [projectId, userId]);
 
@@ -114,6 +141,7 @@ export default function BidPage({ params }: Props) {
         method: 'POST',
         body: {
           projectId: project.id,
+          availableFrom: formData.availableFrom || null,
           message: formData.message,
         },
       });
@@ -303,13 +331,32 @@ export default function BidPage({ params }: Props) {
 
           {step === 'input' ? (
             <form onSubmit={handleConfirm}>
+              {/* 対応可能時期 */}
+              <div className="card p-4 mb-4">
+                <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+                  対応可能時期
+                </label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="例：即日対応可、4月上旬から、2週間後から"
+                  value={formData.availableFrom}
+                  onChange={(e) =>
+                    setFormData({ ...formData, availableFrom: e.target.value })
+                  }
+                />
+                <p className="text-xs text-[#73726C] mt-2">
+                  ※ おおよその目安で構いません
+                </p>
+              </div>
+
               {/* アピールメッセージ */}
               <div className="card p-4 mb-4">
                 <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
                   アピールメッセージ <span className="text-[#E24B4A]">*</span>
                 </label>
                 <textarea
-                  className="input min-h-[160px] resize-none"
+                  className="input min-h-[140px] resize-none"
                   placeholder="自社の強み、実績、対応可能な作業内容などをアピールしてください。"
                   value={formData.message}
                   onChange={(e) =>
@@ -317,10 +364,69 @@ export default function BidPage({ params }: Props) {
                   }
                   required
                 />
-                <p className="text-xs text-[#73726C] mt-2">
-                  ※ 会社プロフィールの情報も発注者に表示されます。
-                </p>
               </div>
+
+              {/* 会社情報プレビュー */}
+              {profile && (
+                <div className="card p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-medium text-[#73726C]">
+                      登録者に表示される あなたの会社情報
+                    </h2>
+                    <Link
+                      href="/profile/edit"
+                      className="text-xs text-[#0F6E56] underline"
+                    >
+                      プロフィールを編集
+                    </Link>
+                  </div>
+
+                  <dl className="space-y-2 text-sm">
+                    <div className="flex">
+                      <dt className="w-20 text-[#73726C] shrink-0">会社名</dt>
+                      <dd className="flex-1 text-[#2C2C2A]">
+                        {profile.companyName || '未設定'}
+                      </dd>
+                    </div>
+                    <div className="flex">
+                      <dt className="w-20 text-[#73726C] shrink-0">業種</dt>
+                      <dd className="flex-1 text-[#2C2C2A]">
+                        {profile.businessType
+                          ? BUSINESS_TYPE_LABELS[profile.businessType as BusinessType]
+                          : '未設定'}
+                      </dd>
+                    </div>
+                    <div className="flex">
+                      <dt className="w-20 text-[#73726C] shrink-0">対応エリア</dt>
+                      <dd className="flex-1 text-[#2C2C2A]">
+                        {profile.coverageAreas.length > 0
+                          ? profile.coverageAreas.join('、')
+                          : '未設定'}
+                      </dd>
+                    </div>
+                    <div className="flex">
+                      <dt className="w-20 text-[#73726C] shrink-0">保有資格</dt>
+                      <dd className="flex-1 text-[#2C2C2A]">
+                        {profile.licenses.length > 0
+                          ? profile.licenses.join('、')
+                          : '未設定'}
+                      </dd>
+                    </div>
+                    {profile.companyDescription && (
+                      <div className="pt-2 border-t border-[#D5D5D0]">
+                        <dt className="text-[#73726C] mb-1">会社紹介</dt>
+                        <dd className="text-[#2C2C2A] whitespace-pre-wrap text-xs">
+                          {profile.companyDescription}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+
+                  <p className="text-xs text-[#73726C] mt-3 pt-3 border-t border-[#D5D5D0]">
+                    ※ この情報が入札時に登録者へ送られます
+                  </p>
+                </div>
+              )}
 
               {/* 送信ボタン */}
               <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D5D5D0] p-4">
@@ -339,6 +445,12 @@ export default function BidPage({ params }: Props) {
 
                 <dl className="space-y-3 text-sm">
                   <div className="flex">
+                    <dt className="w-24 text-[#73726C] shrink-0">対応可能時期</dt>
+                    <dd className="flex-1 text-[#2C2C2A]">
+                      {formData.availableFrom || '未入力'}
+                    </dd>
+                  </div>
+                  <div className="flex">
                     <dt className="w-24 text-[#73726C] shrink-0">メッセージ</dt>
                     <dd className="flex-1 text-[#2C2C2A] whitespace-pre-wrap">
                       {formData.message}
@@ -346,6 +458,39 @@ export default function BidPage({ params }: Props) {
                   </div>
                 </dl>
               </div>
+
+              {/* 会社情報プレビュー（確認画面でも表示） */}
+              {profile && (
+                <div className="card p-4 mb-4 bg-[#F9F9F7]">
+                  <h2 className="text-sm font-medium text-[#73726C] mb-3">
+                    送信される会社情報
+                  </h2>
+                  <dl className="space-y-2 text-sm">
+                    <div className="flex">
+                      <dt className="w-20 text-[#73726C] shrink-0">会社名</dt>
+                      <dd className="flex-1 text-[#2C2C2A]">
+                        {profile.companyName || '未設定'}
+                      </dd>
+                    </div>
+                    <div className="flex">
+                      <dt className="w-20 text-[#73726C] shrink-0">業種</dt>
+                      <dd className="flex-1 text-[#2C2C2A]">
+                        {profile.businessType
+                          ? BUSINESS_TYPE_LABELS[profile.businessType as BusinessType]
+                          : '未設定'}
+                      </dd>
+                    </div>
+                    <div className="flex">
+                      <dt className="w-20 text-[#73726C] shrink-0">対応エリア</dt>
+                      <dd className="flex-1 text-[#2C2C2A]">
+                        {profile.coverageAreas.length > 0
+                          ? profile.coverageAreas.join('、')
+                          : '未設定'}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              )}
 
               <div className="card p-4 bg-[#F4F3F0] border-[#D5D5D0]">
                 <p className="text-xs text-[#73726C]">

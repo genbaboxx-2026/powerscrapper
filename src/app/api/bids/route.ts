@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // リクエストボディを解析
     const body = await request.json();
-    const { projectId, amount, message } = body;
+    const { projectId, availableFrom, message } = body;
 
     if (!projectId || !message) {
       return NextResponse.json(
@@ -94,12 +94,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 入札を作成
+    // 入札を作成（amountカラムをavailableFromとして使用）
     const bid = await prisma.bid.create({
       data: {
         projectId,
         userId: user.id,
-        amount: amount || null,
+        amount: availableFrom || null,
         message,
         status: 'submitted',
       },
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       const notification = createBidNotification(
         project.title,
         user.companyName || '未設定',
-        amount ? parseInt(amount, 10) : 0,
+        availableFrom || '',
         project.id
       );
       await pushMessage(project.user.lineUserId, [notification]);
