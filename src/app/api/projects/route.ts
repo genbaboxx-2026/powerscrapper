@@ -97,6 +97,7 @@ export async function GET(req: NextRequest) {
         deadline: p.deadline,
         bidCount: p._count.bids,
         createdAt: p.createdAt,
+        isOwner: p.userId === user.id,
       })),
       total,
       page,

@@ -28,6 +28,7 @@ type Project = {
   deadline: string;
   bidCount: number;
   createdAt: string;
+  isOwner: boolean;
 };
 
 const PREFECTURES = [
@@ -174,6 +175,11 @@ function ProjectsContent() {
                   {/* バッジ行 */}
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
+                      {project.isOwner && (
+                        <span className="px-2 py-0.5 bg-[#E8E8E6] text-[#73726C] text-xs rounded font-medium">
+                          自分の案件
+                        </span>
+                      )}
                       {project.isUrgent && (
                         <span className="badge badge-urgent">急募</span>
                       )}
