@@ -42,7 +42,6 @@ export default function BidPage({ params }: Props) {
   const [step, setStep] = useState<'input' | 'confirm'>('input');
 
   const [formData, setFormData] = useState({
-    amount: '',
     message: '',
   });
 
@@ -115,7 +114,6 @@ export default function BidPage({ params }: Props) {
         method: 'POST',
         body: {
           projectId: project.id,
-          amount: formData.amount || null,
           message: formData.message,
         },
       });
@@ -305,28 +303,6 @@ export default function BidPage({ params }: Props) {
 
           {step === 'input' ? (
             <form onSubmit={handleConfirm}>
-              {/* 見積金額 */}
-              <div className="card p-4 mb-4">
-                <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
-                  見積金額（税込）
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    className="input flex-1"
-                    placeholder="例: 1000000"
-                    value={formData.amount}
-                    onChange={(e) =>
-                      setFormData({ ...formData, amount: e.target.value })
-                    }
-                  />
-                  <span className="text-[#73726C]">円</span>
-                </div>
-                <p className="text-xs text-[#73726C] mt-2">
-                  ※ 見積金額は任意です。詳細な見積もりは成約後に調整できます。
-                </p>
-              </div>
-
               {/* アピールメッセージ */}
               <div className="card p-4 mb-4">
                 <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
@@ -362,14 +338,6 @@ export default function BidPage({ params }: Props) {
                 </h2>
 
                 <dl className="space-y-3 text-sm">
-                  <div className="flex">
-                    <dt className="w-24 text-[#73726C] shrink-0">見積金額</dt>
-                    <dd className="flex-1 text-[#2C2C2A]">
-                      {formData.amount
-                        ? `${parseInt(formData.amount).toLocaleString()}円`
-                        : '未入力'}
-                    </dd>
-                  </div>
                   <div className="flex">
                     <dt className="w-24 text-[#73726C] shrink-0">メッセージ</dt>
                     <dd className="flex-1 text-[#2C2C2A] whitespace-pre-wrap">
