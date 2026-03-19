@@ -170,7 +170,7 @@ function ProjectsContent() {
                 <Link
                   key={project.id}
                   href={`/projects/${project.id}`}
-                  className="card block p-4"
+                  className={`card block p-4 ${project.isOwner ? 'bg-[#F0F7FF] border-[#B8D4E8]' : ''}`}
                 >
                   {/* バッジ行 */}
                   <div className="flex items-center justify-between mb-2">
