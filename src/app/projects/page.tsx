@@ -176,7 +176,7 @@ function ProjectsContent() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       {project.isOwner && (
-                        <span className="px-2 py-0.5 bg-[#E8E8E6] text-[#73726C] text-xs rounded font-medium">
+                        <span className="px-2 py-0.5 bg-[#E3EDF7] text-[#4A6FA5] text-xs rounded font-medium border border-[#B8D4E8]">
                           自分の案件
                         </span>
                       )}
