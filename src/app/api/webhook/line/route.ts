@@ -4,7 +4,10 @@ import {
   replyMessage,
   createTextMessage,
   createWelcomeMessage,
+  createEventInfoMessage,
+  createContactInfoMessage,
   type WebhookEvent,
+  type MessageEvent,
 } from '@/lib/line';
 import { prisma } from '@/lib/prisma';
 
@@ -60,7 +63,7 @@ async function handleEvent(event: WebhookEvent): Promise<void> {
       break;
 
     case 'message':
-      // 必要に応じてメッセージ応答
+      await handleMessage(event);
       break;
 
     default:
@@ -329,6 +332,33 @@ async function handlePostback(
       await replyMessage(replyToken, [
         createTextMessage('メニューから操作を選択してください。'),
       ]);
+  }
+}
+
+/**
+ * メッセージイベント処理
+ */
+async function handleMessage(event: MessageEvent): Promise<void> {
+  const { replyToken, message } = event;
+
+  if (message.type !== 'text' || !message.text) {
+    return;
+  }
+
+  const text = message.text.trim();
+
+  switch (text) {
+    case 'イベント案内':
+      await replyMessage(replyToken, [createEventInfoMessage()]);
+      break;
+
+    case 'お問い合わせ':
+      await replyMessage(replyToken, [createContactInfoMessage()]);
+      break;
+
+    default:
+      // 対応していないメッセージは無視（または汎用応答）
+      break;
   }
 }
 
