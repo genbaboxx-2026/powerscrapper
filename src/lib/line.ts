@@ -272,7 +272,7 @@ export function createWelcomeMessage() {
 
   return {
     type: 'flex',
-    altText: 'PowerScrapperへようこそ',
+    altText: 'PowerScrapperの集いへようこそ',
     contents: {
       type: 'bubble',
       hero: {
@@ -283,17 +283,17 @@ export function createWelcomeMessage() {
         contents: [
           {
             type: 'text',
-            text: 'PowerScrapper',
+            text: 'ようこそ！',
             color: '#FFFFFF',
-            size: 'xxl',
-            weight: 'bold',
+            size: 'lg',
             align: 'center',
           },
           {
             type: 'text',
-            text: '解体業界のマッチングプラットフォーム',
+            text: 'PowerScrapperの集い',
             color: '#FFFFFF',
-            size: 'sm',
+            size: 'xxl',
+            weight: 'bold',
             align: 'center',
             margin: 'sm',
           },
@@ -306,125 +306,75 @@ export function createWelcomeMessage() {
         contents: [
           {
             type: 'text',
-            text: 'ご登録ありがとうございます',
+            text: '友だち追加ありがとうございます！',
             weight: 'bold',
             size: 'md',
             color: '#2C2C2A',
           },
           {
-            type: 'text',
-            text: '3ステップで案件マッチング',
-            size: 'sm',
-            color: '#73726C',
-            margin: 'md',
+            type: 'box',
+            layout: 'vertical',
+            margin: 'lg',
+            contents: [
+              {
+                type: 'text',
+                text: 'PowerScrapperは解体業界で働く仲間がつながるコミュニティです。',
+                size: 'sm',
+                color: '#2C2C2A',
+                wrap: true,
+              },
+            ],
           },
           {
             type: 'box',
             layout: 'vertical',
             margin: 'lg',
-            spacing: 'md',
             contents: [
               {
-                type: 'box',
-                layout: 'horizontal',
-                spacing: 'md',
-                contents: [
-                  {
-                    type: 'box',
-                    layout: 'vertical',
-                    backgroundColor: BRAND_COLOR,
-                    cornerRadius: '50px',
-                    width: '28px',
-                    height: '28px',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    contents: [
-                      {
-                        type: 'text',
-                        text: '1',
-                        color: '#FFFFFF',
-                        size: 'sm',
-                        weight: 'bold',
-                      },
-                    ],
-                  },
-                  {
-                    type: 'text',
-                    text: '会社プロフィールを登録',
-                    size: 'sm',
-                    color: '#2C2C2A',
-                    flex: 1,
-                    gravity: 'center',
-                  },
-                ],
+                type: 'text',
+                text: '今後こんな情報をお届けします：',
+                size: 'sm',
+                color: '#2C2C2A',
               },
               {
-                type: 'box',
-                layout: 'horizontal',
-                spacing: 'md',
-                contents: [
-                  {
-                    type: 'box',
-                    layout: 'vertical',
-                    backgroundColor: BRAND_COLOR,
-                    cornerRadius: '50px',
-                    width: '28px',
-                    height: '28px',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    contents: [
-                      {
-                        type: 'text',
-                        text: '2',
-                        color: '#FFFFFF',
-                        size: 'sm',
-                        weight: 'bold',
-                      },
-                    ],
-                  },
-                  {
-                    type: 'text',
-                    text: '案件を探して入札',
-                    size: 'sm',
-                    color: '#2C2C2A',
-                    flex: 1,
-                    gravity: 'center',
-                  },
-                ],
+                type: 'text',
+                text: '・イベント・交流会のご案内',
+                size: 'sm',
+                color: '#2C2C2A',
+                margin: 'sm',
               },
               {
-                type: 'box',
-                layout: 'horizontal',
-                spacing: 'md',
-                contents: [
-                  {
-                    type: 'box',
-                    layout: 'vertical',
-                    backgroundColor: BRAND_COLOR,
-                    cornerRadius: '50px',
-                    width: '28px',
-                    height: '28px',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    contents: [
-                      {
-                        type: 'text',
-                        text: '3',
-                        color: '#FFFFFF',
-                        size: 'sm',
-                        weight: 'bold',
-                      },
-                    ],
-                  },
-                  {
-                    type: 'text',
-                    text: 'マッチング成立で直接やりとり',
-                    size: 'sm',
-                    color: '#2C2C2A',
-                    flex: 1,
-                    gravity: 'center',
-                  },
-                ],
+                type: 'text',
+                text: '・業界の最新情報',
+                size: 'sm',
+                color: '#2C2C2A',
+                margin: 'xs',
+              },
+            ],
+          },
+          {
+            type: 'separator',
+            margin: 'xl',
+          },
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            contents: [
+              {
+                type: 'text',
+                text: '💡 案件マッチング機能もあります',
+                weight: 'bold',
+                size: 'sm',
+                color: '#2C2C2A',
+              },
+              {
+                type: 'text',
+                text: '解体案件の募集・入札ができるマッチング機能も使えます。よかったら覗いてみてください！',
+                size: 'xs',
+                color: '#73726C',
+                wrap: true,
+                margin: 'sm',
               },
             ],
           },
@@ -433,25 +383,13 @@ export function createWelcomeMessage() {
       footer: {
         type: 'box',
         layout: 'vertical',
-        spacing: 'sm',
         paddingAll: '12px',
         contents: [
           {
             type: 'button',
             action: {
               type: 'uri',
-              label: 'プロフィールを登録する',
-              uri: `https://liff.line.me/${liffId}/profile/edit`,
-            },
-            style: 'primary',
-            color: BRAND_COLOR,
-            height: 'sm',
-          },
-          {
-            type: 'button',
-            action: {
-              type: 'uri',
-              label: '案件一覧を見る',
+              label: '案件を見てみる',
               uri: `https://liff.line.me/${liffId}/projects`,
             },
             style: 'secondary',
