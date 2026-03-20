@@ -87,6 +87,7 @@ export default function ProjectNewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   // プロフィール取得
   useEffect(() => {
@@ -114,7 +115,33 @@ export default function ProjectNewPage() {
     }
   }, [liffLoading, userId]);
 
+  const getValidationErrors = (): string[] => {
+    const errors: string[] = [];
+    if (!formData.title) errors.push('案件名');
+    if (!formData.structureType) errors.push('構造種別');
+    if (!formData.sitePrefecture) errors.push('現場所在地（都道府県）');
+    if (!formData.siteCity) errors.push('現場所在地（市区町村）');
+    if (!formData.periodStartMonth) errors.push('工期開始（月）');
+    if (!formData.periodStartPeriod) errors.push('工期開始（時期）');
+    if (!formData.periodEndMonth) errors.push('工期終了（月）');
+    if (!formData.periodEndPeriod) errors.push('工期終了（時期）');
+    if (!formData.description) errors.push('案件詳細・条件');
+    if (!formData.deadline) errors.push('募集期限');
+    return errors;
+  };
+
   const handleNext = () => {
+    if (currentStep === 3) {
+      const errors = getValidationErrors();
+      if (errors.length > 0) {
+        setValidationErrors(errors);
+        setError(`以下の必須項目を入力してください：\n${errors.join('、')}`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      setValidationErrors([]);
+      setError(null);
+    }
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
@@ -340,7 +367,7 @@ export default function ProjectNewPage() {
           {currentStep === 3 && (
             <div className="space-y-4">
               {/* 案件名 */}
-              <div className="card p-4">
+              <div className={`card p-4 ${validationErrors.includes('案件名') ? 'border-[#E24B4A] border-2' : ''}`}>
                 <label className="block text-sm font-medium text-[#1E293B] mb-2">
                   案件名 <span className="text-[#E24B4A]">*</span>
                 </label>
@@ -356,7 +383,7 @@ export default function ProjectNewPage() {
               </div>
 
               {/* 構造 */}
-              <div className="card p-4">
+              <div className={`card p-4 ${validationErrors.includes('構造種別') ? 'border-[#E24B4A] border-2' : ''}`}>
                 <label className="block text-sm font-medium text-[#1E293B] mb-2">
                   構造 <span className="text-[#E24B4A]">*</span>
                 </label>
@@ -417,7 +444,7 @@ export default function ProjectNewPage() {
               </div>
 
               {/* 現場所在地 */}
-              <div className="card p-4">
+              <div className={`card p-4 ${validationErrors.includes('現場所在地（都道府県）') || validationErrors.includes('現場所在地（市区町村）') ? 'border-[#E24B4A] border-2' : ''}`}>
                 <label className="block text-sm font-medium text-[#1E293B] mb-2">
                   現場所在地 <span className="text-[#E24B4A]">*</span>
                 </label>
@@ -465,7 +492,7 @@ export default function ProjectNewPage() {
               </div>
 
               {/* 工期 */}
-              <div className="card p-4">
+              <div className={`card p-4 ${validationErrors.some(e => e.includes('工期')) ? 'border-[#E24B4A] border-2' : ''}`}>
                 <label className="block text-sm font-medium text-[#1E293B] mb-2">
                   工期 <span className="text-[#E24B4A]">*</span>
                 </label>
@@ -564,7 +591,7 @@ export default function ProjectNewPage() {
               </div>
 
               {/* 案件詳細 */}
-              <div className="card p-4">
+              <div className={`card p-4 ${validationErrors.includes('案件詳細・条件') ? 'border-[#E24B4A] border-2' : ''}`}>
                 <label className="block text-sm font-medium text-[#1E293B] mb-2">
                   案件詳細・条件 <span className="text-[#E24B4A]">*</span>
                 </label>
@@ -610,7 +637,7 @@ export default function ProjectNewPage() {
               </div>
 
               {/* 募集期限 */}
-              <div className="card p-4">
+              <div className={`card p-4 ${validationErrors.includes('募集期限') ? 'border-[#E24B4A] border-2' : ''}`}>
                 <label className="block text-sm font-medium text-[#1E293B] mb-2">
                   募集期限 <span className="text-[#E24B4A]">*</span>
                 </label>
@@ -708,8 +735,7 @@ export default function ProjectNewPage() {
             {currentStep < 4 ? (
               <button
                 onClick={handleNext}
-                disabled={currentStep === 3 && !isStep3Valid()}
-                className="flex-1 btn-primary disabled:opacity-50"
+                className="flex-1 btn-primary"
               >
                 次へ
               </button>
