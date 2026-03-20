@@ -306,10 +306,6 @@ export default function ProjectDetailPage({ params }: Props) {
                   )}
                 </dd>
               </div>
-              <div className="flex">
-                <dt className="w-20 text-[#64748B] shrink-0">興味あり</dt>
-                <dd className="flex-1 text-[#1E293B]">{project.bidCount}件</dd>
-              </div>
             </dl>
           </div>
 
