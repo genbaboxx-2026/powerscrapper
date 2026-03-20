@@ -55,6 +55,7 @@ export async function GET(request: NextRequest, { params }: Props) {
         category: consultation.category,
         title: consultation.title,
         body: consultation.body,
+        images: consultation.images || [],
         status: consultation.status,
         createdAt: consultation.createdAt.toISOString(),
         user: {
@@ -113,7 +114,7 @@ export async function PUT(request: NextRequest, { params }: Props) {
     }
 
     const body = await request.json();
-    const { category, title, body: consultationBody } = body;
+    const { category, title, body: consultationBody, images } = body;
 
     if (!category || !title?.trim() || !consultationBody?.trim()) {
       return NextResponse.json(
@@ -122,12 +123,16 @@ export async function PUT(request: NextRequest, { params }: Props) {
       );
     }
 
+    // 画像は最大3枚
+    const validImages = Array.isArray(images) ? images.slice(0, 3) : [];
+
     const updatedConsultation = await prisma.consultation.update({
       where: { id },
       data: {
         category,
         title: title.trim(),
         body: consultationBody.trim(),
+        images: validImages,
       },
     });
 
@@ -137,6 +142,7 @@ export async function PUT(request: NextRequest, { params }: Props) {
         category: updatedConsultation.category,
         title: updatedConsultation.title,
         body: updatedConsultation.body,
+        images: updatedConsultation.images,
         status: updatedConsultation.status,
       },
     });

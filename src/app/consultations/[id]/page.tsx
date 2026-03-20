@@ -8,6 +8,9 @@ import { useLiff } from '@/components/LiffProvider';
 import { authFetch } from '@/lib/api';
 
 const CATEGORY_LABELS: Record<string, { label: string; color: string }> = {
+  announcement: { label: '告知', color: 'bg-red-100 text-red-600' },
+  question: { label: '質問', color: 'bg-blue-100 text-blue-600' },
+  request: { label: '依頼', color: 'bg-amber-100 text-amber-600' },
   general: { label: '一般相談', color: 'bg-[#E8E8E6] text-[#64748B]' },
   technical: { label: '技術相談', color: 'bg-[#E3EDF7] text-[#4A6FA5]' },
   equipment: { label: '重機・機材', color: 'bg-[#FAEEDA] text-[#BA7517]' },
@@ -36,6 +39,7 @@ type Consultation = {
   category: string;
   title: string;
   body: string;
+  images: string[];
   status: string;
   createdAt: string;
   user: User;
@@ -58,6 +62,7 @@ export default function ConsultationDetailPage({ params }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchConsultation = async () => {
@@ -299,6 +304,27 @@ export default function ConsultationDetailPage({ params }: Props) {
             <p className="text-[#1E293B] whitespace-pre-wrap leading-relaxed">
               {consultation.body}
             </p>
+
+            {/* 画像 */}
+            {consultation.images && consultation.images.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-[#E2E8F0]">
+                <div className="flex flex-wrap gap-2">
+                  {consultation.images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImage(image)}
+                      className="block"
+                    >
+                      <img
+                        src={image}
+                        alt={`添付画像 ${index + 1}`}
+                        className="w-24 h-24 object-cover rounded-lg border border-[#E2E8F0] hover:opacity-80 transition-opacity"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* コメント一覧 */}
@@ -413,6 +439,27 @@ export default function ConsultationDetailPage({ params }: Props) {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* 画像拡大モーダル */}
+        {selectedImage && (
+          <div
+            className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
+            onClick={() => setSelectedImage(null)}
+          >
+            <button
+              className="absolute top-4 right-4 w-10 h-10 bg-white/20 text-white rounded-full flex items-center justify-center text-2xl"
+              onClick={() => setSelectedImage(null)}
+            >
+              ×
+            </button>
+            <img
+              src={selectedImage}
+              alt="拡大画像"
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         )}
       </div>

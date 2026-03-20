@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { category, title, body: consultationBody } = body;
+    const { category, title, body: consultationBody, images } = body;
 
     // バリデーション
     if (!category || !title || !consultationBody) {
@@ -106,7 +106,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validCategories = ['general', 'technical', 'equipment', 'waste', 'regulation', 'other'];
+    const validCategories = [
+      'announcement', 'question', 'request',
+      'general', 'technical', 'equipment', 'waste', 'regulation', 'other'
+    ];
     if (!validCategories.includes(category)) {
       return NextResponse.json(
         { error: '無効なカテゴリです' },
@@ -114,12 +117,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 画像は最大3枚
+    const validImages = Array.isArray(images) ? images.slice(0, 3) : [];
+
     const consultation = await prisma.consultation.create({
       data: {
         userId: user.id,
         category,
         title,
         body: consultationBody,
+        images: validImages,
       },
     });
 

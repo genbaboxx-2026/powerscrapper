@@ -135,6 +135,7 @@ model Consultation {
   category    String
   title       String
   body        String
+  images      String[] @default([])
   status      String   @default("open")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")

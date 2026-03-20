@@ -58,6 +58,9 @@ const PREFECTURES = [
 
 const CONSULTATION_CATEGORIES = [
   { value: '', label: '全て' },
+  { value: 'announcement', label: '告知' },
+  { value: 'question', label: '質問' },
+  { value: 'request', label: '依頼' },
   { value: 'general', label: '一般相談' },
   { value: 'technical', label: '技術相談' },
   { value: 'equipment', label: '重機・機材' },
@@ -67,6 +70,9 @@ const CONSULTATION_CATEGORIES = [
 ];
 
 const CATEGORY_BADGES: Record<string, { label: string; color: string }> = {
+  announcement: { label: '告知', color: 'bg-red-100 text-red-600' },
+  question: { label: '質問', color: 'bg-blue-100 text-blue-600' },
+  request: { label: '依頼', color: 'bg-amber-100 text-amber-600' },
   general: { label: '一般相談', color: 'bg-[#E8E8E6] text-[#64748B]' },
   technical: { label: '技術相談', color: 'bg-[#E3EDF7] text-[#4A6FA5]' },
   equipment: { label: '重機・機材', color: 'bg-[#FAEEDA] text-[#BA7517]' },
