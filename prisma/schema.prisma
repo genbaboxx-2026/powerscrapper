@@ -108,6 +108,12 @@ model Match {
   bidderNotified Boolean  @default(false) @map("bidder_notified")
   createdAt      DateTime @default(now()) @map("created_at")
 
+  // 管理者用フィールド
+  adminStatus    String   @default("contacted") @map("admin_status") // contacted | negotiating | closed_won | closed_lost
+  adminMemo      String?  @map("admin_memo")
+  contactedAt    DateTime @default(now()) @map("contacted_at")
+  closedAt       DateTime? @map("closed_at")
+
   project        Project  @relation(fields: [projectId], references: [id])
   bid            Bid      @relation(fields: [bidId], references: [id])
   posterUser     User     @relation("MatchPoster", fields: [posterUserId], references: [id])

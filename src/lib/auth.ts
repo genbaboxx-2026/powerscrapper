@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
 import prisma from './prisma';
 
 /**
@@ -92,4 +93,17 @@ export function isAdmin(user: { role: string }): boolean {
  */
 export function isProfileCompleted(user: { profileCompleted: boolean }): boolean {
   return user.profileCompleted;
+}
+
+/**
+ * 管理者セッションを検証してadminフラグを返す
+ */
+export async function getAdminFromRequest(req: NextRequest): Promise<boolean> {
+  try {
+    const cookieStore = await cookies();
+    const session = cookieStore.get('admin_session');
+    return !!session?.value;
+  } catch {
+    return false;
+  }
 }
