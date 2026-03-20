@@ -6,26 +6,50 @@ import { useLiff } from '@/components/LiffProvider';
 import { AuthGuard } from '@/components/AuthGuard';
 import { authFetch } from '@/lib/api';
 import {
-  RECRUITMENT_TYPE_LABELS,
   STRUCTURE_TYPE_LABELS,
-  WORK_TYPE_LABELS,
   BUSINESS_TYPE_LABELS,
-  type RecruitmentType,
   type StructureType,
-  type WorkType,
   type BusinessType,
 } from '@/types';
 
+// 都道府県リスト
+const PREFECTURES = [
+  '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+  '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+  '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県',
+  '岐阜県', '静岡県', '愛知県', '三重県',
+  '滋賀県', '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県',
+  '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+  '徳島県', '香川県', '愛媛県', '高知県',
+  '福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県',
+];
+
+// 年の選択肢（現在年から3年分）
+const currentYear = new Date().getFullYear();
+const YEARS = [currentYear, currentYear + 1, currentYear + 2];
+
+// 月の選択肢
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
+
+// 時期の選択肢
+const PERIODS = ['初旬', '中旬', '下旬'];
+
 type ProjectFormData = {
   title: string;
-  recruitmentType: string;
   structureType: string;
   floors: string;
   totalArea: string;
-  siteAddress: string;
-  periodStart: string;
-  periodEnd: string;
-  workTypes: string[];
+  // 現場所在地（分割）
+  sitePrefecture: string;
+  siteCity: string;
+  // 工期（分割）
+  periodStartYear: string;
+  periodStartMonth: string;
+  periodStartPeriod: string;
+  periodEndYear: string;
+  periodEndMonth: string;
+  periodEndPeriod: string;
+  // その他
   description: string;
   isUrgent: boolean;
   notifyMembers: boolean;
@@ -46,14 +70,17 @@ type ProfileData = {
 
 const initialFormData: ProjectFormData = {
   title: '',
-  recruitmentType: '',
   structureType: '',
   floors: '',
   totalArea: '',
-  siteAddress: '',
-  periodStart: '',
-  periodEnd: '',
-  workTypes: [],
+  sitePrefecture: '',
+  siteCity: '',
+  periodStartYear: String(currentYear),
+  periodStartMonth: '',
+  periodStartPeriod: '',
+  periodEndYear: String(currentYear),
+  periodEndMonth: '',
+  periodEndPeriod: '',
   description: '',
   isUrgent: false,
   notifyMembers: true,
@@ -110,14 +137,54 @@ export default function ProjectNewPage() {
     }
   };
 
+  // 工期のフォーマット
+  const formatPeriod = (year: string, month: string, period: string) => {
+    if (!year || !month || !period) return '';
+    return `${year}年${month}月${period}`;
+  };
+
+  // 現場所在地のフォーマット
+  const formatSiteAddress = () => {
+    if (!formData.sitePrefecture) return '';
+    return formData.siteCity
+      ? `${formData.sitePrefecture}${formData.siteCity}`
+      : formData.sitePrefecture;
+  };
+
   const handleSubmit = async () => {
     setError(null);
     setIsSubmitting(true);
 
     try {
+      // APIに送信するデータを整形
+      const submitData = {
+        title: formData.title,
+        recruitmentType: 'general', // デフォルト値
+        structureType: formData.structureType,
+        floors: formData.floors,
+        totalArea: formData.totalArea,
+        siteAddress: formatSiteAddress(),
+        sitePrefecture: formData.sitePrefecture,
+        periodStart: formatPeriod(
+          formData.periodStartYear,
+          formData.periodStartMonth,
+          formData.periodStartPeriod
+        ),
+        periodEnd: formatPeriod(
+          formData.periodEndYear,
+          formData.periodEndMonth,
+          formData.periodEndPeriod
+        ),
+        workTypes: [], // 空配列
+        description: formData.description,
+        isUrgent: formData.isUrgent,
+        notifyMembers: formData.notifyMembers,
+        deadline: formData.deadline,
+      };
+
       const res = await authFetch('/api/projects', userId, {
         method: 'POST',
-        body: formData,
+        body: submitData,
       });
 
       if (!res.ok) {
@@ -133,25 +200,16 @@ export default function ProjectNewPage() {
     }
   };
 
-  const toggleWorkType = (type: string) => {
-    setFormData((prev) => {
-      const current = prev.workTypes;
-      const updated = current.includes(type)
-        ? current.filter((t) => t !== type)
-        : [...current, type];
-      return { ...prev, workTypes: updated };
-    });
-  };
-
   const isStep3Valid = () => {
     return (
       formData.title &&
-      formData.recruitmentType &&
       formData.structureType &&
-      formData.siteAddress &&
-      formData.periodStart &&
-      formData.periodEnd &&
-      formData.workTypes.length > 0 &&
+      formData.sitePrefecture &&
+      formData.siteCity &&
+      formData.periodStartMonth &&
+      formData.periodStartPeriod &&
+      formData.periodEndMonth &&
+      formData.periodEndPeriod &&
       formData.description &&
       formData.deadline
     );
@@ -292,33 +350,6 @@ export default function ProjectNewPage() {
           {/* Step 3: 案件情報入力 */}
           {currentStep === 3 && (
             <div className="space-y-4">
-              {/* 募集タイプ */}
-              <div className="card p-4">
-                <label className="block text-sm font-medium text-[#1E293B] mb-2">
-                  募集タイプ <span className="text-[#E24B4A]">*</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {(Object.entries(RECRUITMENT_TYPE_LABELS) as [RecruitmentType, string][]).map(
-                    ([value, label]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() =>
-                          setFormData({ ...formData, recruitmentType: value })
-                        }
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                          formData.recruitmentType === value
-                            ? 'bg-[#2563EB] text-white'
-                            : 'bg-white border border-[#E2E8F0] text-[#1E293B]'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    )
-                  )}
-                </div>
-              </div>
-
               {/* 案件名 */}
               <div className="card p-4">
                 <label className="block text-sm font-medium text-[#1E293B] mb-2">
@@ -386,7 +417,7 @@ export default function ProjectNewPage() {
                     <input
                       type="text"
                       className="input"
-                      placeholder="例: 500m2"
+                      placeholder="例: 500m²"
                       value={formData.totalArea}
                       onChange={(e) =>
                         setFormData({ ...formData, totalArea: e.target.value })
@@ -401,15 +432,31 @@ export default function ProjectNewPage() {
                 <label className="block text-sm font-medium text-[#1E293B] mb-2">
                   現場所在地 <span className="text-[#E24B4A]">*</span>
                 </label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="例: 東京都渋谷区神宮前1-2-3"
-                  value={formData.siteAddress}
-                  onChange={(e) =>
-                    setFormData({ ...formData, siteAddress: e.target.value })
-                  }
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <select
+                    className="input"
+                    value={formData.sitePrefecture}
+                    onChange={(e) =>
+                      setFormData({ ...formData, sitePrefecture: e.target.value })
+                    }
+                  >
+                    <option value="">都道府県を選択</option>
+                    {PREFECTURES.map((pref) => (
+                      <option key={pref} value={pref}>
+                        {pref}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="例: 渋谷区"
+                    value={formData.siteCity}
+                    onChange={(e) =>
+                      setFormData({ ...formData, siteCity: e.target.value })
+                    }
+                  />
+                </div>
               </div>
 
               {/* 工期 */}
@@ -417,50 +464,97 @@ export default function ProjectNewPage() {
                 <label className="block text-sm font-medium text-[#1E293B] mb-2">
                   工期 <span className="text-[#E24B4A]">*</span>
                 </label>
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    className="input"
-                    placeholder="開始: 2026年4月"
-                    value={formData.periodStart}
-                    onChange={(e) =>
-                      setFormData({ ...formData, periodStart: e.target.value })
-                    }
-                  />
-                  <input
-                    type="text"
-                    className="input"
-                    placeholder="終了: 2026年6月"
-                    value={formData.periodEnd}
-                    onChange={(e) =>
-                      setFormData({ ...formData, periodEnd: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
 
-              {/* 作業内容 */}
-              <div className="card p-4">
-                <label className="block text-sm font-medium text-[#1E293B] mb-2">
-                  作業内容 <span className="text-[#E24B4A]">*</span>（複数選択可）
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {(Object.entries(WORK_TYPE_LABELS) as [WorkType, string][]).map(
-                    ([value, label]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => toggleWorkType(value)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                          formData.workTypes.includes(value)
-                            ? 'bg-[#2563EB] text-white'
-                            : 'bg-white border border-[#E2E8F0] text-[#1E293B]'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    )
-                  )}
+                {/* 開始時期 */}
+                <p className="text-xs text-[#64748B] mb-2">開始時期</p>
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  <select
+                    className="input text-sm"
+                    value={formData.periodStartYear}
+                    onChange={(e) =>
+                      setFormData({ ...formData, periodStartYear: e.target.value })
+                    }
+                  >
+                    {YEARS.map((year) => (
+                      <option key={year} value={year}>
+                        {year}年
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="input text-sm"
+                    value={formData.periodStartMonth}
+                    onChange={(e) =>
+                      setFormData({ ...formData, periodStartMonth: e.target.value })
+                    }
+                  >
+                    <option value="">月</option>
+                    {MONTHS.map((month) => (
+                      <option key={month} value={month}>
+                        {month}月
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="input text-sm"
+                    value={formData.periodStartPeriod}
+                    onChange={(e) =>
+                      setFormData({ ...formData, periodStartPeriod: e.target.value })
+                    }
+                  >
+                    <option value="">時期</option>
+                    {PERIODS.map((period) => (
+                      <option key={period} value={period}>
+                        {period}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 終了時期 */}
+                <p className="text-xs text-[#64748B] mb-2">終了時期</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <select
+                    className="input text-sm"
+                    value={formData.periodEndYear}
+                    onChange={(e) =>
+                      setFormData({ ...formData, periodEndYear: e.target.value })
+                    }
+                  >
+                    {YEARS.map((year) => (
+                      <option key={year} value={year}>
+                        {year}年
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="input text-sm"
+                    value={formData.periodEndMonth}
+                    onChange={(e) =>
+                      setFormData({ ...formData, periodEndMonth: e.target.value })
+                    }
+                  >
+                    <option value="">月</option>
+                    {MONTHS.map((month) => (
+                      <option key={month} value={month}>
+                        {month}月
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="input text-sm"
+                    value={formData.periodEndPeriod}
+                    onChange={(e) =>
+                      setFormData({ ...formData, periodEndPeriod: e.target.value })
+                    }
+                  >
+                    <option value="">時期</option>
+                    {PERIODS.map((period) => (
+                      <option key={period} value={period}>
+                        {period}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -471,25 +565,10 @@ export default function ProjectNewPage() {
                 </label>
                 <textarea
                   className="input min-h-[120px] resize-none"
-                  placeholder="現場の状況、必要な機材、条件などを詳しく記入してください"
+                  placeholder="現場の状況、必要な機材、条件などを記入してください"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
-                  }
-                />
-              </div>
-
-              {/* 募集期限 */}
-              <div className="card p-4">
-                <label className="block text-sm font-medium text-[#1E293B] mb-2">
-                  募集期限 <span className="text-[#E24B4A]">*</span>
-                </label>
-                <input
-                  type="date"
-                  className="input"
-                  value={formData.deadline}
-                  onChange={(e) =>
-                    setFormData({ ...formData, deadline: e.target.value })
                   }
                 />
               </div>
@@ -524,6 +603,21 @@ export default function ProjectNewPage() {
                   </span>
                 </label>
               </div>
+
+              {/* 募集期限 */}
+              <div className="card p-4">
+                <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                  募集期限 <span className="text-[#E24B4A]">*</span>
+                </label>
+                <input
+                  type="date"
+                  className="input"
+                  value={formData.deadline}
+                  onChange={(e) =>
+                    setFormData({ ...formData, deadline: e.target.value })
+                  }
+                />
+              </div>
             </div>
           )}
 
@@ -535,9 +629,6 @@ export default function ProjectNewPage() {
                   {formData.isUrgent && (
                     <span className="badge badge-urgent">急募</span>
                   )}
-                  <span className="badge badge-type">
-                    {RECRUITMENT_TYPE_LABELS[formData.recruitmentType as RecruitmentType]}
-                  </span>
                 </div>
                 <h2 className="text-lg font-bold text-[#1E293B] mb-4">
                   {formData.title}
@@ -554,27 +645,22 @@ export default function ProjectNewPage() {
                   </div>
                   <div className="flex">
                     <dt className="w-24 text-[#64748B]">現場</dt>
-                    <dd className="flex-1 text-[#1E293B]">{formData.siteAddress}</dd>
+                    <dd className="flex-1 text-[#1E293B]">{formatSiteAddress()}</dd>
                   </div>
                   <div className="flex">
                     <dt className="w-24 text-[#64748B]">工期</dt>
                     <dd className="flex-1 text-[#1E293B]">
-                      {formData.periodStart} 〜 {formData.periodEnd}
-                    </dd>
-                  </div>
-                  <div className="flex">
-                    <dt className="w-24 text-[#64748B]">作業内容</dt>
-                    <dd className="flex-1">
-                      <div className="flex flex-wrap gap-1">
-                        {formData.workTypes.map((type) => (
-                          <span
-                            key={type}
-                            className="px-2 py-1 bg-[#EFF6FF] text-[#2563EB] text-xs rounded"
-                          >
-                            {WORK_TYPE_LABELS[type as WorkType]}
-                          </span>
-                        ))}
-                      </div>
+                      {formatPeriod(
+                        formData.periodStartYear,
+                        formData.periodStartMonth,
+                        formData.periodStartPeriod
+                      )}{' '}
+                      〜{' '}
+                      {formatPeriod(
+                        formData.periodEndYear,
+                        formData.periodEndMonth,
+                        formData.periodEndPeriod
+                      )}
                     </dd>
                   </div>
                   <div className="flex">
