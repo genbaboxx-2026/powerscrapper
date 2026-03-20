@@ -78,7 +78,7 @@ const STATUS_LABELS: Record<string, string> = {
 const BID_STATUS_LABELS: Record<string, string> = {
   submitted: '送信済み',
   selected: '選定済み',
-  connected: '連絡あり',
+  connected: '返答あり',
   rejected: '落選',
 };
 
