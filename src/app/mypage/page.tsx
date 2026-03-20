@@ -78,6 +78,7 @@ const STATUS_LABELS: Record<string, string> = {
 const BID_STATUS_LABELS: Record<string, string> = {
   submitted: '送信済み',
   selected: '選定済み',
+  connected: '連絡あり',
   rejected: '落選',
 };
 
@@ -88,6 +89,25 @@ export default function MyPage() {
   const [projects, setProjects] = useState<MyProject[]>([]);
   const [bids, setBids] = useState<MyBid[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userName, setUserName] = useState<string | null>(null);
+
+  // ユーザープロフィールを取得
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!userId) return;
+      try {
+        const res = await authFetch('/api/profile', userId);
+        if (res.ok) {
+          const data = await res.json();
+          // 登録名（representativeName > companyName > displayName）
+          setUserName(data.representativeName || data.companyName || null);
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+      }
+    };
+    fetchProfile();
+  }, [userId]);
 
   const fetchData = useCallback(async () => {
     if (!userId) return;
@@ -155,6 +175,8 @@ export default function MyPage() {
     switch (status) {
       case 'selected':
         return 'text-[#2563EB]';
+      case 'connected':
+        return 'text-[#06C755]';
       case 'submitted':
         return 'text-[#BA7517]';
       case 'rejected':
@@ -195,7 +217,7 @@ export default function MyPage() {
             )}
             <div>
               <h1 className="text-lg font-bold text-[#1E293B]">
-                {displayName || 'ユーザー'}
+                {userName || displayName || 'ユーザー'}
               </h1>
               <p className="text-sm text-[#64748B]">マイページ</p>
             </div>
