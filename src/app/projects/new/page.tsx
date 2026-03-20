@@ -610,13 +610,13 @@ export default function ProjectNewPage() {
               </div>
 
               {/* 募集期限 */}
-              <div className="card p-4">
+              <div className="card p-4 overflow-hidden">
                 <label className="block text-sm font-medium text-[#1E293B] mb-2">
                   募集期限 <span className="text-[#E24B4A]">*</span>
                 </label>
                 <input
                   type="date"
-                  className="input"
+                  className="input w-full max-w-full"
                   value={formData.deadline}
                   onChange={(e) =>
                     setFormData({ ...formData, deadline: e.target.value })
