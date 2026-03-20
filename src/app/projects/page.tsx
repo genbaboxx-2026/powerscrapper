@@ -47,6 +47,7 @@ type Consultation = {
     pictureUrl: string | null;
   };
   commentCount: number;
+  likeCount: number;
   isOwner: boolean;
 };
 
@@ -359,9 +360,14 @@ function MainContent() {
                             {getUserDisplayName(consultation.user)}
                           </span>
                         </div>
-                        <span className="text-xs text-[#2563EB]">
-                          💬 {consultation.commentCount}件
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-[#64748B]">
+                            ❤️ {consultation.likeCount}件
+                          </span>
+                          <span className="text-xs text-[#2563EB]">
+                            💬 {consultation.commentCount}件
+                          </span>
+                        </div>
                       </div>
                     </Link>
                   );

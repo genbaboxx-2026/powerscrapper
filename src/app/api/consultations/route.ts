@@ -46,6 +46,10 @@ export async function GET(request: NextRequest) {
               comments: true,
             },
           },
+          reactions: {
+            where: { type: 'like' },
+            select: { id: true },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
@@ -69,6 +73,7 @@ export async function GET(request: NextRequest) {
           pictureUrl: c.user.linePictureUrl,
         },
         commentCount: c._count.comments,
+        likeCount: c.reactions.length,
         isOwner: c.userId === user.id,
       })),
       total,
