@@ -129,7 +129,6 @@ function MainContent() {
   // Project state
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectFilters, setProjectFilters] = useState({
-    recruitmentType: '',
     prefecture: '',
     urgentOnly: false,
     excludeBidded: false,
@@ -172,9 +171,6 @@ function MainContent() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (projectFilters.recruitmentType) {
-        params.set('recruitmentType', projectFilters.recruitmentType);
-      }
       if (projectFilters.prefecture) {
         params.set('prefecture', projectFilters.prefecture);
       }
@@ -396,20 +392,6 @@ function MainContent() {
           {/* 案件フィルタ */}
           <div className="bg-white border-b border-[#E2E8F0] px-4 py-3">
             <div className="flex gap-2 overflow-x-auto pb-1">
-              <select
-                className="input text-sm py-2 px-3 min-w-[130px]"
-                value={projectFilters.recruitmentType}
-                onChange={(e) =>
-                  setProjectFilters({ ...projectFilters, recruitmentType: e.target.value })
-                }
-              >
-                <option value="">募集タイプ</option>
-                {Object.entries(RECRUITMENT_TYPE_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
               <select
                 className="input text-sm py-2 px-3 min-w-[100px]"
                 value={projectFilters.prefecture}
