@@ -42,12 +42,19 @@ export async function GET(request: NextRequest, { params }: Props) {
           },
           orderBy: { createdAt: 'asc' },
         },
+        reactions: true,
       },
     });
 
     if (!consultation) {
       return NextResponse.json({ error: '相談が見つかりません' }, { status: 404 });
     }
+
+    // リアクション数を集計
+    const likeCount = consultation.reactions.filter((r) => r.type === 'like').length;
+    const goodCount = consultation.reactions.filter((r) => r.type === 'good').length;
+    const userLiked = consultation.reactions.some((r) => r.userId === user.id && r.type === 'like');
+    const userGooded = consultation.reactions.some((r) => r.userId === user.id && r.type === 'good');
 
     return NextResponse.json({
       consultation: {
@@ -65,6 +72,10 @@ export async function GET(request: NextRequest, { params }: Props) {
           pictureUrl: consultation.user.linePictureUrl,
         },
         isOwner: consultation.userId === user.id,
+        likeCount,
+        goodCount,
+        userLiked,
+        userGooded,
         comments: consultation.comments.map((c) => ({
           id: c.id,
           body: c.body,

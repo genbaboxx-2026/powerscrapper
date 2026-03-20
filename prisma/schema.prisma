@@ -40,6 +40,7 @@ model User {
   matchesAsBidder       Match[]   @relation("MatchBidder")
   consultations         Consultation[]
   consultationComments  ConsultationComment[]
+  consultationReactions ConsultationReaction[]
 
   @@map("users")
 }
@@ -142,6 +143,7 @@ model Consultation {
 
   user        User     @relation(fields: [userId], references: [id])
   comments    ConsultationComment[]
+  reactions   ConsultationReaction[]
 
   @@map("consultations")
 }
@@ -152,9 +154,24 @@ model ConsultationComment {
   userId          String   @map("user_id")
   body            String
   createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
 
   consultation    Consultation @relation(fields: [consultationId], references: [id])
   user            User         @relation(fields: [userId], references: [id])
 
   @@map("consultation_comments")
+}
+
+model ConsultationReaction {
+  id              String   @id @default(uuid())
+  consultationId  String   @map("consultation_id")
+  userId          String   @map("user_id")
+  type            String   // "like" or "good"
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  consultation    Consultation @relation(fields: [consultationId], references: [id])
+  user            User         @relation(fields: [userId], references: [id])
+
+  @@unique([consultationId, userId, type])
+  @@map("consultation_reactions")
 }

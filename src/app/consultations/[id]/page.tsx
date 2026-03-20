@@ -44,6 +44,10 @@ type Consultation = {
   createdAt: string;
   user: User;
   isOwner: boolean;
+  likeCount: number;
+  goodCount: number;
+  userLiked: boolean;
+  userGooded: boolean;
   comments: Comment[];
 };
 
@@ -63,6 +67,18 @@ export default function ConsultationDetailPage({ params }: Props) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  // Comment editing state
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentBody, setEditingCommentBody] = useState('');
+  const [isUpdatingComment, setIsUpdatingComment] = useState(false);
+
+  // Comment delete state
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+  const [isDeletingComment, setIsDeletingComment] = useState(false);
+
+  // Reaction state
+  const [isReacting, setIsReacting] = useState(false);
 
   useEffect(() => {
     const fetchConsultation = async () => {
@@ -137,12 +153,125 @@ export default function ConsultationDetailPage({ params }: Props) {
         throw new Error(data.error || 'コメントの投稿に失敗しました');
       }
 
-      // コメント投稿成功後、ページをリロードして最新のコメントを取得
       window.location.reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'コメントの投稿に失敗しました');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleReaction = async (type: 'like' | 'good') => {
+    if (!userId || !consultation || isReacting) return;
+
+    setIsReacting(true);
+
+    try {
+      const res = await authFetch(`/api/consultations/${id}/reactions`, userId, {
+        method: 'POST',
+        body: { type },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'リアクションに失敗しました');
+      }
+
+      const data = await res.json();
+      setConsultation({
+        ...consultation,
+        likeCount: data.likeCount,
+        goodCount: data.goodCount,
+        userLiked: data.userLiked,
+        userGooded: data.userGooded,
+      });
+    } catch (err) {
+      console.error('Reaction error:', err);
+    } finally {
+      setIsReacting(false);
+    }
+  };
+
+  const startEditingComment = (comment: Comment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentBody(comment.body);
+  };
+
+  const cancelEditingComment = () => {
+    setEditingCommentId(null);
+    setEditingCommentBody('');
+  };
+
+  const handleUpdateComment = async () => {
+    if (!userId || !editingCommentId || !editingCommentBody.trim()) return;
+
+    setIsUpdatingComment(true);
+
+    try {
+      const res = await authFetch(
+        `/api/consultations/${id}/comments/${editingCommentId}`,
+        userId,
+        {
+          method: 'PUT',
+          body: { body: editingCommentBody },
+        }
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'コメントの更新に失敗しました');
+      }
+
+      // Update local state
+      if (consultation) {
+        setConsultation({
+          ...consultation,
+          comments: consultation.comments.map((c) =>
+            c.id === editingCommentId ? { ...c, body: editingCommentBody.trim() } : c
+          ),
+        });
+      }
+
+      cancelEditingComment();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'コメントの更新に失敗しました');
+    } finally {
+      setIsUpdatingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async () => {
+    if (!userId || !deletingCommentId) return;
+
+    setIsDeletingComment(true);
+
+    try {
+      const res = await authFetch(
+        `/api/consultations/${id}/comments/${deletingCommentId}`,
+        userId,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'コメントの削除に失敗しました');
+      }
+
+      // Update local state
+      if (consultation) {
+        setConsultation({
+          ...consultation,
+          comments: consultation.comments.filter((c) => c.id !== deletingCommentId),
+        });
+      }
+
+      setDeletingCommentId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'コメントの削除に失敗しました');
+    } finally {
+      setIsDeletingComment(false);
     }
   };
 
@@ -325,6 +454,40 @@ export default function ConsultationDetailPage({ params }: Props) {
                 </div>
               </div>
             )}
+
+            {/* リアクションボタン */}
+            <div className="mt-4 pt-4 border-t border-[#E2E8F0] flex gap-3">
+              <button
+                onClick={() => handleReaction('like')}
+                disabled={isReacting}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  consultation.userLiked
+                    ? 'bg-pink-100 text-pink-600 border border-pink-300'
+                    : 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-pink-50'
+                }`}
+              >
+                <span className="text-lg">❤️</span>
+                <span>いいね</span>
+                {consultation.likeCount > 0 && (
+                  <span className="font-bold">{consultation.likeCount}</span>
+                )}
+              </button>
+              <button
+                onClick={() => handleReaction('good')}
+                disabled={isReacting}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  consultation.userGooded
+                    ? 'bg-blue-100 text-blue-600 border border-blue-300'
+                    : 'bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-blue-50'
+                }`}
+              >
+                <span className="text-lg">👍</span>
+                <span>グッと</span>
+                {consultation.goodCount > 0 && (
+                  <span className="font-bold">{consultation.goodCount}</span>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* コメント一覧 */}
@@ -381,10 +544,56 @@ export default function ConsultationDetailPage({ params }: Props) {
                       </span>
                     </div>
 
-                    {/* コメント本文 */}
-                    <p className="text-sm text-[#1E293B] whitespace-pre-wrap">
-                      {comment.body}
-                    </p>
+                    {/* コメント本文 or 編集フォーム */}
+                    {editingCommentId === comment.id ? (
+                      <div className="space-y-2">
+                        <textarea
+                          className="input w-full min-h-[80px] resize-none"
+                          value={editingCommentBody}
+                          onChange={(e) => setEditingCommentBody(e.target.value)}
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleUpdateComment}
+                            disabled={isUpdatingComment || !editingCommentBody.trim()}
+                            className="px-4 py-2 bg-[#2563EB] text-white text-sm rounded-lg disabled:opacity-50"
+                          >
+                            {isUpdatingComment ? '更新中...' : '更新'}
+                          </button>
+                          <button
+                            onClick={cancelEditingComment}
+                            disabled={isUpdatingComment}
+                            className="px-4 py-2 border border-[#E2E8F0] text-[#64748B] text-sm rounded-lg"
+                          >
+                            キャンセル
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm text-[#1E293B] whitespace-pre-wrap">
+                          {comment.body}
+                        </p>
+
+                        {/* コメント編集・削除ボタン（オーナーのみ） */}
+                        {comment.isOwner && (
+                          <div className="flex gap-2 mt-2 pt-2 border-t border-[#E2E8F0]">
+                            <button
+                              onClick={() => startEditingComment(comment)}
+                              className="text-xs text-[#2563EB] hover:underline"
+                            >
+                              編集
+                            </button>
+                            <button
+                              onClick={() => setDeletingCommentId(comment.id)}
+                              className="text-xs text-[#E24B4A] hover:underline"
+                            >
+                              削除
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
@@ -412,7 +621,7 @@ export default function ConsultationDetailPage({ params }: Props) {
           </form>
         </div>
 
-        {/* 削除確認モーダル */}
+        {/* 相談削除確認モーダル */}
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl p-6 max-w-sm w-full">
@@ -436,6 +645,36 @@ export default function ConsultationDetailPage({ params }: Props) {
                   className="flex-1 py-3 bg-[#E24B4A] text-white rounded-lg font-medium disabled:opacity-50"
                 >
                   {isDeleting ? '削除中...' : '削除する'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* コメント削除確認モーダル */}
+        {deletingCommentId && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 max-w-sm w-full">
+              <h3 className="text-lg font-bold text-[#1E293B] mb-2">
+                コメントを削除しますか？
+              </h3>
+              <p className="text-sm text-[#64748B] mb-6">
+                この操作は取り消せません。
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeletingCommentId(null)}
+                  disabled={isDeletingComment}
+                  className="flex-1 py-3 border border-[#E2E8F0] text-[#1E293B] rounded-lg font-medium"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleDeleteComment}
+                  disabled={isDeletingComment}
+                  className="flex-1 py-3 bg-[#E24B4A] text-white rounded-lg font-medium disabled:opacity-50"
+                >
+                  {isDeletingComment ? '削除中...' : '削除する'}
                 </button>
               </div>
             </div>
