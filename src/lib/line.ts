@@ -1589,13 +1589,25 @@ export function createMatchNotification(
           flex: 2,
         },
         {
-          type: 'text',
-          text: `「${partnerLineDisplayName}」で検索`,
-          size: 'sm',
-          color: '#06C755',
+          type: 'box',
+          layout: 'horizontal',
           flex: 5,
-          wrap: true,
-          decoration: 'underline',
+          contents: [
+            {
+              type: 'text',
+              text: `「${partnerLineDisplayName}」`,
+              size: 'sm',
+              color: '#06C755',
+              wrap: true,
+            },
+            {
+              type: 'text',
+              text: ' 📋',
+              size: 'sm',
+              color: '#06C755',
+              flex: 0,
+            },
+          ],
         },
       ],
     });
@@ -1603,7 +1615,7 @@ export function createMatchNotification(
 
   return {
     type: 'flex',
-    altText: `マッチング成立: ${projectTitle}`,
+    altText: `案件の返答がありました: ${projectTitle}`,
     contents: {
       type: 'bubble',
       hero: {
@@ -1614,9 +1626,9 @@ export function createMatchNotification(
         contents: [
           {
             type: 'text',
-            text: 'マッチング成立',
+            text: '案件の返答がありました',
             color: '#FFFFFF',
-            size: 'xxl',
+            size: 'lg',
             weight: 'bold',
             align: 'center',
           },
