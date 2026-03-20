@@ -1576,10 +1576,6 @@ export function createMatchNotification(
       type: 'box',
       layout: 'horizontal',
       margin: 'md',
-      action: {
-        type: 'clipboard',
-        clipboardText: partnerLineDisplayName,
-      },
       contents: [
         {
           type: 'text',
@@ -1589,25 +1585,36 @@ export function createMatchNotification(
           flex: 2,
         },
         {
-          type: 'box',
-          layout: 'horizontal',
+          type: 'text',
+          text: `「${partnerLineDisplayName}」で検索`,
+          size: 'sm',
+          color: '#06C755',
           flex: 5,
-          contents: [
-            {
-              type: 'text',
-              text: `「${partnerLineDisplayName}」`,
-              size: 'sm',
-              color: '#06C755',
-              wrap: true,
-            },
-            {
-              type: 'text',
-              text: ' 📋',
-              size: 'sm',
-              color: '#06C755',
-              flex: 0,
-            },
-          ],
+          wrap: true,
+        },
+      ],
+    });
+    // コピーボタン
+    contactInfoContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'sm',
+      action: {
+        type: 'clipboard',
+        clipboardText: partnerLineDisplayName,
+      },
+      backgroundColor: '#E8F5E9',
+      cornerRadius: '8px',
+      paddingAll: '8px',
+      justifyContent: 'center',
+      contents: [
+        {
+          type: 'text',
+          text: '📋 名前をコピー',
+          size: 'sm',
+          color: '#06C755',
+          weight: 'bold',
+          align: 'center',
         },
       ],
     });
@@ -1666,15 +1673,33 @@ export function createMatchNotification(
             contents: contactInfoContents,
           },
           {
-            type: 'separator',
+            type: 'box',
+            layout: 'horizontal',
             margin: 'xl',
+            backgroundColor: '#FEF3C7',
+            cornerRadius: '8px',
+            paddingAll: '12px',
+            contents: [
+              {
+                type: 'text',
+                text: '💡 お早めにご連絡ください！',
+                size: 'sm',
+                color: '#92400E',
+                weight: 'bold',
+                wrap: true,
+              },
+            ],
+          },
+          {
+            type: 'separator',
+            margin: 'lg',
           },
           {
             type: 'text',
             text: '※ PowerScrapper公式からの自動送信です',
             size: 'xxs',
             color: TEXT_SECONDARY_COLOR,
-            margin: 'lg',
+            margin: 'md',
             align: 'center',
           },
         ],
