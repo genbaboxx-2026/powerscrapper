@@ -348,7 +348,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <main className="py-4 pb-8 max-w-5xl mx-auto px-6">
+        <main className="py-4 pb-24 max-w-5xl mx-auto px-6">
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-[#E24B4A] rounded-lg text-[#E24B4A] text-sm">
               {error}
