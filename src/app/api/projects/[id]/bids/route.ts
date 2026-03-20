@@ -112,3 +112,65 @@ export async function GET(request: NextRequest, { params }: Params) {
     );
   }
 }
+
+/**
+ * DELETE /api/projects/[id]/bids - 興味ありを取り消す（自分の入札のみ）
+ */
+export async function DELETE(request: NextRequest, { params }: Params) {
+  try {
+    const { id: projectId } = await params;
+
+    // 認証チェック
+    const lineUserId = request.headers.get('x-line-userid');
+    if (!lineUserId) {
+      return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+    }
+
+    // ユーザーを取得
+    const user = await prisma.user.findUnique({
+      where: { lineUserId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'ユーザーが見つかりません' }, { status: 404 });
+    }
+
+    // 自分の入札を取得
+    const bid = await prisma.bid.findUnique({
+      where: {
+        projectId_userId: {
+          projectId,
+          userId: user.id,
+        },
+      },
+      include: {
+        match: true,
+      },
+    });
+
+    if (!bid) {
+      return NextResponse.json({ error: '興味ありが見つかりません' }, { status: 404 });
+    }
+
+    // 既にマッチングしている場合は取り消し不可
+    if (bid.match) {
+      return NextResponse.json(
+        { error: '選定済みの興味ありは取り消せません' },
+        { status: 400 }
+      );
+    }
+
+    // 入札を削除
+    await prisma.bid.delete({
+      where: { id: bid.id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to cancel bid:', error);
+    return NextResponse.json(
+      { error: '興味ありの取り消しに失敗しました' },
+      { status: 500 }
+    );
+  }
+}

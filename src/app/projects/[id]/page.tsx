@@ -50,6 +50,8 @@ export default function ProjectDetailPage({ params }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showCancelBidConfirm, setShowCancelBidConfirm] = useState(false);
+  const [isCancellingBid, setIsCancellingBid] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -103,6 +105,34 @@ export default function ProjectDetailPage({ params }: Props) {
       setShowDeleteConfirm(false);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleCancelBid = async () => {
+    if (!userId) return;
+
+    setIsCancellingBid(true);
+
+    try {
+      const res = await authFetch(`/api/projects/${id}/bids`, userId, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '取り消しに失敗しました');
+      }
+
+      // 成功したらprojectのhasBidをfalseに更新
+      if (project) {
+        setProject({ ...project, hasBid: false, bidCount: project.bidCount - 1 });
+      }
+      setShowCancelBidConfirm(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '取り消しに失敗しました');
+      setShowCancelBidConfirm(false);
+    } finally {
+      setIsCancellingBid(false);
     }
   };
 
@@ -336,8 +366,11 @@ export default function ProjectDetailPage({ params }: Props) {
               興味ありリスト（{project.bidCount}件）
             </Link>
           ) : project.hasBid ? (
-            <button disabled className="btn-primary w-full opacity-50 cursor-not-allowed">
-              興味ありを送信済み
+            <button
+              onClick={() => setShowCancelBidConfirm(true)}
+              className="w-full py-3 border border-[#E24B4A] text-[#E24B4A] rounded-lg font-medium"
+            >
+              興味ありを取り消す
             </button>
           ) : isExpired ? (
             <button disabled className="btn-primary w-full opacity-50 cursor-not-allowed">
@@ -352,6 +385,36 @@ export default function ProjectDetailPage({ params }: Props) {
             </Link>
           )}
         </div>
+
+        {/* 興味あり取り消し確認モーダル */}
+        {showCancelBidConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 max-w-sm w-full">
+              <h3 className="text-lg font-bold text-[#1E293B] mb-2">
+                興味ありを取り消しますか？
+              </h3>
+              <p className="text-sm text-[#64748B] mb-6">
+                取り消すと、この案件への応募がキャンセルされます。
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowCancelBidConfirm(false)}
+                  disabled={isCancellingBid}
+                  className="flex-1 py-3 border border-[#E2E8F0] text-[#1E293B] rounded-lg font-medium"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleCancelBid}
+                  disabled={isCancellingBid}
+                  className="flex-1 py-3 bg-[#E24B4A] text-white rounded-lg font-medium disabled:opacity-50"
+                >
+                  {isCancellingBid ? '取り消し中...' : '取り消す'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 削除確認モーダル */}
         {showDeleteConfirm && (
