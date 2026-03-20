@@ -27,7 +27,15 @@ export async function GET(req: NextRequest, { params }: Params) {
         },
         bids: {
           where: { userId: user.id },
-          select: { id: true },
+          select: { id: true, status: true },
+        },
+        user: {
+          select: {
+            companyName: true,
+            representativeName: true,
+            phone: true,
+            email: true,
+          },
         },
       },
     });
@@ -42,7 +50,17 @@ export async function GET(req: NextRequest, { params }: Params) {
     }
 
     const isOwner = project.userId === user.id;
-    const hasBid = project.bids.length > 0;
+    const userBid = project.bids[0] || null;
+    const hasBid = !!userBid;
+    const bidStatus = userBid?.status || null;
+
+    // 返答あり（connected）の場合のみオーナー情報を開示
+    const ownerInfo = bidStatus === 'connected' ? {
+      companyName: project.user.companyName || '',
+      representativeName: project.user.representativeName || '',
+      phone: project.user.phone || '',
+      email: project.user.email,
+    } : null;
 
     return NextResponse.json({
       id: project.id,
@@ -63,6 +81,8 @@ export async function GET(req: NextRequest, { params }: Params) {
       bidCount: project._count.bids,
       isOwner,
       hasBid,
+      bidStatus,
+      ownerInfo,
       createdAt: project.createdAt,
     });
   } catch (error) {

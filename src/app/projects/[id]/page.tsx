@@ -34,6 +34,13 @@ type Project = {
   bidCount: number;
   isOwner: boolean;
   hasBid: boolean;
+  bidStatus: string | null;
+  ownerInfo: {
+    companyName: string;
+    representativeName: string;
+    phone: string;
+    email: string | null;
+  } | null;
   createdAt: string;
 };
 
@@ -350,8 +357,48 @@ export default function ProjectDetailPage({ params }: Props) {
             </p>
           </div>
 
+          {/* 返答あり時の登録者情報 */}
+          {!project.isOwner && project.bidStatus === 'connected' && project.ownerInfo && (
+            <div className="card p-4 border-[#06C755] border-2">
+              <h2 className="text-sm font-bold text-[#06C755] mb-3 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                案件登録者の連絡先
+              </h2>
+              <dl className="space-y-2 text-sm">
+                <div className="flex">
+                  <dt className="w-20 text-[#64748B]">会社名</dt>
+                  <dd className="flex-1 text-[#1E293B] font-medium">{project.ownerInfo.companyName}</dd>
+                </div>
+                <div className="flex">
+                  <dt className="w-20 text-[#64748B]">担当者</dt>
+                  <dd className="flex-1 text-[#1E293B]">{project.ownerInfo.representativeName}</dd>
+                </div>
+                <div className="flex">
+                  <dt className="w-20 text-[#64748B]">電話番号</dt>
+                  <dd className="flex-1 text-[#1E293B]">
+                    <a href={`tel:${project.ownerInfo.phone}`} className="text-[#2563EB] underline">
+                      {project.ownerInfo.phone}
+                    </a>
+                  </dd>
+                </div>
+                {project.ownerInfo.email && (
+                  <div className="flex">
+                    <dt className="w-20 text-[#64748B]">メール</dt>
+                    <dd className="flex-1 text-[#1E293B]">
+                      <a href={`mailto:${project.ownerInfo.email}`} className="text-[#2563EB] underline">
+                        {project.ownerInfo.email}
+                      </a>
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          )}
+
           {/* 注意事項 */}
-          {!project.isOwner && (
+          {!project.isOwner && project.bidStatus !== 'connected' && (
             <div className="card p-4 bg-[#F8FAFC] border-[#E2E8F0]">
               <p className="text-xs text-[#64748B]">
                 ※ 登録者の企業名・連絡先は興味ありを送信後、選定された場合にのみ開示されます。
@@ -412,6 +459,10 @@ export default function ProjectDetailPage({ params }: Props) {
               </svg>
               興味ありリスト（{project.bidCount}社）
             </Link>
+          ) : project.hasBid && project.bidStatus === 'connected' ? (
+            <div className="text-center text-sm text-[#06C755] font-medium">
+              返答済み - 下記の連絡先をご確認ください
+            </div>
           ) : project.hasBid ? (
             <button
               onClick={() => setShowCancelBidConfirm(true)}
