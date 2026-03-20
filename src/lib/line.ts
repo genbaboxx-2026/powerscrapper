@@ -1572,12 +1572,16 @@ export function createMatchNotification(
     });
   }
 
-  // LINE表示名
+  // LINE表示名（タップでコピー）
   if (partnerLineDisplayName) {
     contactInfoContents.push({
       type: 'box',
       layout: 'horizontal',
       margin: 'md',
+      action: {
+        type: 'clipboard',
+        clipboardText: partnerLineDisplayName,
+      },
       contents: [
         {
           type: 'text',
@@ -1593,6 +1597,7 @@ export function createMatchNotification(
           color: '#06C755',
           flex: 5,
           wrap: true,
+          decoration: 'underline',
         },
       ],
     });
