@@ -363,14 +363,36 @@ export function createWelcomeMessage() {
             contents: [
               {
                 type: 'text',
-                text: '💡 案件マッチング機能もあります',
+                text: '📋 会社情報を登録しませんか？',
                 weight: 'bold',
                 size: 'sm',
                 color: '#2C2C2A',
               },
               {
                 type: 'text',
-                text: '解体案件の募集・入札ができるマッチング機能も使えます。よかったら覗いてみてください！まずは自己紹介を登録しておくと、案件への入札もスムーズです。',
+                text: '会社名や対応エリアなどを登録しておくと、今後のイベントや案件マッチングでスムーズにやりとりができます。',
+                size: 'xs',
+                color: '#73726C',
+                wrap: true,
+                margin: 'sm',
+              },
+            ],
+          },
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'lg',
+            contents: [
+              {
+                type: 'text',
+                text: '💡 案件マッチング機能もあります',
+                weight: 'bold',
+                size: 'xs',
+                color: '#2C2C2A',
+              },
+              {
+                type: 'text',
+                text: '解体案件の募集・入札ができるマッチング機能も使えます。よかったら覗いてみてください！',
                 size: 'xs',
                 color: '#73726C',
                 wrap: true,
@@ -390,7 +412,7 @@ export function createWelcomeMessage() {
             type: 'button',
             action: {
               type: 'uri',
-              label: '自己紹介を登録する',
+              label: '会社情報を登録する',
               uri: `https://liff.line.me/${liffId}/profile/edit`,
             },
             style: 'primary',
@@ -401,7 +423,7 @@ export function createWelcomeMessage() {
             type: 'button',
             action: {
               type: 'uri',
-              label: '案件を見てみる',
+              label: '案件マッチングを見る',
               uri: `https://liff.line.me/${liffId}/projects`,
             },
             style: 'secondary',
