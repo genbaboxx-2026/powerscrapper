@@ -7,8 +7,24 @@ import { useLiff } from '@/components/LiffProvider';
 import { authFetch } from '@/lib/api';
 import {
   RECRUITMENT_TYPE_LABELS,
+  CONSULTATION_CATEGORY_LABELS,
   type RecruitmentType,
+  type ConsultationCategory,
 } from '@/types';
+
+type MyConsultation = {
+  id: string;
+  category: string;
+  title: string;
+  status: string;
+  commentCount: number;
+  createdAt: string;
+  latestComment: {
+    userName: string;
+    companyName: string | null;
+    createdAt: string;
+  } | null;
+};
 
 type MyProject = {
   id: string;
@@ -45,9 +61,9 @@ type MyBid = {
 };
 
 const TABS = [
-  { value: 'projects', label: '登録案件' },
-  { value: 'bids', label: '興味あり' },
-  { value: 'matches', label: '成約済み' },
+  { value: 'consultations', label: '自分の相談' },
+  { value: 'projects', label: '自分の案件' },
+  { value: 'bids', label: '興味あり送信' },
 ];
 
 const STATUS_LABELS: Record<string, string> = {
@@ -66,10 +82,10 @@ const BID_STATUS_LABELS: Record<string, string> = {
 
 export default function MyPage() {
   const { userId, displayName, pictureUrl, role } = useLiff();
-  const [activeTab, setActiveTab] = useState('projects');
+  const [activeTab, setActiveTab] = useState('consultations');
+  const [consultations, setConsultations] = useState<MyConsultation[]>([]);
   const [projects, setProjects] = useState<MyProject[]>([]);
   const [bids, setBids] = useState<MyBid[]>([]);
-  const [matchCount, setMatchCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -77,7 +93,13 @@ export default function MyPage() {
 
     setIsLoading(true);
     try {
-      if (activeTab === 'projects') {
+      if (activeTab === 'consultations') {
+        const res = await authFetch('/api/mypage/consultations', userId);
+        if (res.ok) {
+          const data = await res.json();
+          setConsultations(data.consultations);
+        }
+      } else if (activeTab === 'projects') {
         const res = await authFetch('/api/mypage/projects', userId);
         if (res.ok) {
           const data = await res.json();
@@ -88,12 +110,6 @@ export default function MyPage() {
         if (res.ok) {
           const data = await res.json();
           setBids(data.bids);
-        }
-      } else if (activeTab === 'matches') {
-        const res = await authFetch('/api/mypage/matches', userId);
-        if (res.ok) {
-          const data = await res.json();
-          setMatchCount(data.matches.length);
         }
       }
     } catch (err) {
@@ -112,18 +128,25 @@ export default function MyPage() {
     return `${date.getMonth() + 1}/${date.getDate()}`;
   };
 
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
-        return 'text-[#2563EB]';
+        return 'bg-[#2563EB] text-white';
       case 'pending':
-        return 'text-[#BA7517]';
+        return 'bg-[#FEF3C7] text-[#BA7517]';
       case 'rejected':
-        return 'text-[#E24B4A]';
+        return 'bg-[#FEE2E2] text-[#E24B4A]';
       case 'matched':
-        return 'text-[#2563EB]';
+        return 'bg-[#2563EB] text-white';
+      case 'closed':
+        return 'bg-[#E2E8F0] text-[#64748B]';
       default:
-        return 'text-[#64748B]';
+        return 'bg-[#E2E8F0] text-[#64748B]';
     }
   };
 
@@ -274,7 +297,65 @@ export default function MyPage() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
               <p className="mt-4 text-[#64748B] text-sm">読み込み中...</p>
             </div>
+          ) : activeTab === 'consultations' ? (
+            // 自分の相談タブ
+            consultations.length === 0 ? (
+              <div className="text-center py-12 text-[#64748B]">
+                <p>投稿した相談はありません</p>
+                <Link
+                  href="/consultations/new"
+                  className="btn-primary inline-block mt-4"
+                >
+                  相談を投稿
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {consultations.map((consultation) => (
+                  <Link
+                    key={consultation.id}
+                    href={`/consultations/${consultation.id}`}
+                    className="card block p-4"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 bg-[#EFF6FF] text-[#2563EB] text-xs rounded">
+                        {CONSULTATION_CATEGORY_LABELS[consultation.category as ConsultationCategory] || consultation.category}
+                      </span>
+                      <span className="text-xs text-[#64748B]">
+                        {formatDate(consultation.createdAt)}
+                      </span>
+                    </div>
+                    <h2 className="text-base font-bold text-[#1E293B] mb-2 line-clamp-2">
+                      {consultation.title}
+                    </h2>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-[#2563EB] font-medium flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        {consultation.commentCount}件
+                      </span>
+                    </div>
+                    {consultation.latestComment && (
+                      <div className="mt-3 pt-3 border-t border-[#E2E8F0]">
+                        <p className="text-xs text-[#64748B]">最新コメント</p>
+                        <p className="text-sm text-[#1E293B] mt-1">
+                          <span className="font-medium">{consultation.latestComment.userName}</span>
+                          {consultation.latestComment.companyName && (
+                            <span className="text-[#64748B]">（{consultation.latestComment.companyName}）</span>
+                          )}
+                          <span className="text-[#64748B] ml-2 text-xs">
+                            {formatDateTime(consultation.latestComment.createdAt)}
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )
           ) : activeTab === 'projects' ? (
+            // 自分の案件タブ
             projects.length === 0 ? (
               <div className="text-center py-12 text-[#64748B]">
                 <p>登録した案件はありません</p>
@@ -290,11 +371,7 @@ export default function MyPage() {
                 {projects.map((project) => (
                   <Link
                     key={project.id}
-                    href={
-                      project.bidCount > 0
-                        ? `/projects/${project.id}/bids`
-                        : `/projects/${project.id}`
-                    }
+                    href={`/projects/${project.id}`}
                     className="card block p-4"
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -302,33 +379,44 @@ export default function MyPage() {
                         {project.isUrgent && (
                           <span className="badge badge-urgent">急募</span>
                         )}
-                        <span className="badge badge-type">
-                          {RECRUITMENT_TYPE_LABELS[project.recruitmentType as RecruitmentType]}
+                        <span className={`px-2 py-0.5 text-xs rounded font-medium ${getStatusColor(project.status)}`}>
+                          {STATUS_LABELS[project.status] || project.status}
                         </span>
                       </div>
-                      <span
-                        className={`text-sm font-medium ${getStatusColor(project.status)}`}
-                      >
-                        {STATUS_LABELS[project.status] || project.status}
-                      </span>
                     </div>
                     <h2 className="text-base font-bold text-[#1E293B] mb-2">
                       {project.title}
                     </h2>
-                    <div className="flex items-center justify-between text-sm text-[#64748B]">
-                      <span>
-                        {project.sitePrefecture || '未設定'} | {project.periodStart}
-                        〜{project.periodEnd}
-                      </span>
-                      <span className="text-[#2563EB] font-medium">
-                        興味あり {project.bidCount}件
-                      </span>
+                    <div className="text-sm text-[#64748B] mb-3">
+                      {project.sitePrefecture || '未設定'} | {project.periodStart}〜{project.periodEnd}
+                    </div>
+
+                    {/* 興味あり件数を目立つように表示 */}
+                    <div className="flex items-center justify-between pt-3 border-t border-[#E2E8F0]">
+                      <Link
+                        href={`/projects/${project.id}/bids`}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium ${
+                          project.bidCount > 0
+                            ? 'bg-[#2563EB] text-white'
+                            : 'bg-[#F8FAFC] text-[#64748B]'
+                        }`}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        {project.bidCount > 0 ? `${project.bidCount}社が興味あり` : '興味あり 0件'}
+                      </Link>
+                      {project.isMatched && (
+                        <span className="text-xs text-[#2563EB] font-medium">成約済み</span>
+                      )}
                     </div>
                   </Link>
                 ))}
               </div>
             )
-          ) : activeTab === 'bids' ? (
+          ) : (
+            // 興味ありを送った案件タブ
             bids.length === 0 ? (
               <div className="text-center py-12 text-[#64748B]">
                 <p>興味ありを送った案件はありません</p>
@@ -365,23 +453,6 @@ export default function MyPage() {
                 ))}
               </div>
             )
-          ) : (
-            // 成約済みタブ
-            <div className="text-center py-6">
-              <p className="text-[#64748B] mb-4">
-                {matchCount > 0
-                  ? `成約済み案件が ${matchCount} 件あります`
-                  : '成約済みの案件はありません'}
-              </p>
-              {matchCount > 0 && (
-                <Link
-                  href="/mypage/matches"
-                  className="btn-primary inline-block"
-                >
-                  成約一覧を見る
-                </Link>
-              )}
-            </div>
           )}
         </main>
 

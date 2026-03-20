@@ -64,6 +64,9 @@ export async function GET(request: NextRequest, { params }: Params) {
             licenses: true,
             companyDescription: true,
             linePictureUrl: true,
+            lineDisplayName: true,
+            phone: true,
+            email: true,
           },
         },
         match: {
@@ -93,6 +96,9 @@ export async function GET(request: NextRequest, { params }: Params) {
         licenses: bid.user.licenses,
         companyDescription: bid.user.companyDescription,
         pictureUrl: bid.user.linePictureUrl,
+        lineDisplayName: bid.user.lineDisplayName,
+        phone: bid.user.phone,
+        email: bid.user.email,
       },
     }));
 

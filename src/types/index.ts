@@ -100,3 +100,28 @@ export const BUSINESS_TYPE_LABELS: Record<BusinessType, string> = {
   waste_disposal: '産廃業者',
   equipment: '重機業者',
 };
+
+// 相談カテゴリータイプ
+export type ConsultationCategory =
+  | 'announcement'  // お知らせ
+  | 'question'      // 質問
+  | 'request'       // 依頼
+  | 'general'       // 雑談
+  | 'technical'     // 技術相談
+  | 'equipment'     // 設備相談
+  | 'waste'         // 産廃相談
+  | 'regulation'    // 法規相談
+  | 'other';        // その他
+
+// 相談カテゴリーのラベル
+export const CONSULTATION_CATEGORY_LABELS: Record<ConsultationCategory, string> = {
+  announcement: 'お知らせ',
+  question: '質問',
+  request: '依頼',
+  general: '雑談',
+  technical: '技術相談',
+  equipment: '設備相談',
+  waste: '産廃相談',
+  regulation: '法規相談',
+  other: 'その他',
+};
