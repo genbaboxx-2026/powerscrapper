@@ -404,9 +404,11 @@ export default function MyPage() {
                         {project.isUrgent && (
                           <span className="badge badge-urgent">急募</span>
                         )}
-                        <span className={`px-2 py-0.5 text-xs rounded font-medium ${getStatusColor(project.status)}`}>
-                          {STATUS_LABELS[project.status] || project.status}
-                        </span>
+                        {project.status !== 'matched' && (
+                          <span className={`px-2 py-0.5 text-xs rounded font-medium ${getStatusColor(project.status)}`}>
+                            {STATUS_LABELS[project.status] || project.status}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <h2 className="text-base font-bold text-[#1E293B] mb-2">
