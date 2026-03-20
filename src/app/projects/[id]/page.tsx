@@ -48,6 +48,8 @@ export default function ProjectDetailPage({ params }: Props) {
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -79,6 +81,30 @@ export default function ProjectDetailPage({ params }: Props) {
       fetchProject();
     }
   }, [id, userId]);
+
+  const handleDelete = async () => {
+    if (!userId) return;
+
+    setIsDeleting(true);
+
+    try {
+      const res = await authFetch(`/api/projects/${id}`, userId, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '削除に失敗しました');
+      }
+
+      router.push('/projects?deleted=true');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '削除に失敗しました');
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const getDaysRemaining = (deadline: string) => {
     const now = new Date();
@@ -168,6 +194,12 @@ export default function ProjectDetailPage({ params }: Props) {
         </header>
 
         <main className="p-4 pb-24">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-[#E24B4A] rounded-lg text-[#E24B4A] text-sm">
+              {error}
+            </div>
+          )}
+
           {/* メインカード */}
           <div className="card p-4 mb-4">
             {/* バッジ */}
@@ -269,6 +301,29 @@ export default function ProjectDetailPage({ params }: Props) {
               </p>
             </div>
           )}
+
+          {/* オーナー用の編集・削除ボタン */}
+          {project.isOwner && (
+            <div className="card p-4">
+              <h3 className="text-sm font-medium text-[#64748B] mb-3">
+                案件の管理
+              </h3>
+              <div className="flex gap-2">
+                <Link
+                  href={`/projects/${id}/edit`}
+                  className="flex-1 py-2 px-4 border border-[#2563EB] text-[#2563EB] rounded-lg text-sm font-medium text-center"
+                >
+                  編集する
+                </Link>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex-1 py-2 px-4 border border-[#E24B4A] text-[#E24B4A] rounded-lg text-sm font-medium"
+                >
+                  削除する
+                </button>
+              </div>
+            </div>
+          )}
         </main>
 
         {/* フッターボタン */}
@@ -297,6 +352,36 @@ export default function ProjectDetailPage({ params }: Props) {
             </Link>
           )}
         </div>
+
+        {/* 削除確認モーダル */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 max-w-sm w-full">
+              <h3 className="text-lg font-bold text-[#1E293B] mb-2">
+                案件を削除しますか？
+              </h3>
+              <p className="text-sm text-[#64748B] mb-6">
+                この操作は取り消せません。関連する興味ありも全て削除されます。
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 border border-[#E2E8F0] text-[#1E293B] rounded-lg font-medium"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 bg-[#E24B4A] text-white rounded-lg font-medium disabled:opacity-50"
+                >
+                  {isDeleting ? '削除中...' : '削除する'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AuthGuard>
   );

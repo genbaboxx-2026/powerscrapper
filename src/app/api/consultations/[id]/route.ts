@@ -86,3 +86,109 @@ export async function GET(request: NextRequest, { params }: Props) {
     );
   }
 }
+
+/**
+ * PUT /api/consultations/[id] - 相談更新
+ */
+export async function PUT(request: NextRequest, { params }: Props) {
+  try {
+    const { id } = await params;
+    const user = await getUserFromRequest(request);
+
+    if (!user) {
+      return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+    }
+
+    const consultation = await prisma.consultation.findUnique({
+      where: { id },
+    });
+
+    if (!consultation) {
+      return NextResponse.json({ error: '相談が見つかりません' }, { status: 404 });
+    }
+
+    // オーナーのみ編集可能
+    if (consultation.userId !== user.id) {
+      return NextResponse.json({ error: '編集権限がありません' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { category, title, body: consultationBody } = body;
+
+    if (!category || !title?.trim() || !consultationBody?.trim()) {
+      return NextResponse.json(
+        { error: '全ての項目を入力してください' },
+        { status: 400 }
+      );
+    }
+
+    const updatedConsultation = await prisma.consultation.update({
+      where: { id },
+      data: {
+        category,
+        title: title.trim(),
+        body: consultationBody.trim(),
+      },
+    });
+
+    return NextResponse.json({
+      consultation: {
+        id: updatedConsultation.id,
+        category: updatedConsultation.category,
+        title: updatedConsultation.title,
+        body: updatedConsultation.body,
+        status: updatedConsultation.status,
+      },
+    });
+  } catch (error) {
+    console.error('Failed to update consultation:', error);
+    return NextResponse.json(
+      { error: '相談の更新に失敗しました' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/consultations/[id] - 相談削除
+ */
+export async function DELETE(request: NextRequest, { params }: Props) {
+  try {
+    const { id } = await params;
+    const user = await getUserFromRequest(request);
+
+    if (!user) {
+      return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+    }
+
+    const consultation = await prisma.consultation.findUnique({
+      where: { id },
+    });
+
+    if (!consultation) {
+      return NextResponse.json({ error: '相談が見つかりません' }, { status: 404 });
+    }
+
+    // オーナーのみ削除可能
+    if (consultation.userId !== user.id) {
+      return NextResponse.json({ error: '削除権限がありません' }, { status: 403 });
+    }
+
+    // コメントも一緒に削除
+    await prisma.consultationComment.deleteMany({
+      where: { consultationId: id },
+    });
+
+    await prisma.consultation.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete consultation:', error);
+    return NextResponse.json(
+      { error: '相談の削除に失敗しました' },
+      { status: 500 }
+    );
+  }
+}

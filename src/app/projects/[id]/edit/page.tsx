@@ -1,0 +1,460 @@
+'use client';
+
+import { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
+import { AuthGuard } from '@/components/AuthGuard';
+import { useLiff } from '@/components/LiffProvider';
+import { authFetch } from '@/lib/api';
+import {
+  RECRUITMENT_TYPE_LABELS,
+  STRUCTURE_TYPE_LABELS,
+  WORK_TYPE_LABELS,
+  type RecruitmentType,
+  type StructureType,
+  type WorkType,
+} from '@/types';
+
+type ProjectFormData = {
+  title: string;
+  recruitmentType: string;
+  structureType: string;
+  floors: string;
+  totalArea: string;
+  siteAddress: string;
+  periodStart: string;
+  periodEnd: string;
+  workTypes: string[];
+  description: string;
+  isUrgent: boolean;
+  deadline: string;
+};
+
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export default function EditProjectPage({ params }: Props) {
+  const { id } = use(params);
+  const router = useRouter();
+  const { userId } = useLiff();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<ProjectFormData>({
+    title: '',
+    recruitmentType: '',
+    structureType: '',
+    floors: '',
+    totalArea: '',
+    siteAddress: '',
+    periodStart: '',
+    periodEnd: '',
+    workTypes: [],
+    description: '',
+    isUrgent: false,
+    deadline: '',
+  });
+
+  useEffect(() => {
+    const fetchProject = async () => {
+      if (!userId) return;
+
+      try {
+        const res = await authFetch(`/api/projects/${id}`, userId);
+
+        if (!res.ok) {
+          if (res.status === 404) {
+            setError('案件が見つかりません');
+          } else {
+            setError('エラーが発生しました');
+          }
+          return;
+        }
+
+        const data = await res.json();
+
+        // オーナーでない場合はリダイレクト
+        if (!data.isOwner) {
+          router.replace(`/projects/${id}`);
+          return;
+        }
+
+        // 日付をフォーマット
+        const deadlineDate = new Date(data.deadline);
+        const formattedDeadline = deadlineDate.toISOString().split('T')[0];
+
+        setFormData({
+          title: data.title || '',
+          recruitmentType: data.recruitmentType || '',
+          structureType: data.structureType || '',
+          floors: data.floors || '',
+          totalArea: data.totalArea || '',
+          siteAddress: data.siteAddress || '',
+          periodStart: data.periodStart || '',
+          periodEnd: data.periodEnd || '',
+          workTypes: data.workTypes || [],
+          description: data.description || '',
+          isUrgent: data.isUrgent || false,
+          deadline: formattedDeadline,
+        });
+      } catch (err) {
+        console.error('Failed to fetch project:', err);
+        setError('エラーが発生しました');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (userId) {
+      fetchProject();
+    }
+  }, [id, userId, router]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!userId) return;
+
+    if (!isFormValid()) {
+      setError('必須項目を入力してください');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await authFetch(`/api/projects/${id}`, userId, {
+        method: 'PUT',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '更新に失敗しました');
+      }
+
+      router.push(`/projects/${id}?updated=true`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '更新に失敗しました');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const toggleWorkType = (type: string) => {
+    setFormData((prev) => {
+      const current = prev.workTypes;
+      const updated = current.includes(type)
+        ? current.filter((t) => t !== type)
+        : [...current, type];
+      return { ...prev, workTypes: updated };
+    });
+  };
+
+  const isFormValid = () => {
+    return (
+      formData.title &&
+      formData.recruitmentType &&
+      formData.structureType &&
+      formData.siteAddress &&
+      formData.periodStart &&
+      formData.periodEnd &&
+      formData.workTypes.length > 0 &&
+      formData.description &&
+      formData.deadline
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <AuthGuard>
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563EB] mx-auto"></div>
+            <p className="mt-4 text-[#64748B]">読み込み中...</p>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  return (
+    <AuthGuard>
+      <div className="min-h-screen bg-[#F8FAFC]">
+        {/* ヘッダー */}
+        <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-1 text-[#2563EB]"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            戻る
+          </button>
+        </header>
+
+        <main className="p-4 pb-24">
+          <div className="card p-4 mb-4">
+            <h1 className="text-lg font-bold text-[#1E293B] mb-2">
+              案件を編集する
+            </h1>
+            <p className="text-sm text-[#64748B]">
+              編集後は再度審査が必要になります。
+            </p>
+          </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-[#E24B4A] rounded-lg text-[#E24B4A] text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            {/* 募集タイプ */}
+            <div className="card p-4 mb-4">
+              <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                募集タイプ <span className="text-[#E24B4A]">*</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(Object.entries(RECRUITMENT_TYPE_LABELS) as [RecruitmentType, string][]).map(
+                  ([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() =>
+                        setFormData({ ...formData, recruitmentType: value })
+                      }
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        formData.recruitmentType === value
+                          ? 'bg-[#2563EB] text-white'
+                          : 'bg-white border border-[#E2E8F0] text-[#1E293B]'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* 案件名 */}
+            <div className="card p-4 mb-4">
+              <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                案件名 <span className="text-[#E24B4A]">*</span>
+              </label>
+              <input
+                type="text"
+                className="input"
+                placeholder="例: RC造3階建てビル解体工事"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+              />
+            </div>
+
+            {/* 構造 */}
+            <div className="card p-4 mb-4">
+              <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                構造 <span className="text-[#E24B4A]">*</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(Object.entries(STRUCTURE_TYPE_LABELS) as [StructureType, string][]).map(
+                  ([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() =>
+                        setFormData({ ...formData, structureType: value })
+                      }
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        formData.structureType === value
+                          ? 'bg-[#2563EB] text-white'
+                          : 'bg-white border border-[#E2E8F0] text-[#1E293B]'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* 階数・延床面積 */}
+            <div className="card p-4 mb-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                    階数
+                  </label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="例: 地上3階"
+                    value={formData.floors}
+                    onChange={(e) =>
+                      setFormData({ ...formData, floors: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                    延床面積
+                  </label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="例: 500m2"
+                    value={formData.totalArea}
+                    onChange={(e) =>
+                      setFormData({ ...formData, totalArea: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 現場所在地 */}
+            <div className="card p-4 mb-4">
+              <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                現場所在地 <span className="text-[#E24B4A]">*</span>
+              </label>
+              <input
+                type="text"
+                className="input"
+                placeholder="例: 東京都渋谷区神宮前1-2-3"
+                value={formData.siteAddress}
+                onChange={(e) =>
+                  setFormData({ ...formData, siteAddress: e.target.value })
+                }
+              />
+            </div>
+
+            {/* 工期 */}
+            <div className="card p-4 mb-4">
+              <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                工期 <span className="text-[#E24B4A]">*</span>
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="開始: 2026年4月"
+                  value={formData.periodStart}
+                  onChange={(e) =>
+                    setFormData({ ...formData, periodStart: e.target.value })
+                  }
+                />
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="終了: 2026年6月"
+                  value={formData.periodEnd}
+                  onChange={(e) =>
+                    setFormData({ ...formData, periodEnd: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            {/* 作業内容 */}
+            <div className="card p-4 mb-4">
+              <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                作業内容 <span className="text-[#E24B4A]">*</span>（複数選択可）
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(Object.entries(WORK_TYPE_LABELS) as [WorkType, string][]).map(
+                  ([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => toggleWorkType(value)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        formData.workTypes.includes(value)
+                          ? 'bg-[#2563EB] text-white'
+                          : 'bg-white border border-[#E2E8F0] text-[#1E293B]'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* 案件詳細 */}
+            <div className="card p-4 mb-4">
+              <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                案件詳細・条件 <span className="text-[#E24B4A]">*</span>
+              </label>
+              <textarea
+                className="input min-h-[120px] resize-none"
+                placeholder="現場の状況、必要な機材、条件などを詳しく記入してください"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+              />
+            </div>
+
+            {/* 募集期限 */}
+            <div className="card p-4 mb-4">
+              <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                募集期限 <span className="text-[#E24B4A]">*</span>
+              </label>
+              <input
+                type="date"
+                className="input"
+                value={formData.deadline}
+                onChange={(e) =>
+                  setFormData({ ...formData, deadline: e.target.value })
+                }
+              />
+            </div>
+
+            {/* オプション */}
+            <div className="card p-4 mb-4">
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 rounded border-[#E2E8F0] accent-[#2563EB]"
+                  checked={formData.isUrgent}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isUrgent: e.target.checked })
+                  }
+                />
+                <span className="text-sm text-[#1E293B]">
+                  <span className="badge badge-urgent mr-1">急募</span>
+                  急ぎの案件として表示
+                </span>
+              </label>
+            </div>
+
+            {/* 送信ボタン */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] p-4">
+              <button
+                type="submit"
+                disabled={isSubmitting || !isFormValid()}
+                className="btn-primary w-full disabled:opacity-50"
+              >
+                {isSubmitting ? '更新中...' : '更新する'}
+              </button>
+            </div>
+          </form>
+        </main>
+      </div>
+    </AuthGuard>
+  );
+}

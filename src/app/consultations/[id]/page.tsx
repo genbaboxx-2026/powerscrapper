@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { AuthGuard } from '@/components/AuthGuard';
 import { useLiff } from '@/components/LiffProvider';
 import { authFetch } from '@/lib/api';
@@ -55,6 +56,8 @@ export default function ConsultationDetailPage({ params }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [commentBody, setCommentBody] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchConsultation = async () => {
@@ -86,6 +89,30 @@ export default function ConsultationDetailPage({ params }: Props) {
       fetchConsultation();
     }
   }, [id, userId]);
+
+  const handleDelete = async () => {
+    if (!userId) return;
+
+    setIsDeleting(true);
+
+    try {
+      const res = await authFetch(`/api/consultations/${id}`, userId, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '削除に失敗しました');
+      }
+
+      router.push('/projects?tab=consultation&deleted=true');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '削除に失敗しました');
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,6 +242,24 @@ export default function ConsultationDetailPage({ params }: Props) {
               {consultation.title}
             </h1>
 
+            {/* オーナー用の編集・削除ボタン */}
+            {consultation.isOwner && (
+              <div className="flex gap-2 mb-3">
+                <Link
+                  href={`/consultations/${id}/edit`}
+                  className="flex-1 py-2 px-4 border border-[#2563EB] text-[#2563EB] rounded-lg text-sm font-medium text-center"
+                >
+                  編集する
+                </Link>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex-1 py-2 px-4 border border-[#E24B4A] text-[#E24B4A] rounded-lg text-sm font-medium"
+                >
+                  削除する
+                </button>
+              </div>
+            )}
+
             {/* 投稿者 */}
             <div className="flex items-center gap-2 mb-4 pb-4 border-b border-[#E2E8F0]">
               {consultation.user.pictureUrl ? (
@@ -340,6 +385,36 @@ export default function ConsultationDetailPage({ params }: Props) {
             </button>
           </form>
         </div>
+
+        {/* 削除確認モーダル */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 max-w-sm w-full">
+              <h3 className="text-lg font-bold text-[#1E293B] mb-2">
+                相談を削除しますか？
+              </h3>
+              <p className="text-sm text-[#64748B] mb-6">
+                この操作は取り消せません。コメントも全て削除されます。
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 border border-[#E2E8F0] text-[#1E293B] rounded-lg font-medium"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 bg-[#E24B4A] text-white rounded-lg font-medium disabled:opacity-50"
+                >
+                  {isDeleting ? '削除中...' : '削除する'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AuthGuard>
   );
