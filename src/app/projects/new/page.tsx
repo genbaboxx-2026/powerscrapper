@@ -11,18 +11,7 @@ import {
   type StructureType,
   type BusinessType,
 } from '@/types';
-
-// 都道府県リスト
-const PREFECTURES = [
-  '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
-  '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
-  '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県',
-  '岐阜県', '静岡県', '愛知県', '三重県',
-  '滋賀県', '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県',
-  '鳥取県', '島根県', '岡山県', '広島県', '山口県',
-  '徳島県', '香川県', '愛媛県', '高知県',
-  '福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県',
-];
+import { AREA_DATA, PREFECTURES } from '@/lib/areas';
 
 // 年の選択肢（現在年から3年分）
 const currentYear = new Date().getFullYear();
@@ -437,7 +426,11 @@ export default function ProjectNewPage() {
                     className="input"
                     value={formData.sitePrefecture}
                     onChange={(e) =>
-                      setFormData({ ...formData, sitePrefecture: e.target.value })
+                      setFormData({
+                        ...formData,
+                        sitePrefecture: e.target.value,
+                        siteCity: '', // 都道府県変更時に市区町村をリセット
+                      })
                     }
                   >
                     <option value="">都道府県を選択</option>
@@ -447,15 +440,27 @@ export default function ProjectNewPage() {
                       </option>
                     ))}
                   </select>
-                  <input
-                    type="text"
+                  <select
                     className="input"
-                    placeholder="例: 渋谷区"
                     value={formData.siteCity}
                     onChange={(e) =>
                       setFormData({ ...formData, siteCity: e.target.value })
                     }
-                  />
+                    disabled={!formData.sitePrefecture}
+                  >
+                    {!formData.sitePrefecture ? (
+                      <option value="">都道府県を先に選択</option>
+                    ) : (
+                      <>
+                        <option value="">市区町村を選択</option>
+                        {AREA_DATA[formData.sitePrefecture]?.map((city) => (
+                          <option key={city} value={city}>
+                            {city}
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </select>
                 </div>
               </div>
 
