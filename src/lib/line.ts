@@ -1570,55 +1570,6 @@ export function createMatchNotification(
     });
   }
 
-  // LINE表示名（タップでコピー）
-  if (partnerLineDisplayName) {
-    contactInfoContents.push({
-      type: 'box',
-      layout: 'horizontal',
-      margin: 'md',
-      contents: [
-        {
-          type: 'text',
-          text: 'LINE',
-          size: 'sm',
-          color: TEXT_SECONDARY_COLOR,
-          flex: 2,
-        },
-        {
-          type: 'text',
-          text: `「${partnerLineDisplayName}」で検索`,
-          size: 'sm',
-          color: '#06C755',
-          flex: 5,
-          wrap: true,
-        },
-      ],
-    });
-    // コピーボタン
-    contactInfoContents.push({
-      type: 'box',
-      layout: 'horizontal',
-      margin: 'sm',
-      action: {
-        type: 'clipboard',
-        clipboardText: partnerLineDisplayName,
-      },
-      backgroundColor: '#E8F5E9',
-      cornerRadius: '8px',
-      paddingAll: '8px',
-      justifyContent: 'center',
-      contents: [
-        {
-          type: 'text',
-          text: '📋 名前をコピー',
-          size: 'sm',
-          color: '#06C755',
-          weight: 'bold',
-          align: 'center',
-        },
-      ],
-    });
-  }
 
   return {
     type: 'flex',

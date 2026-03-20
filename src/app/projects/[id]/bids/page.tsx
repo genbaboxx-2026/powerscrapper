@@ -411,7 +411,6 @@ export default function ProjectBidsPage({ params }: Props) {
                     <p className="font-medium text-[#1E293B] mb-1">送信される情報:</p>
                     <p>・会社名、担当者名</p>
                     <p>・電話番号、メールアドレス</p>
-                    <p>・LINE表示名</p>
                   </div>
                   <div className="flex gap-3">
                     <button
