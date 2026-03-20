@@ -230,6 +230,9 @@ function MainContent() {
   };
 
   const getUserDisplayName = (user: Consultation['user']) => {
+    if (user.companyName && user.displayName) {
+      return `${user.companyName} / ${user.displayName}`;
+    }
     return user.companyName || user.displayName || '匿名';
   };
 

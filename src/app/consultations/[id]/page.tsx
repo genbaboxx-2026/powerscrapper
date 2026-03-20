@@ -284,6 +284,9 @@ export default function ConsultationDetailPage({ params }: Props) {
   };
 
   const getUserDisplayName = (user: User) => {
+    if (user.companyName && user.displayName) {
+      return `${user.companyName} / ${user.displayName}`;
+    }
     return user.companyName || user.displayName || '匿名';
   };
 
