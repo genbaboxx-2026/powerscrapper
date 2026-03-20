@@ -80,6 +80,9 @@ export default function ConsultationDetailPage({ params }: Props) {
   // Reaction state
   const [isReacting, setIsReacting] = useState(false);
 
+  // Menu state
+  const [showMenu, setShowMenu] = useState(false);
+
   useEffect(() => {
     const fetchConsultation = async () => {
       if (!userId) return;
@@ -361,73 +364,93 @@ export default function ConsultationDetailPage({ params }: Props) {
         <main className="p-4 pb-32">
           {/* 相談本文 */}
           <div className="card p-4 mb-4">
-            {/* カテゴリ・日時 */}
+            {/* ヘッダー: 投稿者・カテゴリ・日時・メニュー */}
             <div className="flex items-center justify-between mb-3">
-              <span className={`px-2 py-0.5 text-xs rounded font-medium ${categoryInfo.color}`}>
-                {categoryInfo.label}
-              </span>
-              <span className="text-xs text-[#64748B]">
-                {formatDateTime(consultation.createdAt)}
-              </span>
+              <div className="flex items-center gap-2">
+                {consultation.user.pictureUrl ? (
+                  <img
+                    src={consultation.user.pictureUrl}
+                    alt=""
+                    className="w-8 h-8 rounded-full"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#E2E8F0] flex items-center justify-center">
+                    <svg
+                      className="w-4 h-4 text-[#64748B]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                  </div>
+                )}
+                <span className="text-sm font-medium text-[#1E293B]">
+                  {getUserDisplayName(consultation.user)}
+                </span>
+                <span className={`px-2 py-0.5 text-xs rounded font-medium ${categoryInfo.color}`}>
+                  {categoryInfo.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#64748B]">
+                  {formatDateTime(consultation.createdAt)}
+                </span>
+                {/* 3点リーダーメニュー（オーナーのみ） */}
+                {consultation.isOwner && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowMenu(!showMenu)}
+                      className="p-1 hover:bg-[#F1F5F9] rounded-full transition-colors"
+                    >
+                      <svg
+                        className="w-5 h-5 text-[#64748B]"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
+                    {showMenu && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setShowMenu(false)}
+                        />
+                        <div className="absolute right-0 top-8 bg-white border border-[#E2E8F0] rounded-lg shadow-lg z-20 py-1 min-w-[120px]">
+                          <Link
+                            href={`/consultations/${id}/edit`}
+                            className="block px-4 py-2 text-sm text-[#1E293B] hover:bg-[#F8FAFC]"
+                            onClick={() => setShowMenu(false)}
+                          >
+                            編集する
+                          </Link>
+                          <button
+                            onClick={() => {
+                              setShowMenu(false);
+                              setShowDeleteConfirm(true);
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm text-[#E24B4A] hover:bg-[#F8FAFC]"
+                          >
+                            削除する
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* タイトル */}
             <h1 className="text-lg font-bold text-[#1E293B] mb-3">
               {consultation.title}
             </h1>
-
-            {/* オーナー用の編集・削除ボタン */}
-            {consultation.isOwner && (
-              <div className="flex gap-2 mb-3">
-                <Link
-                  href={`/consultations/${id}/edit`}
-                  className="flex-1 py-2 px-4 border border-[#2563EB] text-[#2563EB] rounded-lg text-sm font-medium text-center"
-                >
-                  編集する
-                </Link>
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="flex-1 py-2 px-4 border border-[#E24B4A] text-[#E24B4A] rounded-lg text-sm font-medium"
-                >
-                  削除する
-                </button>
-              </div>
-            )}
-
-            {/* 投稿者 */}
-            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-[#E2E8F0]">
-              {consultation.user.pictureUrl ? (
-                <img
-                  src={consultation.user.pictureUrl}
-                  alt=""
-                  className="w-8 h-8 rounded-full"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-[#E2E8F0] flex items-center justify-center">
-                  <svg
-                    className="w-4 h-4 text-[#64748B]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                </div>
-              )}
-              <span className="text-sm text-[#1E293B]">
-                {getUserDisplayName(consultation.user)}
-              </span>
-              {consultation.isOwner && (
-                <span className="px-2 py-0.5 bg-[#E3EDF7] text-[#4A6FA5] text-xs rounded">
-                  投稿者
-                </span>
-              )}
-            </div>
 
             {/* 本文 */}
             <p className="text-[#1E293B] whitespace-pre-wrap leading-relaxed">
