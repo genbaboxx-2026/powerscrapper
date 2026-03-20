@@ -358,10 +358,7 @@ function MainContent() {
                       </p>
 
                       {/* フッター */}
-                      <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#E2E8F0]">
-                        <span className="text-xs text-[#64748B]">
-                          ❤️ {consultation.likeCount}件
-                        </span>
+                      <div className="flex items-center justify-end">
                         <span className="text-xs text-[#2563EB]">
                           💬 {consultation.commentCount}件
                         </span>
