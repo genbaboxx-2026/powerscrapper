@@ -6,10 +6,15 @@ import crypto from 'crypto';
 
 const LINE_API_BASE = 'https://api.line.me/v2/bot';
 
-// ブランドカラー
-const BRAND_COLOR = '#0F6E56'; // 深緑
-const ACCENT_COLOR = '#BA7517'; // 琥珀
-const DANGER_COLOR = '#E24B4A'; // 赤
+// ブランドカラー（青系グラデーションテーマ）
+const HERO_COLOR = '#1E3A8A'; // ディープブルー（hero背景）
+const HERO_SUCCESS_COLOR = '#1E40AF'; // ブルー（成功/マッチング）
+const HERO_URGENT_COLOR = '#92400E'; // ダークアンバー（警告/急募）
+const DANGER_COLOR = '#991B1B'; // ダークレッド（エラー/却下）
+const BUTTON_PRIMARY_COLOR = '#2563EB'; // ブルー（プライマリボタン）
+const TEXT_PRIMARY_COLOR = '#1E293B'; // ダークスレート（メインテキスト）
+const TEXT_SECONDARY_COLOR = '#64748B'; // スレートグレー（サブテキスト）
+const TEXT_ACCENT_COLOR = '#2563EB'; // ブルー（アクセントテキスト）
 
 // LIFF ID取得
 const getLiffId = () => process.env.NEXT_PUBLIC_LIFF_ID || '';
@@ -278,7 +283,7 @@ export function createWelcomeMessage() {
       hero: {
         type: 'box',
         layout: 'vertical',
-        backgroundColor: BRAND_COLOR,
+        backgroundColor: HERO_COLOR,
         paddingAll: '20px',
         contents: [
           {
@@ -309,7 +314,7 @@ export function createWelcomeMessage() {
             text: '友だち追加ありがとうございます！',
             weight: 'bold',
             size: 'md',
-            color: '#2C2C2A',
+            color: TEXT_PRIMARY_COLOR,
           },
           {
             type: 'box',
@@ -320,7 +325,7 @@ export function createWelcomeMessage() {
                 type: 'text',
                 text: 'PowerScrapperは解体業界で働く仲間がつながるコミュニティです。',
                 size: 'sm',
-                color: '#2C2C2A',
+                color: TEXT_PRIMARY_COLOR,
                 wrap: true,
               },
             ],
@@ -334,20 +339,20 @@ export function createWelcomeMessage() {
                 type: 'text',
                 text: '今後こんな情報をお届けします：',
                 size: 'sm',
-                color: '#2C2C2A',
+                color: TEXT_PRIMARY_COLOR,
               },
               {
                 type: 'text',
                 text: '・イベント・交流会のご案内',
                 size: 'sm',
-                color: '#2C2C2A',
+                color: TEXT_PRIMARY_COLOR,
                 margin: 'sm',
               },
               {
                 type: 'text',
                 text: '・業界の最新情報',
                 size: 'sm',
-                color: '#2C2C2A',
+                color: TEXT_PRIMARY_COLOR,
                 margin: 'xs',
               },
             ],
@@ -366,13 +371,13 @@ export function createWelcomeMessage() {
                 text: '📋 会社情報を登録しませんか？',
                 weight: 'bold',
                 size: 'sm',
-                color: '#2C2C2A',
+                color: TEXT_PRIMARY_COLOR,
               },
               {
                 type: 'text',
                 text: '会社名や対応エリアなどを登録しておくと、今後のイベントや案件マッチングでスムーズにやりとりができます。',
                 size: 'xs',
-                color: '#73726C',
+                color: TEXT_SECONDARY_COLOR,
                 wrap: true,
                 margin: 'sm',
               },
@@ -384,7 +389,7 @@ export function createWelcomeMessage() {
                   uri: `https://liff.line.me/${liffId}/profile/edit`,
                 },
                 style: 'primary',
-                color: BRAND_COLOR,
+                color: BUTTON_PRIMARY_COLOR,
                 height: 'sm',
                 margin: 'lg',
               },
@@ -404,13 +409,13 @@ export function createWelcomeMessage() {
                 text: '💡 案件マッチング機能もあります',
                 weight: 'bold',
                 size: 'xs',
-                color: '#2C2C2A',
+                color: TEXT_PRIMARY_COLOR,
               },
               {
                 type: 'text',
                 text: '解体案件の募集・入札ができるマッチング機能も使えます。よかったら覗いてみてください！',
                 size: 'xs',
-                color: '#73726C',
+                color: TEXT_SECONDARY_COLOR,
                 wrap: true,
                 margin: 'sm',
               },
@@ -461,7 +466,7 @@ export function createBidNotification(
       text: bidderCompanyName,
       weight: 'bold',
       size: 'lg',
-      color: '#2C2C2A',
+      color: TEXT_PRIMARY_COLOR,
     },
   ];
 
@@ -501,14 +506,14 @@ export function createBidNotification(
           type: 'text',
           text: '対応エリア',
           size: 'xs',
-          color: '#73726C',
+          color: TEXT_SECONDARY_COLOR,
           flex: 0,
         },
         {
           type: 'text',
           text: bidderAreas.join('、'),
           size: 'sm',
-          color: '#2C2C2A',
+          color: TEXT_PRIMARY_COLOR,
           flex: 1,
           wrap: true,
           margin: 'md',
@@ -527,14 +532,14 @@ export function createBidNotification(
           type: 'text',
           text: '保有資格',
           size: 'xs',
-          color: '#73726C',
+          color: TEXT_SECONDARY_COLOR,
           flex: 0,
         },
         {
           type: 'text',
           text: bidderLicenses.join('、'),
           size: 'sm',
-          color: '#2C2C2A',
+          color: TEXT_PRIMARY_COLOR,
           flex: 1,
           wrap: true,
           margin: 'md',
@@ -554,14 +559,14 @@ export function createBidNotification(
           type: 'text',
           text: '対応可能時期',
           size: 'xs',
-          color: '#73726C',
+          color: TEXT_SECONDARY_COLOR,
           flex: 0,
         },
         {
           type: 'text',
           text: availability,
           size: 'sm',
-          color: '#2C2C2A',
+          color: TEXT_PRIMARY_COLOR,
           flex: 1,
           margin: 'md',
         },
@@ -583,13 +588,13 @@ export function createBidNotification(
           type: 'text',
           text: 'アピールメッセージ',
           size: 'xs',
-          color: '#73726C',
+          color: TEXT_SECONDARY_COLOR,
         },
         {
           type: 'text',
           text: bidMessage,
           size: 'sm',
-          color: '#2C2C2A',
+          color: TEXT_PRIMARY_COLOR,
           wrap: true,
           margin: 'sm',
         },
@@ -605,7 +610,7 @@ export function createBidNotification(
       hero: {
         type: 'box',
         layout: 'vertical',
-        backgroundColor: ACCENT_COLOR,
+        backgroundColor: HERO_COLOR,
         paddingAll: '20px',
         contents: [
           {
@@ -628,7 +633,7 @@ export function createBidNotification(
             text: projectTitle,
             weight: 'bold',
             size: 'md',
-            color: '#2C2C2A',
+            color: TEXT_PRIMARY_COLOR,
             wrap: true,
           },
           {
@@ -656,7 +661,7 @@ export function createBidNotification(
               uri: `https://liff.line.me/${liffId}/projects/${projectId}/bids`,
             },
             style: 'primary',
-            color: BRAND_COLOR,
+            color: BUTTON_PRIMARY_COLOR,
             height: 'sm',
           },
         ],
@@ -689,7 +694,7 @@ export function createSelectionNotification(
         text: partnerCompanyName,
         weight: 'bold',
         size: 'lg',
-        color: '#2C2C2A',
+        color: TEXT_PRIMARY_COLOR,
       });
     }
 
@@ -703,14 +708,14 @@ export function createSelectionNotification(
             type: 'text',
             text: '担当者',
             size: 'xs',
-            color: '#73726C',
+            color: TEXT_SECONDARY_COLOR,
             flex: 2,
           },
           {
             type: 'text',
             text: partnerRepresentative,
             size: 'sm',
-            color: '#2C2C2A',
+            color: TEXT_PRIMARY_COLOR,
             flex: 5,
           },
         ],
@@ -727,14 +732,14 @@ export function createSelectionNotification(
             type: 'text',
             text: '電話番号',
             size: 'xs',
-            color: '#73726C',
+            color: TEXT_SECONDARY_COLOR,
             flex: 2,
           },
           {
             type: 'text',
             text: partnerPhone,
             size: 'sm',
-            color: '#2C2C2A',
+            color: TEXT_PRIMARY_COLOR,
             flex: 5,
           },
         ],
@@ -751,14 +756,14 @@ export function createSelectionNotification(
             type: 'text',
             text: 'メール',
             size: 'xs',
-            color: '#73726C',
+            color: TEXT_SECONDARY_COLOR,
             flex: 2,
           },
           {
             type: 'text',
             text: partnerEmail,
             size: 'sm',
-            color: '#2C2C2A',
+            color: TEXT_PRIMARY_COLOR,
             flex: 5,
             wrap: true,
           },
@@ -776,14 +781,14 @@ export function createSelectionNotification(
             type: 'text',
             text: '住所',
             size: 'xs',
-            color: '#73726C',
+            color: TEXT_SECONDARY_COLOR,
             flex: 2,
           },
           {
             type: 'text',
             text: partnerAddress,
             size: 'sm',
-            color: '#2C2C2A',
+            color: TEXT_PRIMARY_COLOR,
             flex: 5,
             wrap: true,
           },
@@ -799,7 +804,7 @@ export function createSelectionNotification(
         hero: {
           type: 'box',
           layout: 'vertical',
-          backgroundColor: BRAND_COLOR,
+          backgroundColor: HERO_SUCCESS_COLOR,
           paddingAll: '20px',
           contents: [
             {
@@ -822,7 +827,7 @@ export function createSelectionNotification(
               text: projectTitle,
               weight: 'bold',
               size: 'md',
-              color: '#2C2C2A',
+              color: TEXT_PRIMARY_COLOR,
               wrap: true,
             },
             {
@@ -833,7 +838,7 @@ export function createSelectionNotification(
               type: 'text',
               text: '相手企業の情報',
               size: 'xs',
-              color: '#73726C',
+              color: TEXT_SECONDARY_COLOR,
               margin: 'lg',
             },
             {
@@ -857,7 +862,7 @@ export function createSelectionNotification(
                 uri: `https://liff.line.me/${liffId}/mypage/matches`,
               },
               style: 'primary',
-              color: BRAND_COLOR,
+              color: BUTTON_PRIMARY_COLOR,
               height: 'sm',
             },
           ],
@@ -878,7 +883,7 @@ export function createSelectionNotification(
             {
               type: 'text',
               text: '選定結果のお知らせ',
-              color: '#73726C',
+              color: TEXT_SECONDARY_COLOR,
               size: 'sm',
               weight: 'bold',
             },
@@ -894,7 +899,7 @@ export function createSelectionNotification(
               type: 'text',
               text: '残念ながら今回は選定されませんでした。引き続き案件をご確認ください。',
               size: 'sm',
-              color: '#73726C',
+              color: TEXT_SECONDARY_COLOR,
               wrap: true,
               margin: 'lg',
             },
@@ -936,7 +941,7 @@ export function createApprovalNotification(projectTitle: string, projectId: stri
       hero: {
         type: 'box',
         layout: 'vertical',
-        backgroundColor: BRAND_COLOR,
+        backgroundColor: HERO_COLOR,
         paddingAll: '20px',
         contents: [
           {
@@ -959,14 +964,14 @@ export function createApprovalNotification(projectTitle: string, projectId: stri
             text: projectTitle,
             weight: 'bold',
             size: 'lg',
-            color: '#2C2C2A',
+            color: TEXT_PRIMARY_COLOR,
             wrap: true,
           },
           {
             type: 'text',
             text: '管理者の審査を通過し、案件一覧に掲載されました。興味ありが届いたらLINEで通知します。',
             size: 'sm',
-            color: '#73726C',
+            color: TEXT_SECONDARY_COLOR,
             wrap: true,
             margin: 'lg',
           },
@@ -985,7 +990,7 @@ export function createApprovalNotification(projectTitle: string, projectId: stri
               uri: `https://liff.line.me/${liffId}/projects/${projectId}`,
             },
             style: 'primary',
-            color: BRAND_COLOR,
+            color: BUTTON_PRIMARY_COLOR,
             height: 'sm',
           },
         ],
@@ -1031,7 +1036,7 @@ export function createRejectionNotification(projectTitle: string, rejectionReaso
             text: projectTitle,
             weight: 'bold',
             size: 'lg',
-            color: '#2C2C2A',
+            color: TEXT_PRIMARY_COLOR,
             wrap: true,
           },
           {
@@ -1042,14 +1047,14 @@ export function createRejectionNotification(projectTitle: string, rejectionReaso
             type: 'text',
             text: '却下理由',
             size: 'xs',
-            color: '#73726C',
+            color: TEXT_SECONDARY_COLOR,
             margin: 'lg',
           },
           {
             type: 'text',
             text: rejectionReason,
             size: 'sm',
-            color: '#2C2C2A',
+            color: TEXT_PRIMARY_COLOR,
             wrap: true,
             margin: 'sm',
           },
@@ -1068,7 +1073,7 @@ export function createRejectionNotification(projectTitle: string, rejectionReaso
               uri: `https://liff.line.me/${liffId}/projects/new`,
             },
             style: 'primary',
-            color: BRAND_COLOR,
+            color: BUTTON_PRIMARY_COLOR,
             height: 'sm',
           },
         ],
@@ -1091,7 +1096,7 @@ export function createProjectNotification(
 ) {
   const liffId = getLiffId();
 
-  const heroColor = isUrgent ? ACCENT_COLOR : BRAND_COLOR;
+  const heroColor = isUrgent ? HERO_URGENT_COLOR : HERO_COLOR;
   const heroText = isUrgent ? '急募案件' : '新着案件';
 
   const bodyContents: unknown[] = [
@@ -1101,7 +1106,7 @@ export function createProjectNotification(
       weight: 'bold',
       size: 'lg',
       wrap: true,
-      color: '#2C2C2A',
+      color: TEXT_PRIMARY_COLOR,
     },
     {
       type: 'separator',
@@ -1121,14 +1126,14 @@ export function createProjectNotification(
               type: 'text',
               text: 'エリア',
               size: 'xs',
-              color: '#73726C',
+              color: TEXT_SECONDARY_COLOR,
               flex: 2,
             },
             {
               type: 'text',
               text: prefecture || '未設定',
               size: 'sm',
-              color: '#2C2C2A',
+              color: TEXT_PRIMARY_COLOR,
               flex: 5,
             },
           ],
@@ -1141,14 +1146,14 @@ export function createProjectNotification(
               type: 'text',
               text: '工期',
               size: 'xs',
-              color: '#73726C',
+              color: TEXT_SECONDARY_COLOR,
               flex: 2,
             },
             {
               type: 'text',
               text: `${periodStart} 〜 ${periodEnd}`,
               size: 'sm',
-              color: '#2C2C2A',
+              color: TEXT_PRIMARY_COLOR,
               flex: 5,
             },
           ],
@@ -1167,14 +1172,14 @@ export function createProjectNotification(
           type: 'text',
           text: '作業内容',
           size: 'xs',
-          color: '#73726C',
+          color: TEXT_SECONDARY_COLOR,
           flex: 2,
         },
         {
           type: 'text',
           text: workContent,
           size: 'sm',
-          color: '#2C2C2A',
+          color: TEXT_PRIMARY_COLOR,
           flex: 5,
           wrap: true,
         },
@@ -1222,7 +1227,7 @@ export function createProjectNotification(
               uri: `https://liff.line.me/${liffId}/projects/${projectId}`,
             },
             style: 'primary',
-            color: BRAND_COLOR,
+            color: BUTTON_PRIMARY_COLOR,
             height: 'sm',
           },
         ],
@@ -1243,7 +1248,7 @@ export function createEventInfoMessage() {
       hero: {
         type: 'box',
         layout: 'vertical',
-        backgroundColor: BRAND_COLOR,
+        backgroundColor: HERO_COLOR,
         paddingAll: '20px',
         contents: [
           {
@@ -1266,14 +1271,14 @@ export function createEventInfoMessage() {
             text: '現在予定されているイベントはありません',
             weight: 'bold',
             size: 'md',
-            color: '#2C2C2A',
+            color: TEXT_PRIMARY_COLOR,
             wrap: true,
           },
           {
             type: 'text',
             text: 'イベントが決まり次第、LINE通知でお知らせします。',
             size: 'sm',
-            color: '#73726C',
+            color: TEXT_SECONDARY_COLOR,
             wrap: true,
             margin: 'lg',
           },
@@ -1317,7 +1322,7 @@ export function createWeeklyDigestMessage(projects: WeeklyDigestProject[]) {
             text: project.title,
             size: 'sm',
             weight: 'bold',
-            color: '#2C2C2A',
+            color: TEXT_PRIMARY_COLOR,
             wrap: true,
             maxLines: 2,
           },
@@ -1330,7 +1335,7 @@ export function createWeeklyDigestMessage(projects: WeeklyDigestProject[]) {
                 type: 'text',
                 text: project.sitePrefecture || '未設定',
                 size: 'xs',
-                color: '#73726C',
+                color: TEXT_SECONDARY_COLOR,
               },
               {
                 type: 'text',
@@ -1343,7 +1348,7 @@ export function createWeeklyDigestMessage(projects: WeeklyDigestProject[]) {
                 type: 'text',
                 text: project.recruitmentType === 'subcontract' ? '元請け募集' : '協力会社募集',
                 size: 'xs',
-                color: '#73726C',
+                color: TEXT_SECONDARY_COLOR,
                 margin: 'sm',
               },
             ],
@@ -1365,7 +1370,7 @@ export function createWeeklyDigestMessage(projects: WeeklyDigestProject[]) {
               uri: `https://liff.line.me/${liffId}/projects/${project.id}`,
             },
             style: 'primary',
-            color: BRAND_COLOR,
+            color: BUTTON_PRIMARY_COLOR,
             height: 'sm',
           },
         ],
@@ -1392,7 +1397,7 @@ export function createWeeklyDigestMessage(projects: WeeklyDigestProject[]) {
       type: 'text',
       text: `他${projects.length - 5}件の案件があります`,
       size: 'xs',
-      color: '#73726C',
+      color: TEXT_SECONDARY_COLOR,
       align: 'center',
       margin: 'lg',
     });
@@ -1406,7 +1411,7 @@ export function createWeeklyDigestMessage(projects: WeeklyDigestProject[]) {
       hero: {
         type: 'box',
         layout: 'vertical',
-        backgroundColor: BRAND_COLOR,
+        backgroundColor: HERO_COLOR,
         paddingAll: '20px',
         contents: [
           {
@@ -1446,7 +1451,7 @@ export function createWeeklyDigestMessage(projects: WeeklyDigestProject[]) {
               uri: `https://liff.line.me/${liffId}/projects?tab=project`,
             },
             style: 'primary',
-            color: BRAND_COLOR,
+            color: BUTTON_PRIMARY_COLOR,
             height: 'sm',
           },
         ],
@@ -1467,7 +1472,7 @@ export function createContactInfoMessage() {
       hero: {
         type: 'box',
         layout: 'vertical',
-        backgroundColor: BRAND_COLOR,
+        backgroundColor: HERO_COLOR,
         paddingAll: '20px',
         contents: [
           {
@@ -1490,7 +1495,7 @@ export function createContactInfoMessage() {
             text: 'PowerScrapperへのお問い合わせありがとうございます',
             weight: 'bold',
             size: 'md',
-            color: '#2C2C2A',
+            color: TEXT_PRIMARY_COLOR,
             wrap: true,
           },
           {
@@ -1511,14 +1516,14 @@ export function createContactInfoMessage() {
                     type: 'text',
                     text: 'メール',
                     size: 'xs',
-                    color: '#73726C',
+                    color: TEXT_SECONDARY_COLOR,
                     flex: 2,
                   },
                   {
                     type: 'text',
                     text: 'support@powerscrapper.jp',
                     size: 'sm',
-                    color: '#2C2C2A',
+                    color: TEXT_PRIMARY_COLOR,
                     flex: 5,
                   },
                 ],
@@ -1531,14 +1536,14 @@ export function createContactInfoMessage() {
                     type: 'text',
                     text: '営業時間',
                     size: 'xs',
-                    color: '#73726C',
+                    color: TEXT_SECONDARY_COLOR,
                     flex: 2,
                   },
                   {
                     type: 'text',
                     text: '平日 9:00〜18:00',
                     size: 'sm',
-                    color: '#2C2C2A',
+                    color: TEXT_PRIMARY_COLOR,
                     flex: 5,
                   },
                 ],
@@ -1549,7 +1554,7 @@ export function createContactInfoMessage() {
             type: 'text',
             text: 'お問い合わせ内容を上記メールアドレスまでお送りください。担当者より折り返しご連絡いたします。',
             size: 'xs',
-            color: '#73726C',
+            color: TEXT_SECONDARY_COLOR,
             wrap: true,
             margin: 'lg',
           },
