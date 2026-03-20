@@ -291,17 +291,6 @@ function MainContent() {
                   </option>
                 ))}
               </select>
-              <label className="flex items-center gap-1 text-sm whitespace-nowrap px-2">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4"
-                  checked={consultationFilters.myPosts}
-                  onChange={(e) =>
-                    setConsultationFilters({ ...consultationFilters, myPosts: e.target.checked })
-                  }
-                />
-                自分の投稿
-              </label>
             </div>
           </div>
 
