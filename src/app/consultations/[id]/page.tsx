@@ -488,6 +488,34 @@ export default function ConsultationDetailPage({ params }: Props) {
               </div>
             )}
 
+            {/* いいねボタン */}
+            <div className="mt-4 pt-4 border-t border-[#E2E8F0] flex justify-end">
+              <button
+                onClick={() => handleReaction('like')}
+                disabled={isReacting}
+                className="flex items-center gap-1 transition-colors"
+              >
+                <svg
+                  className={`w-6 h-6 ${consultation.userLiked ? 'text-red-500 fill-red-500' : 'text-[#94A3B8]'}`}
+                  fill={consultation.userLiked ? 'currentColor' : 'none'}
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
+                </svg>
+                {consultation.likeCount > 0 && (
+                  <span className={`text-sm ${consultation.userLiked ? 'text-red-500' : 'text-[#94A3B8]'}`}>
+                    {consultation.likeCount}
+                  </span>
+                )}
+              </button>
+            </div>
+
           </div>
 
           {/* コメント一覧 */}
