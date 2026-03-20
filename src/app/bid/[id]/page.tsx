@@ -15,6 +15,13 @@ import {
   type BusinessType,
 } from '@/types';
 
+const MESSAGE_TEMPLATES = [
+  'この案件に対応可能です。弊社の実績を活かして貢献できると考えています。詳細をお聞かせいただけますか？',
+  '対応エリア内の案件で興味があります。工期や現場の詳細について相談させてください。',
+  '同種の工事実績があり、すぐに対応可能です。まずはお話しできればと思います。',
+  '条件次第で対応を検討したいです。詳しい条件を教えていただけますか？',
+];
+
 type Project = {
   id: string;
   title: string;
@@ -57,6 +64,17 @@ export default function BidPage({ params }: Props) {
     availableFrom: '',
     message: '',
   });
+  const [selectedTemplateIndex, setSelectedTemplateIndex] = useState<number | null>(null);
+
+  const handleTemplateSelect = (index: number) => {
+    setSelectedTemplateIndex(index);
+    setFormData({ ...formData, message: MESSAGE_TEMPLATES[index] });
+  };
+
+  const truncateTemplate = (text: string, maxLength: number = 20) => {
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength) + '...';
+  };
 
   // 案件情報とプロフィールを取得
   useEffect(() => {
@@ -355,13 +373,39 @@ export default function BidPage({ params }: Props) {
                 <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
                   アピールメッセージ <span className="text-[#E24B4A]">*</span>
                 </label>
+
+                {/* テンプレート選択 */}
+                <div className="mb-3">
+                  <p className="text-xs text-[#73726C] mb-2">テンプレートから選ぶ</p>
+                  <div className="flex flex-wrap gap-2">
+                    {MESSAGE_TEMPLATES.map((template, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleTemplateSelect(index)}
+                        className={`px-3 py-2 text-xs rounded-lg border transition-colors text-left ${
+                          selectedTemplateIndex === index
+                            ? 'border-[#0F6E56] bg-[#E1F5EE] text-[#0F6E56]'
+                            : 'border-[#D5D5D0] bg-[#F9F9F7] text-[#73726C] hover:border-[#73726C]'
+                        }`}
+                      >
+                        {truncateTemplate(template)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <textarea
                   className="input min-h-[140px] resize-none"
                   placeholder="自社の強み、実績、対応可能な作業内容などをアピールしてください。"
                   value={formData.message}
-                  onChange={(e) =>
-                    setFormData({ ...formData, message: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, message: e.target.value });
+                    // ユーザーが編集したらテンプレート選択をクリア
+                    if (selectedTemplateIndex !== null && e.target.value !== MESSAGE_TEMPLATES[selectedTemplateIndex]) {
+                      setSelectedTemplateIndex(null);
+                    }
+                  }}
                   required
                 />
               </div>
