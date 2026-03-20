@@ -121,21 +121,22 @@ export default function MyPage() {
     fetchProfile();
   }, [userId]);
 
-  // 未読件数を取得
+  // 初回ロード時に未読件数を取得するため、bidsを先に取得
   useEffect(() => {
-    const fetchUnreadCounts = async () => {
+    const fetchBidsForCount = async () => {
       if (!userId) return;
       try {
-        const res = await authFetch('/api/mypage/unread-counts', userId);
+        const res = await authFetch('/api/bids', userId);
         if (res.ok) {
           const data = await res.json();
-          setUnreadCounts(data);
+          const newCount = data.bids?.filter((b: MyBid) => b.isNew).length || 0;
+          setUnreadCounts((prev) => ({ ...prev, bids: newCount }));
         }
       } catch (err) {
-        console.error('Failed to fetch unread counts:', err);
+        console.error('Failed to fetch bids for count:', err);
       }
     };
-    fetchUnreadCounts();
+    fetchBidsForCount();
   }, [userId]);
 
   const fetchData = useCallback(async () => {
@@ -333,7 +334,8 @@ export default function MyPage() {
         <div className="bg-white border-b border-[#E2E8F0]">
           <div className="flex">
             {TABS.map((tab) => {
-              const unreadCount = unreadCounts[tab.value as keyof UnreadCounts];
+              // bidsタブのみ未読件数を表示
+              const unreadCount = tab.value === 'bids' ? unreadCounts.bids : 0;
               return (
                 <button
                   key={tab.value}
