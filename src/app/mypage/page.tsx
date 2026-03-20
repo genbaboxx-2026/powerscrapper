@@ -466,11 +466,13 @@ export default function MyPage() {
                       <span className="badge badge-type">
                         {RECRUITMENT_TYPE_LABELS[bid.project.recruitmentType as RecruitmentType]}
                       </span>
-                      <span
-                        className={`text-sm font-medium ${getBidStatusColor(bid.status)}`}
-                      >
-                        {BID_STATUS_LABELS[bid.status] || bid.status}
-                      </span>
+                      {bid.status !== 'submitted' && (
+                        <span
+                          className={`text-sm font-medium ${getBidStatusColor(bid.status)}`}
+                        >
+                          {BID_STATUS_LABELS[bid.status] || bid.status}
+                        </span>
+                      )}
                     </div>
                     <h2 className="text-base font-bold text-[#1E293B] mb-2">
                       {bid.project.title}
