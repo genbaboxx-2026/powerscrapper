@@ -137,9 +137,7 @@ function MainContent() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectFilters, setProjectFilters] = useState({
     prefecture: '',
-    urgentOnly: false,
-    excludeBidded: false,
-    myProjects: false,
+    excludeBidded: true,
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -181,14 +179,8 @@ function MainContent() {
       if (projectFilters.prefecture) {
         params.set('prefecture', projectFilters.prefecture);
       }
-      if (projectFilters.urgentOnly) {
-        params.set('urgentOnly', 'true');
-      }
       if (projectFilters.excludeBidded) {
         params.set('excludeBidded', 'true');
-      }
-      if (projectFilters.myProjects) {
-        params.set('myProjects', 'true');
       }
 
       const res = await authFetch(`/api/projects?${params.toString()}`, userId);
@@ -428,7 +420,7 @@ function MainContent() {
           <div className="bg-white border-b border-[#E2E8F0] px-4 py-3">
             <div className="flex gap-2 overflow-x-auto pb-1">
               <select
-                className="input text-sm py-2 px-3 min-w-[100px]"
+                className="input text-sm py-2 px-3 min-w-[140px]"
                 value={projectFilters.prefecture}
                 onChange={(e) =>
                   setProjectFilters({ ...projectFilters, prefecture: e.target.value })
@@ -441,18 +433,7 @@ function MainContent() {
                   </option>
                 ))}
               </select>
-              <label className="flex items-center gap-1 text-sm whitespace-nowrap px-2">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4"
-                  checked={projectFilters.urgentOnly}
-                  onChange={(e) =>
-                    setProjectFilters({ ...projectFilters, urgentOnly: e.target.checked })
-                  }
-                />
-                急募のみ
-              </label>
-              <label className="flex items-center gap-1 text-sm whitespace-nowrap px-2">
+              <label className="flex items-center gap-2 text-sm whitespace-nowrap">
                 <input
                   type="checkbox"
                   className="w-4 h-4"
@@ -461,18 +442,7 @@ function MainContent() {
                     setProjectFilters({ ...projectFilters, excludeBidded: e.target.checked })
                   }
                 />
-                興味あり済を除外
-              </label>
-              <label className="flex items-center gap-1 text-sm whitespace-nowrap px-2">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4"
-                  checked={projectFilters.myProjects}
-                  onChange={(e) =>
-                    setProjectFilters({ ...projectFilters, myProjects: e.target.checked })
-                  }
-                />
-                自分が登録
+                未応募のみ
               </label>
             </div>
           </div>
@@ -502,11 +472,6 @@ function MainContent() {
                       {/* バッジ行 */}
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          {project.isOwner && (
-                            <span className="px-2 py-0.5 bg-[#E3EDF7] text-[#4A6FA5] text-xs rounded font-medium border border-[#B8D4E8]">
-                              自分の案件
-                            </span>
-                          )}
                           {project.isUrgent && (
                             <span className="badge badge-urgent">急募</span>
                           )}
