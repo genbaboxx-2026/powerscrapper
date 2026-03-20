@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
       deadline: project.deadline,
       status: project.status,
       bidCount: project._count.bids,
+      connectedCount: project.matches.length,
       isMatched: project.matches.length > 0,
       createdAt: project.createdAt,
     }));

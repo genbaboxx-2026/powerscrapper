@@ -119,11 +119,11 @@ export default function MyMatchesPage() {
         </header>
 
         <main className="p-4 pb-24">
-          <h1 className="text-lg font-bold text-[#1E293B] mb-4">成約一覧</h1>
+          <h1 className="text-lg font-bold text-[#1E293B] mb-4">連絡済み企業一覧</h1>
 
           {matches.length === 0 ? (
             <div className="text-center py-12 text-[#64748B]">
-              <p>成約済みの案件はありません</p>
+              <p>連絡済みの企業はありません</p>
               <Link href="/projects" className="btn-primary inline-block mt-4">
                 案件を探す
               </Link>
@@ -150,7 +150,7 @@ export default function MyMatchesPage() {
                     </h2>
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-[#64748B]">
-                        成約日: {formatDate(match.createdAt)}
+                        連絡日: {formatDate(match.createdAt)}
                       </p>
                       <svg
                         className={`w-5 h-5 text-[#64748B] transition-transform ${

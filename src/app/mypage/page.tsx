@@ -38,6 +38,7 @@ type MyProject = {
   deadline: string;
   status: string;
   bidCount: number;
+  connectedCount: number;
   isMatched: boolean;
   createdAt: string;
 };
@@ -407,8 +408,8 @@ export default function MyPage() {
                         </svg>
                         {project.bidCount > 0 ? `${project.bidCount}社が興味あり` : '興味あり 0件'}
                       </Link>
-                      {project.isMatched && (
-                        <span className="text-xs text-[#2563EB] font-medium">成約済み</span>
+                      {project.connectedCount > 0 && (
+                        <span className="text-xs text-[#06C755] font-medium">連絡済み: {project.connectedCount}社</span>
                       )}
                     </div>
                   </Link>

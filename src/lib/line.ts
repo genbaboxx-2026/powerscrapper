@@ -1461,6 +1461,232 @@ export function createWeeklyDigestMessage(projects: WeeklyDigestProject[]) {
 }
 
 /**
+ * マッチング成立通知メッセージを作成（連絡先交換用）
+ * 電話・メールはタップでアクション可能
+ */
+export function createMatchNotification(
+  projectTitle: string,
+  partnerCompanyName: string,
+  partnerRepresentative: string | null,
+  partnerPhone: string | null,
+  partnerEmail: string | null,
+  partnerLineDisplayName: string | null
+) {
+  const liffId = getLiffId();
+
+  const contactInfoContents: unknown[] = [];
+
+  // 会社名
+  contactInfoContents.push({
+    type: 'text',
+    text: partnerCompanyName,
+    weight: 'bold',
+    size: 'xl',
+    color: TEXT_PRIMARY_COLOR,
+  });
+
+  // 担当者名
+  if (partnerRepresentative) {
+    contactInfoContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'lg',
+      contents: [
+        {
+          type: 'text',
+          text: '担当者',
+          size: 'sm',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 2,
+        },
+        {
+          type: 'text',
+          text: partnerRepresentative,
+          size: 'sm',
+          color: TEXT_PRIMARY_COLOR,
+          flex: 5,
+          weight: 'bold',
+        },
+      ],
+    });
+  }
+
+  // 電話番号（タップで発信）
+  if (partnerPhone) {
+    contactInfoContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'md',
+      action: {
+        type: 'uri',
+        uri: `tel:${partnerPhone}`,
+      },
+      contents: [
+        {
+          type: 'text',
+          text: '電話番号',
+          size: 'sm',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 2,
+        },
+        {
+          type: 'text',
+          text: partnerPhone,
+          size: 'sm',
+          color: TEXT_ACCENT_COLOR,
+          flex: 5,
+          decoration: 'underline',
+        },
+      ],
+    });
+  }
+
+  // メールアドレス（タップでメール起動）
+  if (partnerEmail) {
+    contactInfoContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'md',
+      action: {
+        type: 'uri',
+        uri: `mailto:${partnerEmail}`,
+      },
+      contents: [
+        {
+          type: 'text',
+          text: 'メール',
+          size: 'sm',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 2,
+        },
+        {
+          type: 'text',
+          text: partnerEmail,
+          size: 'sm',
+          color: TEXT_ACCENT_COLOR,
+          flex: 5,
+          decoration: 'underline',
+          wrap: true,
+        },
+      ],
+    });
+  }
+
+  // LINE表示名
+  if (partnerLineDisplayName) {
+    contactInfoContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'md',
+      contents: [
+        {
+          type: 'text',
+          text: 'LINE',
+          size: 'sm',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 2,
+        },
+        {
+          type: 'text',
+          text: `「${partnerLineDisplayName}」で検索`,
+          size: 'sm',
+          color: '#06C755',
+          flex: 5,
+          wrap: true,
+        },
+      ],
+    });
+  }
+
+  return {
+    type: 'flex',
+    altText: `マッチング成立: ${projectTitle}`,
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_SUCCESS_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: 'マッチング成立',
+            color: '#FFFFFF',
+            size: 'xxl',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: projectTitle,
+            weight: 'bold',
+            size: 'md',
+            color: TEXT_PRIMARY_COLOR,
+            wrap: true,
+          },
+          {
+            type: 'separator',
+            margin: 'lg',
+          },
+          {
+            type: 'text',
+            text: '相手企業の連絡先',
+            size: 'sm',
+            color: TEXT_SECONDARY_COLOR,
+            margin: 'lg',
+            weight: 'bold',
+          },
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'md',
+            contents: contactInfoContents,
+          },
+          {
+            type: 'separator',
+            margin: 'xl',
+          },
+          {
+            type: 'text',
+            text: '※ PowerScrapper公式からの自動送信です',
+            size: 'xxs',
+            color: TEXT_SECONDARY_COLOR,
+            margin: 'lg',
+            align: 'center',
+          },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '12px',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '連絡済み一覧を見る',
+              uri: `https://liff.line.me/${liffId}/mypage/matches`,
+            },
+            style: 'primary',
+            color: BUTTON_PRIMARY_COLOR,
+            height: 'sm',
+          },
+        ],
+      },
+    },
+  };
+}
+
+/**
  * お問い合わせメッセージを作成
  */
 export function createContactInfoMessage() {
