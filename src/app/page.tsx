@@ -14,7 +14,7 @@ export default function Home() {
   }, [isLoading, isLoggedIn, error, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0]">
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto" />
         <p className="mt-4 text-gray-600 text-sm">読み込み中...</p>

@@ -18,7 +18,7 @@ type Member = {
 };
 
 const BUSINESS_TYPE_BADGE_COLORS: Record<string, string> = {
-  general_contractor: 'bg-[#E1F5EE] text-[#0F6E56]', // 緑
+  general_contractor: 'bg-[#EFF6FF] text-[#2563EB]', // 緑
   subcontractor: 'bg-[#E3EDF7] text-[#4A6FA5]', // 青
   craftsman: 'bg-[#FAEEDA] text-[#BA7517]', // 琥珀
   waste_disposal: 'bg-[#FDEAEA] text-[#E24B4A]', // 赤
@@ -80,12 +80,12 @@ export default function MembersPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#F4F3F0]">
+      <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
-        <header className="bg-white border-b border-[#D5D5D0] px-4 py-3 sticky top-0 z-10">
+        <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Link href="/projects" className="text-[#0F6E56]">
+              <Link href="/projects" className="text-[#2563EB]">
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -100,13 +100,13 @@ export default function MembersPage() {
                   />
                 </svg>
               </Link>
-              <h1 className="text-lg font-bold text-[#2C2C2A]">会員一覧</h1>
+              <h1 className="text-lg font-bold text-[#1E293B]">会員一覧</h1>
             </div>
           </div>
         </header>
 
         {/* フィルタ */}
-        <div className="bg-white border-b border-[#D5D5D0] px-4 py-3">
+        <div className="bg-white border-b border-[#E2E8F0] px-4 py-3">
           <div className="flex gap-2 overflow-x-auto pb-1">
             <select
               className="input text-sm py-2 px-3 min-w-[120px]"
@@ -142,11 +142,11 @@ export default function MembersPage() {
         <main className="p-4 pb-24">
           {isLoading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F6E56] mx-auto"></div>
-              <p className="mt-4 text-[#73726C] text-sm">読み込み中...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
+              <p className="mt-4 text-[#64748B] text-sm">読み込み中...</p>
             </div>
           ) : members.length === 0 ? (
-            <div className="text-center py-12 text-[#73726C]">
+            <div className="text-center py-12 text-[#64748B]">
               <p>該当する会員企業がありません</p>
               <p className="text-sm mt-2">フィルタ条件を変更してみてください</p>
             </div>
@@ -164,9 +164,9 @@ export default function MembersPage() {
                         className="w-12 h-12 rounded-full flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-[#D5D5D0] flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 rounded-full bg-[#E2E8F0] flex items-center justify-center flex-shrink-0">
                         <svg
-                          className="w-6 h-6 text-[#73726C]"
+                          className="w-6 h-6 text-[#64748B]"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -183,7 +183,7 @@ export default function MembersPage() {
 
                     <div className="flex-1 min-w-0">
                       {/* 会社名 */}
-                      <h2 className="text-base font-bold text-[#2C2C2A] truncate">
+                      <h2 className="text-base font-bold text-[#1E293B] truncate">
                         {member.companyName || '未設定'}
                       </h2>
 
@@ -192,7 +192,7 @@ export default function MembersPage() {
                         <span
                           className={`inline-block px-2 py-0.5 text-xs rounded font-medium mt-1 ${
                             BUSINESS_TYPE_BADGE_COLORS[member.businessType] ||
-                            'bg-[#E8E8E6] text-[#73726C]'
+                            'bg-[#E8E8E6] text-[#64748B]'
                           }`}
                         >
                           {BUSINESS_TYPE_LABELS[member.businessType as BusinessType] ||
@@ -205,12 +205,12 @@ export default function MembersPage() {
                   {/* 対応エリア */}
                   {member.coverageAreas.length > 0 && (
                     <div className="mb-3">
-                      <p className="text-xs text-[#73726C] mb-1">対応エリア</p>
+                      <p className="text-xs text-[#64748B] mb-1">対応エリア</p>
                       <div className="flex flex-wrap gap-1">
                         {member.coverageAreas.map((area) => (
                           <span
                             key={area}
-                            className="px-2 py-0.5 bg-[#F4F3F0] text-[#2C2C2A] text-xs rounded"
+                            className="px-2 py-0.5 bg-[#F8FAFC] text-[#1E293B] text-xs rounded"
                           >
                             {area}
                           </span>
@@ -222,7 +222,7 @@ export default function MembersPage() {
                   {/* 保有資格 */}
                   {member.licenses.length > 0 && (
                     <div className="mb-3">
-                      <p className="text-xs text-[#73726C] mb-1">保有資格</p>
+                      <p className="text-xs text-[#64748B] mb-1">保有資格</p>
                       <div className="flex flex-wrap gap-1">
                         {member.licenses.map((license) => (
                           <span
@@ -238,8 +238,8 @@ export default function MembersPage() {
 
                   {/* 会社紹介 */}
                   {member.companyDescription && (
-                    <div className="pt-3 border-t border-[#D5D5D0]">
-                      <p className="text-sm text-[#73726C] line-clamp-2">
+                    <div className="pt-3 border-t border-[#E2E8F0]">
+                      <p className="text-sm text-[#64748B] line-clamp-2">
                         {truncateText(member.companyDescription)}
                       </p>
                     </div>
@@ -251,11 +251,11 @@ export default function MembersPage() {
         </main>
 
         {/* ナビゲーション */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D5D5D0]">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0]">
           <div className="flex">
             <Link
               href="/projects"
-              className="flex-1 flex flex-col items-center py-3 text-[#73726C]"
+              className="flex-1 flex flex-col items-center py-3 text-[#64748B]"
             >
               <svg
                 className="w-6 h-6"
@@ -274,7 +274,7 @@ export default function MembersPage() {
             </Link>
             <Link
               href="/members"
-              className="flex-1 flex flex-col items-center py-3 text-[#0F6E56]"
+              className="flex-1 flex flex-col items-center py-3 text-[#2563EB]"
             >
               <svg
                 className="w-6 h-6"
@@ -293,7 +293,7 @@ export default function MembersPage() {
             </Link>
             <Link
               href="/mypage"
-              className="flex-1 flex flex-col items-center py-3 text-[#73726C]"
+              className="flex-1 flex flex-col items-center py-3 text-[#64748B]"
             >
               <svg
                 className="w-6 h-6"

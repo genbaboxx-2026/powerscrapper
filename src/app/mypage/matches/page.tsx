@@ -82,10 +82,10 @@ export default function MyMatchesPage() {
   if (isLoading) {
     return (
       <AuthGuard>
-        <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0]">
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F6E56] mx-auto"></div>
-            <p className="mt-4 text-[#73726C]">読み込み中...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563EB] mx-auto"></div>
+            <p className="mt-4 text-[#64748B]">読み込み中...</p>
           </div>
         </div>
       </AuthGuard>
@@ -94,12 +94,12 @@ export default function MyMatchesPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#F4F3F0]">
+      <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
-        <header className="bg-white border-b border-[#D5D5D0] px-4 py-3 sticky top-0 z-10">
+        <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-1 text-[#0F6E56]"
+            className="flex items-center gap-1 text-[#2563EB]"
           >
             <svg
               className="w-5 h-5"
@@ -119,10 +119,10 @@ export default function MyMatchesPage() {
         </header>
 
         <main className="p-4 pb-24">
-          <h1 className="text-lg font-bold text-[#2C2C2A] mb-4">成約一覧</h1>
+          <h1 className="text-lg font-bold text-[#1E293B] mb-4">成約一覧</h1>
 
           {matches.length === 0 ? (
-            <div className="text-center py-12 text-[#73726C]">
+            <div className="text-center py-12 text-[#64748B]">
               <p>成約済みの案件はありません</p>
               <Link href="/projects" className="btn-primary inline-block mt-4">
                 案件を探す
@@ -141,19 +141,19 @@ export default function MyMatchesPage() {
                       <span className="badge badge-type">
                         {RECRUITMENT_TYPE_LABELS[match.project.recruitmentType as RecruitmentType]}
                       </span>
-                      <span className="text-xs text-[#73726C]">
+                      <span className="text-xs text-[#64748B]">
                         {match.role === 'poster' ? '発注' : '受注'}
                       </span>
                     </div>
-                    <h2 className="text-base font-bold text-[#2C2C2A] mb-2">
+                    <h2 className="text-base font-bold text-[#1E293B] mb-2">
                       {match.project.title}
                     </h2>
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-[#73726C]">
+                      <p className="text-sm text-[#64748B]">
                         成約日: {formatDate(match.createdAt)}
                       </p>
                       <svg
-                        className={`w-5 h-5 text-[#73726C] transition-transform ${
+                        className={`w-5 h-5 text-[#64748B] transition-transform ${
                           expandedId === match.id ? 'rotate-180' : ''
                         }`}
                         fill="none"
@@ -172,13 +172,13 @@ export default function MyMatchesPage() {
 
                   {/* 展開時のコンテンツ */}
                   {expandedId === match.id && (
-                    <div className="px-4 pb-4 border-t border-[#D5D5D0]">
+                    <div className="px-4 pb-4 border-t border-[#E2E8F0]">
                       {/* 相手の情報 */}
                       <div className="mt-4">
-                        <h3 className="text-sm font-medium text-[#73726C] mb-3">
+                        <h3 className="text-sm font-medium text-[#64748B] mb-3">
                           {match.role === 'poster' ? '受注者情報' : '発注者情報'}
                         </h3>
-                        <div className="bg-[#F4F3F0] rounded-lg p-4">
+                        <div className="bg-[#F8FAFC] rounded-lg p-4">
                           <div className="flex items-start gap-3 mb-3">
                             {match.counterpart.pictureUrl ? (
                               <img
@@ -187,9 +187,9 @@ export default function MyMatchesPage() {
                                 className="w-12 h-12 rounded-full"
                               />
                             ) : (
-                              <div className="w-12 h-12 rounded-full bg-[#D5D5D0] flex items-center justify-center">
+                              <div className="w-12 h-12 rounded-full bg-[#E2E8F0] flex items-center justify-center">
                                 <svg
-                                  className="w-6 h-6 text-[#73726C]"
+                                  className="w-6 h-6 text-[#64748B]"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -204,10 +204,10 @@ export default function MyMatchesPage() {
                               </div>
                             )}
                             <div>
-                              <h4 className="font-bold text-[#2C2C2A]">
+                              <h4 className="font-bold text-[#1E293B]">
                                 {match.counterpart.companyName || '未設定'}
                               </h4>
-                              <p className="text-sm text-[#73726C]">
+                              <p className="text-sm text-[#64748B]">
                                 {match.counterpart.businessType
                                   ? BUSINESS_TYPE_LABELS[match.counterpart.businessType as BusinessType]
                                   : ''}
@@ -218,19 +218,19 @@ export default function MyMatchesPage() {
                           <dl className="space-y-2 text-sm">
                             {match.counterpart.representativeName && (
                               <div className="flex">
-                                <dt className="w-16 text-[#73726C] shrink-0">代表者</dt>
-                                <dd className="flex-1 text-[#2C2C2A]">
+                                <dt className="w-16 text-[#64748B] shrink-0">代表者</dt>
+                                <dd className="flex-1 text-[#1E293B]">
                                   {match.counterpart.representativeName}
                                 </dd>
                               </div>
                             )}
                             {match.counterpart.phone && (
                               <div className="flex">
-                                <dt className="w-16 text-[#73726C] shrink-0">電話</dt>
+                                <dt className="w-16 text-[#64748B] shrink-0">電話</dt>
                                 <dd className="flex-1">
                                   <a
                                     href={`tel:${match.counterpart.phone}`}
-                                    className="text-[#0F6E56] underline"
+                                    className="text-[#2563EB] underline"
                                   >
                                     {match.counterpart.phone}
                                   </a>
@@ -239,11 +239,11 @@ export default function MyMatchesPage() {
                             )}
                             {match.counterpart.email && (
                               <div className="flex">
-                                <dt className="w-16 text-[#73726C] shrink-0">メール</dt>
+                                <dt className="w-16 text-[#64748B] shrink-0">メール</dt>
                                 <dd className="flex-1">
                                   <a
                                     href={`mailto:${match.counterpart.email}`}
-                                    className="text-[#0F6E56] underline"
+                                    className="text-[#2563EB] underline"
                                   >
                                     {match.counterpart.email}
                                   </a>
@@ -252,8 +252,8 @@ export default function MyMatchesPage() {
                             )}
                             {match.counterpart.address && (
                               <div className="flex">
-                                <dt className="w-16 text-[#73726C] shrink-0">住所</dt>
-                                <dd className="flex-1 text-[#2C2C2A]">
+                                <dt className="w-16 text-[#64748B] shrink-0">住所</dt>
+                                <dd className="flex-1 text-[#1E293B]">
                                   {match.counterpart.address}
                                 </dd>
                               </div>
@@ -264,10 +264,10 @@ export default function MyMatchesPage() {
 
                       {/* 案件・入札情報 */}
                       <div className="mt-4">
-                        <h3 className="text-sm font-medium text-[#73726C] mb-2">
+                        <h3 className="text-sm font-medium text-[#64748B] mb-2">
                           案件情報
                         </h3>
-                        <div className="text-sm text-[#2C2C2A] space-y-1">
+                        <div className="text-sm text-[#1E293B] space-y-1">
                           <p>
                             エリア: {match.project.sitePrefecture || '未設定'}
                           </p>

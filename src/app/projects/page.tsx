@@ -67,12 +67,12 @@ const CONSULTATION_CATEGORIES = [
 ];
 
 const CATEGORY_BADGES: Record<string, { label: string; color: string }> = {
-  general: { label: '一般相談', color: 'bg-[#E8E8E6] text-[#73726C]' },
+  general: { label: '一般相談', color: 'bg-[#E8E8E6] text-[#64748B]' },
   technical: { label: '技術相談', color: 'bg-[#E3EDF7] text-[#4A6FA5]' },
   equipment: { label: '重機・機材', color: 'bg-[#FAEEDA] text-[#BA7517]' },
-  waste: { label: '産廃関連', color: 'bg-[#E1F5EE] text-[#0F6E56]' },
+  waste: { label: '産廃関連', color: 'bg-[#EFF6FF] text-[#2563EB]' },
   regulation: { label: '法規・許可', color: 'bg-[#FDEAEA] text-[#E24B4A]' },
-  other: { label: 'その他', color: 'bg-[#E8E8E6] text-[#73726C]' },
+  other: { label: 'その他', color: 'bg-[#E8E8E6] text-[#64748B]' },
 };
 
 // ===== Message Component =====
@@ -85,7 +85,7 @@ function ToastMessage() {
 
   if (registered) {
     return (
-      <div className="mx-4 mt-4 p-3 bg-[#E1F5EE] border border-[#0F6E56] rounded-lg text-[#0F6E56] text-sm">
+      <div className="mx-4 mt-4 p-3 bg-[#EFF6FF] border border-[#2563EB] rounded-lg text-[#2563EB] text-sm">
         案件を登録しました。管理者の審査後に公開されます。
       </div>
     );
@@ -93,7 +93,7 @@ function ToastMessage() {
 
   if (bidSuccess) {
     return (
-      <div className="mx-4 mt-4 p-3 bg-[#E1F5EE] border border-[#0F6E56] rounded-lg text-[#0F6E56] text-sm">
+      <div className="mx-4 mt-4 p-3 bg-[#EFF6FF] border border-[#2563EB] rounded-lg text-[#2563EB] text-sm">
         興味ありを送信しました。結果をお待ちください。
       </div>
     );
@@ -101,7 +101,7 @@ function ToastMessage() {
 
   if (posted) {
     return (
-      <div className="mx-4 mt-4 p-3 bg-[#E1F5EE] border border-[#0F6E56] rounded-lg text-[#0F6E56] text-sm">
+      <div className="mx-4 mt-4 p-3 bg-[#EFF6FF] border border-[#2563EB] rounded-lg text-[#2563EB] text-sm">
         相談を投稿しました。
       </div>
     );
@@ -242,14 +242,14 @@ function MainContent() {
   return (
     <>
       {/* タブ */}
-      <div className="bg-white border-b border-[#D5D5D0]">
+      <div className="bg-white border-b border-[#E2E8F0]">
         <div className="flex">
           <button
             onClick={() => setActiveTab('consultation')}
             className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${
               activeTab === 'consultation'
-                ? 'border-[#0F6E56] text-[#0F6E56]'
-                : 'border-transparent text-[#73726C]'
+                ? 'border-[#2563EB] text-[#2563EB]'
+                : 'border-transparent text-[#64748B]'
             }`}
           >
             パワスク相談
@@ -258,8 +258,8 @@ function MainContent() {
             onClick={() => setActiveTab('project')}
             className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${
               activeTab === 'project'
-                ? 'border-[#0F6E56] text-[#0F6E56]'
-                : 'border-transparent text-[#73726C]'
+                ? 'border-[#2563EB] text-[#2563EB]'
+                : 'border-transparent text-[#64748B]'
             }`}
           >
             案件
@@ -270,7 +270,7 @@ function MainContent() {
       {activeTab === 'consultation' ? (
         <>
           {/* 相談フィルタ */}
-          <div className="bg-white border-b border-[#D5D5D0] px-4 py-3">
+          <div className="bg-white border-b border-[#E2E8F0] px-4 py-3">
             <div className="flex gap-2 overflow-x-auto pb-1">
               <select
                 className="input text-sm py-2 px-3 min-w-[120px]"
@@ -303,11 +303,11 @@ function MainContent() {
           <main className="p-4 pb-24">
             {isLoading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F6E56] mx-auto"></div>
-                <p className="mt-4 text-[#73726C] text-sm">読み込み中...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
+                <p className="mt-4 text-[#64748B] text-sm">読み込み中...</p>
               </div>
             ) : consultations.length === 0 ? (
-              <div className="text-center py-12 text-[#73726C]">
+              <div className="text-center py-12 text-[#64748B]">
                 <p>相談がありません</p>
                 <p className="text-sm mt-2">最初の相談を投稿してみましょう</p>
               </div>
@@ -326,23 +326,23 @@ function MainContent() {
                         <span className={`px-2 py-0.5 text-xs rounded font-medium ${categoryInfo.color}`}>
                           {categoryInfo.label}
                         </span>
-                        <span className="text-xs text-[#73726C]">
+                        <span className="text-xs text-[#64748B]">
                           {formatDateTime(consultation.createdAt)}
                         </span>
                       </div>
 
                       {/* タイトル */}
-                      <h2 className="text-base font-bold text-[#2C2C2A] mb-2">
+                      <h2 className="text-base font-bold text-[#1E293B] mb-2">
                         {consultation.title}
                       </h2>
 
                       {/* 本文プレビュー */}
-                      <p className="text-sm text-[#73726C] mb-3 line-clamp-2">
+                      <p className="text-sm text-[#64748B] mb-3 line-clamp-2">
                         {truncateText(consultation.body)}
                       </p>
 
                       {/* フッター */}
-                      <div className="flex items-center justify-between pt-2 border-t border-[#D5D5D0]">
+                      <div className="flex items-center justify-between pt-2 border-t border-[#E2E8F0]">
                         <div className="flex items-center gap-2">
                           {consultation.user.pictureUrl ? (
                             <img
@@ -351,13 +351,13 @@ function MainContent() {
                               className="w-5 h-5 rounded-full"
                             />
                           ) : (
-                            <div className="w-5 h-5 rounded-full bg-[#D5D5D0]"></div>
+                            <div className="w-5 h-5 rounded-full bg-[#E2E8F0]"></div>
                           )}
-                          <span className="text-xs text-[#73726C]">
+                          <span className="text-xs text-[#64748B]">
                             {getUserDisplayName(consultation.user)}
                           </span>
                         </div>
-                        <span className="text-xs text-[#0F6E56]">
+                        <span className="text-xs text-[#2563EB]">
                           💬 {consultation.commentCount}件
                         </span>
                       </div>
@@ -394,7 +394,7 @@ function MainContent() {
       ) : (
         <>
           {/* 案件フィルタ */}
-          <div className="bg-white border-b border-[#D5D5D0] px-4 py-3">
+          <div className="bg-white border-b border-[#E2E8F0] px-4 py-3">
             <div className="flex gap-2 overflow-x-auto pb-1">
               <select
                 className="input text-sm py-2 px-3 min-w-[130px]"
@@ -464,11 +464,11 @@ function MainContent() {
           <main className="p-4 pb-24">
             {isLoading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F6E56] mx-auto"></div>
-                <p className="mt-4 text-[#73726C] text-sm">読み込み中...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
+                <p className="mt-4 text-[#64748B] text-sm">読み込み中...</p>
               </div>
             ) : projects.length === 0 ? (
-              <div className="text-center py-12 text-[#73726C]">
+              <div className="text-center py-12 text-[#64748B]">
                 <p>案件がありません</p>
                 <p className="text-sm mt-2">新しい案件が登録されるとここに表示されます</p>
               </div>
@@ -497,18 +497,18 @@ function MainContent() {
                             {RECRUITMENT_TYPE_LABELS[project.recruitmentType as RecruitmentType]}
                           </span>
                         </div>
-                        <span className="text-sm text-[#73726C]">
+                        <span className="text-sm text-[#64748B]">
                           {formatDate(project.createdAt)}
                         </span>
                       </div>
 
                       {/* タイトル */}
-                      <h2 className="text-base font-bold text-[#2C2C2A] mb-2">
+                      <h2 className="text-base font-bold text-[#1E293B] mb-2">
                         {project.title}
                       </h2>
 
                       {/* エリア・工期 */}
-                      <p className="text-sm text-[#73726C] mb-2">
+                      <p className="text-sm text-[#64748B] mb-2">
                         {project.sitePrefecture || '未設定'} | {project.periodStart}〜{project.periodEnd}
                       </p>
 
@@ -517,24 +517,24 @@ function MainContent() {
                         {project.workTypes.slice(0, 3).map((type) => (
                           <span
                             key={type}
-                            className="px-2 py-0.5 bg-[#F4F3F0] text-[#73726C] text-xs rounded"
+                            className="px-2 py-0.5 bg-[#F8FAFC] text-[#64748B] text-xs rounded"
                           >
                             {WORK_TYPE_LABELS[type as WorkType]}
                           </span>
                         ))}
                         {project.workTypes.length > 3 && (
-                          <span className="px-2 py-0.5 text-[#73726C] text-xs">
+                          <span className="px-2 py-0.5 text-[#64748B] text-xs">
                             +{project.workTypes.length - 3}
                           </span>
                         )}
                       </div>
 
                       {/* フッター */}
-                      <div className="flex items-center justify-between pt-2 border-t border-[#D5D5D0]">
-                        <span className="text-sm text-[#0F6E56]">詳細を見る</span>
+                      <div className="flex items-center justify-between pt-2 border-t border-[#E2E8F0]">
+                        <span className="text-sm text-[#2563EB]">詳細を見る</span>
                         <span
                           className={`text-sm ${
-                            daysRemaining <= 3 ? 'text-[#E24B4A]' : 'text-[#73726C]'
+                            daysRemaining <= 3 ? 'text-[#E24B4A]' : 'text-[#64748B]'
                           }`}
                         >
                           残り{daysRemaining}日
@@ -580,14 +580,14 @@ function MainContent() {
 export default function ProjectsPage() {
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#F4F3F0]">
+      <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
-        <header className="bg-white border-b border-[#D5D5D0] px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-[#2C2C2A]">PowerScrapper</h1>
+        <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">
+          <h1 className="text-lg font-bold text-[#1E293B]">PowerScrapper</h1>
           <div className="flex items-center gap-4">
             <Link
               href="/members"
-              className="flex items-center gap-1 text-sm text-[#0F6E56]"
+              className="flex items-center gap-1 text-sm text-[#2563EB]"
             >
               <svg
                 className="w-5 h-5"
@@ -606,7 +606,7 @@ export default function ProjectsPage() {
             </Link>
             <Link
               href="/profile/edit"
-              className="flex items-center gap-1 text-sm text-[#0F6E56]"
+              className="flex items-center gap-1 text-sm text-[#2563EB]"
             >
               <svg
                 className="w-5 h-5"
@@ -634,7 +634,7 @@ export default function ProjectsPage() {
         {/* メインコンテンツ */}
         <Suspense fallback={
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F6E56] mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
           </div>
         }>
           <MainContent />

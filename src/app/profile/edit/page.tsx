@@ -128,20 +128,20 @@ export default function ProfileEditPage() {
 
   if (isLoading || liffLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0]">
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F6E56] mx-auto"></div>
-          <p className="mt-4 text-[#73726C]">読み込み中...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563EB] mx-auto"></div>
+          <p className="mt-4 text-[#64748B]">読み込み中...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F3F0]">
+    <div className="min-h-screen bg-[#F8FAFC]">
       {/* ヘッダー */}
-      <header className="bg-white border-b border-[#D5D5D0] px-4 py-3 sticky top-0 z-10">
-        <h1 className="text-lg font-bold text-[#2C2C2A]">会社プロフィール登録</h1>
+      <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
+        <h1 className="text-lg font-bold text-[#1E293B]">会社プロフィール登録</h1>
         {displayName && (
           <div className="flex items-center gap-2 mt-2">
             {pictureUrl && (
@@ -151,7 +151,7 @@ export default function ProfileEditPage() {
                 className="w-8 h-8 rounded-full"
               />
             )}
-            <p className="text-sm text-[#73726C]">
+            <p className="text-sm text-[#64748B]">
               {displayName} / LINE認証済み
             </p>
           </div>
@@ -167,7 +167,7 @@ export default function ProfileEditPage() {
 
         {/* 会社名 */}
         <div className="card p-4 mb-4">
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+          <label className="block text-sm font-medium text-[#1E293B] mb-2">
             会社名 <span className="text-[#E24B4A]">*</span>
           </label>
           <input
@@ -184,7 +184,7 @@ export default function ProfileEditPage() {
 
         {/* 業種カテゴリ */}
         <div className="card p-4 mb-4">
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+          <label className="block text-sm font-medium text-[#1E293B] mb-2">
             業種カテゴリ <span className="text-[#E24B4A]">*</span>
           </label>
           <div className="flex flex-wrap gap-2">
@@ -198,8 +198,8 @@ export default function ProfileEditPage() {
                   }
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     formData.businessType === value
-                      ? 'bg-[#0F6E56] text-white'
-                      : 'bg-white border border-[#D5D5D0] text-[#2C2C2A]'
+                      ? 'bg-[#2563EB] text-white'
+                      : 'bg-white border border-[#E2E8F0] text-[#1E293B]'
                   }`}
                 >
                   {label}
@@ -211,7 +211,7 @@ export default function ProfileEditPage() {
 
         {/* 代表者名 */}
         <div className="card p-4 mb-4">
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+          <label className="block text-sm font-medium text-[#1E293B] mb-2">
             代表者名 <span className="text-[#E24B4A]">*</span>
           </label>
           <input
@@ -228,7 +228,7 @@ export default function ProfileEditPage() {
 
         {/* 電話番号 */}
         <div className="card p-4 mb-4">
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+          <label className="block text-sm font-medium text-[#1E293B] mb-2">
             電話番号 <span className="text-[#E24B4A]">*</span>
           </label>
           <input
@@ -245,7 +245,7 @@ export default function ProfileEditPage() {
 
         {/* メールアドレス */}
         <div className="card p-4 mb-4">
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+          <label className="block text-sm font-medium text-[#1E293B] mb-2">
             メールアドレス
           </label>
           <input
@@ -261,7 +261,7 @@ export default function ProfileEditPage() {
 
         {/* 所在地 */}
         <div className="card p-4 mb-4">
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+          <label className="block text-sm font-medium text-[#1E293B] mb-2">
             所在地
           </label>
           <input
@@ -277,7 +277,7 @@ export default function ProfileEditPage() {
 
         {/* 対応エリア */}
         <div className="card p-4 mb-4">
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+          <label className="block text-sm font-medium text-[#1E293B] mb-2">
             対応エリア（複数選択可）
           </label>
           <div className="flex flex-wrap gap-2">
@@ -288,8 +288,8 @@ export default function ProfileEditPage() {
                 onClick={() => toggleArrayItem('coverageAreas', area)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   formData.coverageAreas.includes(area)
-                    ? 'bg-[#0F6E56] text-white'
-                    : 'bg-white border border-[#D5D5D0] text-[#2C2C2A]'
+                    ? 'bg-[#2563EB] text-white'
+                    : 'bg-white border border-[#E2E8F0] text-[#1E293B]'
                 }`}
               >
                 {area}
@@ -300,7 +300,7 @@ export default function ProfileEditPage() {
 
         {/* 保有許可・資格 */}
         <div className="card p-4 mb-4">
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+          <label className="block text-sm font-medium text-[#1E293B] mb-2">
             保有許可・資格（複数選択可）
           </label>
           <div className="flex flex-wrap gap-2">
@@ -311,8 +311,8 @@ export default function ProfileEditPage() {
                 onClick={() => toggleArrayItem('licenses', license)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   formData.licenses.includes(license)
-                    ? 'bg-[#0F6E56] text-white'
-                    : 'bg-white border border-[#D5D5D0] text-[#2C2C2A]'
+                    ? 'bg-[#2563EB] text-white'
+                    : 'bg-white border border-[#E2E8F0] text-[#1E293B]'
                 }`}
               >
                 {license}
@@ -323,7 +323,7 @@ export default function ProfileEditPage() {
 
         {/* 会社紹介 */}
         <div className="card p-4 mb-4">
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+          <label className="block text-sm font-medium text-[#1E293B] mb-2">
             会社紹介
           </label>
           <textarea
@@ -341,7 +341,7 @@ export default function ProfileEditPage() {
           <label className="flex items-start gap-3">
             <input
               type="checkbox"
-              className="w-5 h-5 mt-0.5 rounded border-[#D5D5D0]"
+              className="w-5 h-5 mt-0.5 rounded border-[#E2E8F0]"
               checked={formData.lineFriendLinkConsent}
               onChange={(e) =>
                 setFormData({
@@ -350,14 +350,14 @@ export default function ProfileEditPage() {
                 })
               }
             />
-            <span className="text-sm text-[#2C2C2A]">
+            <span className="text-sm text-[#1E293B]">
               マッチング成立時に、相手にLINE友だち追加リンクを送付することに同意します
             </span>
           </label>
         </div>
 
         {/* 送信ボタン */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D5D5D0] p-4">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] p-4">
           <button
             type="submit"
             disabled={isSaving}

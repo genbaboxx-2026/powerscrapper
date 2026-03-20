@@ -60,12 +60,12 @@ export default function NewConsultationPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#F4F3F0]">
+      <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
-        <header className="bg-white border-b border-[#D5D5D0] px-4 py-3 sticky top-0 z-10">
+        <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-1 text-[#0F6E56]"
+            className="flex items-center gap-1 text-[#2563EB]"
           >
             <svg
               className="w-5 h-5"
@@ -86,10 +86,10 @@ export default function NewConsultationPage() {
 
         <main className="p-4 pb-24">
           <div className="card p-4 mb-4">
-            <h1 className="text-lg font-bold text-[#2C2C2A] mb-2">
+            <h1 className="text-lg font-bold text-[#1E293B] mb-2">
               相談を投稿する
             </h1>
-            <p className="text-sm text-[#73726C]">
+            <p className="text-sm text-[#64748B]">
               解体業界で働く仲間に相談してみましょう。
             </p>
           </div>
@@ -103,7 +103,7 @@ export default function NewConsultationPage() {
           <form onSubmit={handleSubmit}>
             {/* カテゴリ */}
             <div className="card p-4 mb-4">
-              <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+              <label className="block text-sm font-medium text-[#1E293B] mb-2">
                 カテゴリ <span className="text-[#E24B4A]">*</span>
               </label>
               <select
@@ -125,7 +125,7 @@ export default function NewConsultationPage() {
 
             {/* タイトル */}
             <div className="card p-4 mb-4">
-              <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+              <label className="block text-sm font-medium text-[#1E293B] mb-2">
                 タイトル <span className="text-[#E24B4A]">*</span>
               </label>
               <input
@@ -143,7 +143,7 @@ export default function NewConsultationPage() {
 
             {/* 相談内容 */}
             <div className="card p-4 mb-4">
-              <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+              <label className="block text-sm font-medium text-[#1E293B] mb-2">
                 相談内容 <span className="text-[#E24B4A]">*</span>
               </label>
               <textarea
@@ -158,15 +158,15 @@ export default function NewConsultationPage() {
             </div>
 
             {/* 注意事項 */}
-            <div className="card p-4 mb-4 bg-[#F4F3F0] border-[#D5D5D0]">
-              <p className="text-xs text-[#73726C]">
+            <div className="card p-4 mb-4 bg-[#F8FAFC] border-[#E2E8F0]">
+              <p className="text-xs text-[#64748B]">
                 ※ 投稿内容は会員全員に公開されます。
                 <br />※ 個人情報や機密情報は記載しないでください。
               </p>
             </div>
 
             {/* 送信ボタン */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D5D5D0] p-4">
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] p-4">
               <button
                 type="submit"
                 disabled={isSubmitting}

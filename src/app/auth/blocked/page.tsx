@@ -6,12 +6,12 @@ export default function BlockedPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] px-4">
       <div className="card p-8 max-w-sm w-full text-center">
         {/* ロックアイコン */}
-        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#E1F5EE] flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#EFF6FF] flex items-center justify-center">
           <svg
-            className="w-8 h-8 text-[#0F6E56]"
+            className="w-8 h-8 text-[#2563EB]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -25,11 +25,11 @@ export default function BlockedPage() {
           </svg>
         </div>
 
-        <h1 className="text-xl font-bold text-[#2C2C2A] mb-2">
+        <h1 className="text-xl font-bold text-[#1E293B] mb-2">
           会員限定サービスです
         </h1>
 
-        <p className="text-[#73726C] mb-6 text-sm">
+        <p className="text-[#64748B] mb-6 text-sm">
           PowerScrapper公式LINEを
           <br />
           友だち追加するとご利用いただけます
@@ -45,7 +45,7 @@ export default function BlockedPage() {
           LINEで友だち追加する
         </button>
 
-        <p className="mt-6 text-xs text-[#73726C]">
+        <p className="mt-6 text-xs text-[#64748B]">
           PowerScrapperの集いの参加者・紹介者限定
         </p>
       </div>

@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className="min-h-screen bg-[#F4F3F0]">
+      <body className="min-h-screen bg-[#F8FAFC]">
         <LiffProvider>
           {children}
         </LiffProvider>

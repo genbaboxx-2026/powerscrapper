@@ -194,10 +194,10 @@ export default function BidPage({ params }: Props) {
   if (isLoading) {
     return (
       <AuthGuard>
-        <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0]">
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F6E56] mx-auto"></div>
-            <p className="mt-4 text-[#73726C]">読み込み中...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563EB] mx-auto"></div>
+            <p className="mt-4 text-[#64748B]">読み込み中...</p>
           </div>
         </div>
       </AuthGuard>
@@ -207,11 +207,11 @@ export default function BidPage({ params }: Props) {
   if (error && !project) {
     return (
       <AuthGuard>
-        <div className="min-h-screen bg-[#F4F3F0]">
-          <header className="bg-white border-b border-[#D5D5D0] px-4 py-3">
+        <div className="min-h-screen bg-[#F8FAFC]">
+          <header className="bg-white border-b border-[#E2E8F0] px-4 py-3">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-1 text-[#0F6E56]"
+              className="flex items-center gap-1 text-[#2563EB]"
             >
               <svg
                 className="w-5 h-5"
@@ -249,12 +249,12 @@ export default function BidPage({ params }: Props) {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#F4F3F0]">
+      <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
-        <header className="bg-white border-b border-[#D5D5D0] px-4 py-3 sticky top-0 z-10">
+        <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
           <button
             onClick={() => (step === 'confirm' ? setStep('input') : router.back())}
-            className="flex items-center gap-1 text-[#0F6E56]"
+            className="flex items-center gap-1 text-[#2563EB]"
           >
             <svg
               className="w-5 h-5"
@@ -274,21 +274,21 @@ export default function BidPage({ params }: Props) {
         </header>
 
         {/* ステップインジケーター */}
-        <div className="bg-white px-4 py-3 border-b border-[#D5D5D0]">
+        <div className="bg-white px-4 py-3 border-b border-[#E2E8F0]">
           <div className="flex justify-center gap-4">
             <div className="flex items-center gap-2">
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
                   step === 'input'
-                    ? 'bg-[#0F6E56] text-white'
-                    : 'bg-[#D5D5D0] text-white'
+                    ? 'bg-[#2563EB] text-white'
+                    : 'bg-[#E2E8F0] text-white'
                 }`}
               >
                 1
               </div>
               <span
                 className={`text-sm ${
-                  step === 'input' ? 'text-[#0F6E56] font-medium' : 'text-[#73726C]'
+                  step === 'input' ? 'text-[#2563EB] font-medium' : 'text-[#64748B]'
                 }`}
               >
                 入力
@@ -298,15 +298,15 @@ export default function BidPage({ params }: Props) {
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
                   step === 'confirm'
-                    ? 'bg-[#0F6E56] text-white'
-                    : 'bg-[#D5D5D0] text-white'
+                    ? 'bg-[#2563EB] text-white'
+                    : 'bg-[#E2E8F0] text-white'
                 }`}
               >
                 2
               </div>
               <span
                 className={`text-sm ${
-                  step === 'confirm' ? 'text-[#0F6E56] font-medium' : 'text-[#73726C]'
+                  step === 'confirm' ? 'text-[#2563EB] font-medium' : 'text-[#64748B]'
                 }`}
               >
                 確認
@@ -326,10 +326,10 @@ export default function BidPage({ params }: Props) {
                 {RECRUITMENT_TYPE_LABELS[project.recruitmentType as RecruitmentType]}
               </span>
             </div>
-            <h1 className="text-lg font-bold text-[#2C2C2A] mb-2">
+            <h1 className="text-lg font-bold text-[#1E293B] mb-2">
               {project.title}
             </h1>
-            <div className="text-sm text-[#73726C] space-y-1">
+            <div className="text-sm text-[#64748B] space-y-1">
               <p>
                 {STRUCTURE_TYPE_LABELS[project.structureType as StructureType]}
                 {project.floors && ` / ${project.floors}`}
@@ -351,7 +351,7 @@ export default function BidPage({ params }: Props) {
             <form onSubmit={handleConfirm}>
               {/* 対応可能時期 */}
               <div className="card p-4 mb-4">
-                <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+                <label className="block text-sm font-medium text-[#1E293B] mb-2">
                   対応可能時期
                 </label>
                 <input
@@ -363,20 +363,20 @@ export default function BidPage({ params }: Props) {
                     setFormData({ ...formData, availableFrom: e.target.value })
                   }
                 />
-                <p className="text-xs text-[#73726C] mt-2">
+                <p className="text-xs text-[#64748B] mt-2">
                   ※ おおよその目安で構いません
                 </p>
               </div>
 
               {/* アピールメッセージ */}
               <div className="card p-4 mb-4">
-                <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
+                <label className="block text-sm font-medium text-[#1E293B] mb-2">
                   アピールメッセージ <span className="text-[#E24B4A]">*</span>
                 </label>
 
                 {/* テンプレート選択 */}
                 <div className="mb-3">
-                  <p className="text-xs text-[#73726C] mb-2">テンプレートから選ぶ</p>
+                  <p className="text-xs text-[#64748B] mb-2">テンプレートから選ぶ</p>
                   <div className="flex flex-wrap gap-2">
                     {MESSAGE_TEMPLATES.map((template, index) => (
                       <button
@@ -385,8 +385,8 @@ export default function BidPage({ params }: Props) {
                         onClick={() => handleTemplateSelect(index)}
                         className={`px-3 py-2 text-xs rounded-lg border transition-colors text-left ${
                           selectedTemplateIndex === index
-                            ? 'border-[#0F6E56] bg-[#E1F5EE] text-[#0F6E56]'
-                            : 'border-[#D5D5D0] bg-[#F9F9F7] text-[#73726C] hover:border-[#73726C]'
+                            ? 'border-[#2563EB] bg-[#EFF6FF] text-[#2563EB]'
+                            : 'border-[#E2E8F0] bg-[#F9F9F7] text-[#64748B] hover:border-[#64748B]'
                         }`}
                       >
                         {truncateTemplate(template)}
@@ -414,12 +414,12 @@ export default function BidPage({ params }: Props) {
               {profile && (
                 <div className="card p-4 mb-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-sm font-medium text-[#73726C]">
+                    <h2 className="text-sm font-medium text-[#64748B]">
                       登録者に表示される あなたの会社情報
                     </h2>
                     <Link
                       href="/profile/edit"
-                      className="text-xs text-[#0F6E56] underline"
+                      className="text-xs text-[#2563EB] underline"
                     >
                       プロフィールを編集
                     </Link>
@@ -427,53 +427,53 @@ export default function BidPage({ params }: Props) {
 
                   <dl className="space-y-2 text-sm">
                     <div className="flex">
-                      <dt className="w-20 text-[#73726C] shrink-0">会社名</dt>
-                      <dd className="flex-1 text-[#2C2C2A]">
+                      <dt className="w-20 text-[#64748B] shrink-0">会社名</dt>
+                      <dd className="flex-1 text-[#1E293B]">
                         {profile.companyName || '未設定'}
                       </dd>
                     </div>
                     <div className="flex">
-                      <dt className="w-20 text-[#73726C] shrink-0">業種</dt>
-                      <dd className="flex-1 text-[#2C2C2A]">
+                      <dt className="w-20 text-[#64748B] shrink-0">業種</dt>
+                      <dd className="flex-1 text-[#1E293B]">
                         {profile.businessType
                           ? BUSINESS_TYPE_LABELS[profile.businessType as BusinessType]
                           : '未設定'}
                       </dd>
                     </div>
                     <div className="flex">
-                      <dt className="w-20 text-[#73726C] shrink-0">対応エリア</dt>
-                      <dd className="flex-1 text-[#2C2C2A]">
+                      <dt className="w-20 text-[#64748B] shrink-0">対応エリア</dt>
+                      <dd className="flex-1 text-[#1E293B]">
                         {profile.coverageAreas.length > 0
                           ? profile.coverageAreas.join('、')
                           : '未設定'}
                       </dd>
                     </div>
                     <div className="flex">
-                      <dt className="w-20 text-[#73726C] shrink-0">保有資格</dt>
-                      <dd className="flex-1 text-[#2C2C2A]">
+                      <dt className="w-20 text-[#64748B] shrink-0">保有資格</dt>
+                      <dd className="flex-1 text-[#1E293B]">
                         {profile.licenses.length > 0
                           ? profile.licenses.join('、')
                           : '未設定'}
                       </dd>
                     </div>
                     {profile.companyDescription && (
-                      <div className="pt-2 border-t border-[#D5D5D0]">
-                        <dt className="text-[#73726C] mb-1">会社紹介</dt>
-                        <dd className="text-[#2C2C2A] whitespace-pre-wrap text-xs">
+                      <div className="pt-2 border-t border-[#E2E8F0]">
+                        <dt className="text-[#64748B] mb-1">会社紹介</dt>
+                        <dd className="text-[#1E293B] whitespace-pre-wrap text-xs">
                           {profile.companyDescription}
                         </dd>
                       </div>
                     )}
                   </dl>
 
-                  <p className="text-xs text-[#73726C] mt-3 pt-3 border-t border-[#D5D5D0]">
+                  <p className="text-xs text-[#64748B] mt-3 pt-3 border-t border-[#E2E8F0]">
                     ※ この情報が興味あり送信時に登録者へ送られます
                   </p>
                 </div>
               )}
 
               {/* 送信ボタン */}
-              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D5D5D0] p-4">
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] p-4">
                 <button type="submit" className="btn-primary w-full">
                   確認画面へ
                 </button>
@@ -483,20 +483,20 @@ export default function BidPage({ params }: Props) {
             <>
               {/* 確認画面 */}
               <div className="card p-4 mb-4">
-                <h2 className="text-sm font-medium text-[#73726C] mb-3">
+                <h2 className="text-sm font-medium text-[#64748B] mb-3">
                   送信内容の確認
                 </h2>
 
                 <dl className="space-y-3 text-sm">
                   <div className="flex">
-                    <dt className="w-24 text-[#73726C] shrink-0">対応可能時期</dt>
-                    <dd className="flex-1 text-[#2C2C2A]">
+                    <dt className="w-24 text-[#64748B] shrink-0">対応可能時期</dt>
+                    <dd className="flex-1 text-[#1E293B]">
                       {formData.availableFrom || '未入力'}
                     </dd>
                   </div>
                   <div className="flex">
-                    <dt className="w-24 text-[#73726C] shrink-0">メッセージ</dt>
-                    <dd className="flex-1 text-[#2C2C2A] whitespace-pre-wrap">
+                    <dt className="w-24 text-[#64748B] shrink-0">メッセージ</dt>
+                    <dd className="flex-1 text-[#1E293B] whitespace-pre-wrap">
                       {formData.message}
                     </dd>
                   </div>
@@ -506,27 +506,27 @@ export default function BidPage({ params }: Props) {
               {/* 会社情報プレビュー（確認画面でも表示） */}
               {profile && (
                 <div className="card p-4 mb-4 bg-[#F9F9F7]">
-                  <h2 className="text-sm font-medium text-[#73726C] mb-3">
+                  <h2 className="text-sm font-medium text-[#64748B] mb-3">
                     送信される会社情報
                   </h2>
                   <dl className="space-y-2 text-sm">
                     <div className="flex">
-                      <dt className="w-20 text-[#73726C] shrink-0">会社名</dt>
-                      <dd className="flex-1 text-[#2C2C2A]">
+                      <dt className="w-20 text-[#64748B] shrink-0">会社名</dt>
+                      <dd className="flex-1 text-[#1E293B]">
                         {profile.companyName || '未設定'}
                       </dd>
                     </div>
                     <div className="flex">
-                      <dt className="w-20 text-[#73726C] shrink-0">業種</dt>
-                      <dd className="flex-1 text-[#2C2C2A]">
+                      <dt className="w-20 text-[#64748B] shrink-0">業種</dt>
+                      <dd className="flex-1 text-[#1E293B]">
                         {profile.businessType
                           ? BUSINESS_TYPE_LABELS[profile.businessType as BusinessType]
                           : '未設定'}
                       </dd>
                     </div>
                     <div className="flex">
-                      <dt className="w-20 text-[#73726C] shrink-0">対応エリア</dt>
-                      <dd className="flex-1 text-[#2C2C2A]">
+                      <dt className="w-20 text-[#64748B] shrink-0">対応エリア</dt>
+                      <dd className="flex-1 text-[#1E293B]">
                         {profile.coverageAreas.length > 0
                           ? profile.coverageAreas.join('、')
                           : '未設定'}
@@ -536,15 +536,15 @@ export default function BidPage({ params }: Props) {
                 </div>
               )}
 
-              <div className="card p-4 bg-[#F4F3F0] border-[#D5D5D0]">
-                <p className="text-xs text-[#73726C]">
+              <div className="card p-4 bg-[#F8FAFC] border-[#E2E8F0]">
+                <p className="text-xs text-[#64748B]">
                   ※ 送信後の取り消しはできません。内容をよくご確認ください。
                   <br />※ 選定されると、相互の連絡先が開示されます。
                 </p>
               </div>
 
               {/* 送信ボタン */}
-              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D5D5D0] p-4">
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] p-4">
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}

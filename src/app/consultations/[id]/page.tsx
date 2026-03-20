@@ -7,12 +7,12 @@ import { useLiff } from '@/components/LiffProvider';
 import { authFetch } from '@/lib/api';
 
 const CATEGORY_LABELS: Record<string, { label: string; color: string }> = {
-  general: { label: '一般相談', color: 'bg-[#E8E8E6] text-[#73726C]' },
+  general: { label: '一般相談', color: 'bg-[#E8E8E6] text-[#64748B]' },
   technical: { label: '技術相談', color: 'bg-[#E3EDF7] text-[#4A6FA5]' },
   equipment: { label: '重機・機材', color: 'bg-[#FAEEDA] text-[#BA7517]' },
-  waste: { label: '産廃関連', color: 'bg-[#E1F5EE] text-[#0F6E56]' },
+  waste: { label: '産廃関連', color: 'bg-[#EFF6FF] text-[#2563EB]' },
   regulation: { label: '法規・許可', color: 'bg-[#FDEAEA] text-[#E24B4A]' },
-  other: { label: 'その他', color: 'bg-[#E8E8E6] text-[#73726C]' },
+  other: { label: 'その他', color: 'bg-[#E8E8E6] text-[#64748B]' },
 };
 
 type User = {
@@ -126,10 +126,10 @@ export default function ConsultationDetailPage({ params }: Props) {
   if (isLoading) {
     return (
       <AuthGuard>
-        <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0]">
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F6E56] mx-auto"></div>
-            <p className="mt-4 text-[#73726C]">読み込み中...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563EB] mx-auto"></div>
+            <p className="mt-4 text-[#64748B]">読み込み中...</p>
           </div>
         </div>
       </AuthGuard>
@@ -139,11 +139,11 @@ export default function ConsultationDetailPage({ params }: Props) {
   if (error || !consultation) {
     return (
       <AuthGuard>
-        <div className="min-h-screen bg-[#F4F3F0]">
-          <header className="bg-white border-b border-[#D5D5D0] px-4 py-3">
+        <div className="min-h-screen bg-[#F8FAFC]">
+          <header className="bg-white border-b border-[#E2E8F0] px-4 py-3">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-1 text-[#0F6E56]"
+              className="flex items-center gap-1 text-[#2563EB]"
             >
               <svg
                 className="w-5 h-5"
@@ -173,12 +173,12 @@ export default function ConsultationDetailPage({ params }: Props) {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#F4F3F0]">
+      <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
-        <header className="bg-white border-b border-[#D5D5D0] px-4 py-3 sticky top-0 z-10">
+        <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
           <button
             onClick={() => router.push('/projects')}
-            className="flex items-center gap-1 text-[#0F6E56]"
+            className="flex items-center gap-1 text-[#2563EB]"
           >
             <svg
               className="w-5 h-5"
@@ -205,18 +205,18 @@ export default function ConsultationDetailPage({ params }: Props) {
               <span className={`px-2 py-0.5 text-xs rounded font-medium ${categoryInfo.color}`}>
                 {categoryInfo.label}
               </span>
-              <span className="text-xs text-[#73726C]">
+              <span className="text-xs text-[#64748B]">
                 {formatDateTime(consultation.createdAt)}
               </span>
             </div>
 
             {/* タイトル */}
-            <h1 className="text-lg font-bold text-[#2C2C2A] mb-3">
+            <h1 className="text-lg font-bold text-[#1E293B] mb-3">
               {consultation.title}
             </h1>
 
             {/* 投稿者 */}
-            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-[#D5D5D0]">
+            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-[#E2E8F0]">
               {consultation.user.pictureUrl ? (
                 <img
                   src={consultation.user.pictureUrl}
@@ -224,9 +224,9 @@ export default function ConsultationDetailPage({ params }: Props) {
                   className="w-8 h-8 rounded-full"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-[#D5D5D0] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-[#E2E8F0] flex items-center justify-center">
                   <svg
-                    className="w-4 h-4 text-[#73726C]"
+                    className="w-4 h-4 text-[#64748B]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -240,7 +240,7 @@ export default function ConsultationDetailPage({ params }: Props) {
                   </svg>
                 </div>
               )}
-              <span className="text-sm text-[#2C2C2A]">
+              <span className="text-sm text-[#1E293B]">
                 {getUserDisplayName(consultation.user)}
               </span>
               {consultation.isOwner && (
@@ -251,19 +251,19 @@ export default function ConsultationDetailPage({ params }: Props) {
             </div>
 
             {/* 本文 */}
-            <p className="text-[#2C2C2A] whitespace-pre-wrap leading-relaxed">
+            <p className="text-[#1E293B] whitespace-pre-wrap leading-relaxed">
               {consultation.body}
             </p>
           </div>
 
           {/* コメント一覧 */}
           <div className="mb-4">
-            <h2 className="text-sm font-medium text-[#73726C] mb-3 px-1">
+            <h2 className="text-sm font-medium text-[#64748B] mb-3 px-1">
               コメント（{consultation.comments.length}件）
             </h2>
 
             {consultation.comments.length === 0 ? (
-              <div className="card p-4 text-center text-[#73726C] text-sm">
+              <div className="card p-4 text-center text-[#64748B] text-sm">
                 まだコメントがありません
               </div>
             ) : (
@@ -280,9 +280,9 @@ export default function ConsultationDetailPage({ params }: Props) {
                             className="w-6 h-6 rounded-full"
                           />
                         ) : (
-                          <div className="w-6 h-6 rounded-full bg-[#D5D5D0] flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full bg-[#E2E8F0] flex items-center justify-center">
                             <svg
-                              className="w-3 h-3 text-[#73726C]"
+                              className="w-3 h-3 text-[#64748B]"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -296,7 +296,7 @@ export default function ConsultationDetailPage({ params }: Props) {
                             </svg>
                           </div>
                         )}
-                        <span className="text-sm text-[#2C2C2A]">
+                        <span className="text-sm text-[#1E293B]">
                           {getUserDisplayName(comment.user)}
                         </span>
                         {comment.user.id === consultation.user.id && (
@@ -305,13 +305,13 @@ export default function ConsultationDetailPage({ params }: Props) {
                           </span>
                         )}
                       </div>
-                      <span className="text-xs text-[#73726C]">
+                      <span className="text-xs text-[#64748B]">
                         {formatDateTime(comment.createdAt)}
                       </span>
                     </div>
 
                     {/* コメント本文 */}
-                    <p className="text-sm text-[#2C2C2A] whitespace-pre-wrap">
+                    <p className="text-sm text-[#1E293B] whitespace-pre-wrap">
                       {comment.body}
                     </p>
                   </div>
@@ -322,7 +322,7 @@ export default function ConsultationDetailPage({ params }: Props) {
         </main>
 
         {/* コメント入力フォーム */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D5D5D0] p-4">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] p-4">
           <form onSubmit={handleSubmitComment} className="flex gap-2">
             <textarea
               className="input flex-1 min-h-[44px] max-h-[100px] resize-none py-2"

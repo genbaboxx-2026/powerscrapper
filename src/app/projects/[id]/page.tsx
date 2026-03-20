@@ -95,10 +95,10 @@ export default function ProjectDetailPage({ params }: Props) {
   if (isLoading) {
     return (
       <AuthGuard>
-        <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0]">
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F6E56] mx-auto"></div>
-            <p className="mt-4 text-[#73726C]">読み込み中...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563EB] mx-auto"></div>
+            <p className="mt-4 text-[#64748B]">読み込み中...</p>
           </div>
         </div>
       </AuthGuard>
@@ -108,11 +108,11 @@ export default function ProjectDetailPage({ params }: Props) {
   if (error || !project) {
     return (
       <AuthGuard>
-        <div className="min-h-screen bg-[#F4F3F0]">
-          <header className="bg-white border-b border-[#D5D5D0] px-4 py-3">
+        <div className="min-h-screen bg-[#F8FAFC]">
+          <header className="bg-white border-b border-[#E2E8F0] px-4 py-3">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-1 text-[#0F6E56]"
+              className="flex items-center gap-1 text-[#2563EB]"
             >
               <svg
                 className="w-5 h-5"
@@ -143,12 +143,12 @@ export default function ProjectDetailPage({ params }: Props) {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#F4F3F0]">
+      <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
-        <header className="bg-white border-b border-[#D5D5D0] px-4 py-3 sticky top-0 z-10">
+        <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-1 text-[#0F6E56]"
+            className="flex items-center gap-1 text-[#2563EB]"
           >
             <svg
               className="w-5 h-5"
@@ -181,42 +181,42 @@ export default function ProjectDetailPage({ params }: Props) {
             </div>
 
             {/* タイトル */}
-            <h1 className="text-xl font-bold text-[#2C2C2A] mb-4">
+            <h1 className="text-xl font-bold text-[#1E293B] mb-4">
               {project.title}
             </h1>
 
             {/* 詳細情報 */}
             <dl className="space-y-3 text-sm">
               <div className="flex">
-                <dt className="w-20 text-[#73726C] shrink-0">構造</dt>
-                <dd className="flex-1 text-[#2C2C2A]">
+                <dt className="w-20 text-[#64748B] shrink-0">構造</dt>
+                <dd className="flex-1 text-[#1E293B]">
                   {STRUCTURE_TYPE_LABELS[project.structureType as StructureType]}
                   {project.floors && ` / ${project.floors}`}
                   {project.totalArea && ` / ${project.totalArea}`}
                 </dd>
               </div>
               <div className="flex">
-                <dt className="w-20 text-[#73726C] shrink-0">現場</dt>
-                <dd className="flex-1 text-[#2C2C2A]">
+                <dt className="w-20 text-[#64748B] shrink-0">現場</dt>
+                <dd className="flex-1 text-[#1E293B]">
                   {project.isOwner && project.siteAddress
                     ? project.siteAddress
                     : project.sitePrefecture || '非公開'}
                 </dd>
               </div>
               <div className="flex">
-                <dt className="w-20 text-[#73726C] shrink-0">工期</dt>
-                <dd className="flex-1 text-[#2C2C2A]">
+                <dt className="w-20 text-[#64748B] shrink-0">工期</dt>
+                <dd className="flex-1 text-[#1E293B]">
                   {project.periodStart} 〜 {project.periodEnd}
                 </dd>
               </div>
               <div className="flex">
-                <dt className="w-20 text-[#73726C] shrink-0">作業内容</dt>
+                <dt className="w-20 text-[#64748B] shrink-0">作業内容</dt>
                 <dd className="flex-1">
                   <div className="flex flex-wrap gap-1">
                     {project.workTypes.map((type) => (
                       <span
                         key={type}
-                        className="px-2 py-1 bg-[#E1F5EE] text-[#0F6E56] text-xs rounded"
+                        className="px-2 py-1 bg-[#EFF6FF] text-[#2563EB] text-xs rounded"
                       >
                         {WORK_TYPE_LABELS[type as WorkType]}
                       </span>
@@ -225,15 +225,15 @@ export default function ProjectDetailPage({ params }: Props) {
                 </dd>
               </div>
               <div className="flex">
-                <dt className="w-20 text-[#73726C] shrink-0">募集期限</dt>
+                <dt className="w-20 text-[#64748B] shrink-0">募集期限</dt>
                 <dd className="flex-1">
-                  <span className="text-[#2C2C2A]">
+                  <span className="text-[#1E293B]">
                     {formatDeadline(project.deadline)}
                   </span>
                   {!isExpired && (
                     <span
                       className={`ml-2 ${
-                        daysRemaining <= 3 ? 'text-[#E24B4A]' : 'text-[#73726C]'
+                        daysRemaining <= 3 ? 'text-[#E24B4A]' : 'text-[#64748B]'
                       }`}
                     >
                       （残り{daysRemaining}日）
@@ -245,26 +245,26 @@ export default function ProjectDetailPage({ params }: Props) {
                 </dd>
               </div>
               <div className="flex">
-                <dt className="w-20 text-[#73726C] shrink-0">興味あり</dt>
-                <dd className="flex-1 text-[#2C2C2A]">{project.bidCount}件</dd>
+                <dt className="w-20 text-[#64748B] shrink-0">興味あり</dt>
+                <dd className="flex-1 text-[#1E293B]">{project.bidCount}件</dd>
               </div>
             </dl>
           </div>
 
           {/* 案件詳細 */}
           <div className="card p-4 mb-4">
-            <h2 className="text-sm font-medium text-[#73726C] mb-2">
+            <h2 className="text-sm font-medium text-[#64748B] mb-2">
               案件詳細・条件
             </h2>
-            <p className="text-[#2C2C2A] whitespace-pre-wrap text-sm leading-relaxed">
+            <p className="text-[#1E293B] whitespace-pre-wrap text-sm leading-relaxed">
               {project.description}
             </p>
           </div>
 
           {/* 注意事項 */}
           {!project.isOwner && (
-            <div className="card p-4 bg-[#F4F3F0] border-[#D5D5D0]">
-              <p className="text-xs text-[#73726C]">
+            <div className="card p-4 bg-[#F8FAFC] border-[#E2E8F0]">
+              <p className="text-xs text-[#64748B]">
                 ※ 登録者の企業名・連絡先は興味ありを送信後、選定された場合にのみ開示されます。
               </p>
             </div>
@@ -272,7 +272,7 @@ export default function ProjectDetailPage({ params }: Props) {
         </main>
 
         {/* フッターボタン */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D5D5D0] p-4">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] p-4">
           {project.isOwner ? (
             <Link
               href={`/projects/${project.id}/bids`}

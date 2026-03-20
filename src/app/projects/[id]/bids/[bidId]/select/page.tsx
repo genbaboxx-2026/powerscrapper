@@ -111,10 +111,10 @@ export default function SelectBidPage({ params }: Props) {
   if (isLoading) {
     return (
       <AuthGuard>
-        <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0]">
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F6E56] mx-auto"></div>
-            <p className="mt-4 text-[#73726C]">読み込み中...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563EB] mx-auto"></div>
+            <p className="mt-4 text-[#64748B]">読み込み中...</p>
           </div>
         </div>
       </AuthGuard>
@@ -124,11 +124,11 @@ export default function SelectBidPage({ params }: Props) {
   if (error && !bid) {
     return (
       <AuthGuard>
-        <div className="min-h-screen bg-[#F4F3F0]">
-          <header className="bg-white border-b border-[#D5D5D0] px-4 py-3">
+        <div className="min-h-screen bg-[#F8FAFC]">
+          <header className="bg-white border-b border-[#E2E8F0] px-4 py-3">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-1 text-[#0F6E56]"
+              className="flex items-center gap-1 text-[#2563EB]"
             >
               <svg
                 className="w-5 h-5"
@@ -160,16 +160,16 @@ export default function SelectBidPage({ params }: Props) {
   if (isCompleted) {
     return (
       <AuthGuard>
-        <div className="min-h-screen bg-[#F4F3F0]">
-          <header className="bg-white border-b border-[#D5D5D0] px-4 py-3">
-            <h1 className="text-lg font-bold text-[#2C2C2A]">選定完了</h1>
+        <div className="min-h-screen bg-[#F8FAFC]">
+          <header className="bg-white border-b border-[#E2E8F0] px-4 py-3">
+            <h1 className="text-lg font-bold text-[#1E293B]">選定完了</h1>
           </header>
 
           <main className="p-4 pb-24">
             <div className="card p-6 text-center">
-              <div className="w-16 h-16 bg-[#E1F5EE] rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-[#EFF6FF] rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
-                  className="w-8 h-8 text-[#0F6E56]"
+                  className="w-8 h-8 text-[#2563EB]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -182,23 +182,23 @@ export default function SelectBidPage({ params }: Props) {
                   />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-[#2C2C2A] mb-2">
+              <h2 className="text-xl font-bold text-[#1E293B] mb-2">
                 選定が完了しました
               </h2>
-              <p className="text-sm text-[#73726C] mb-4">
+              <p className="text-sm text-[#64748B] mb-4">
                 {bid.bidder.companyName || '企業'}を選定しました。
                 <br />
                 相手の連絡先がマイページで確認できます。
               </p>
 
-              <div className="bg-[#F4F3F0] rounded-lg p-4 mb-6 text-left">
-                <h3 className="text-sm font-medium text-[#2C2C2A] mb-2">
+              <div className="bg-[#F8FAFC] rounded-lg p-4 mb-6 text-left">
+                <h3 className="text-sm font-medium text-[#1E293B] mb-2">
                   選定した会社
                 </h3>
-                <p className="text-lg font-bold text-[#0F6E56]">
+                <p className="text-lg font-bold text-[#2563EB]">
                   {bid.bidder.companyName || '未設定'}
                 </p>
-                <p className="text-sm text-[#73726C]">
+                <p className="text-sm text-[#64748B]">
                   {bid.bidder.businessType
                     ? BUSINESS_TYPE_LABELS[bid.bidder.businessType as BusinessType]
                     : ''}
@@ -207,7 +207,7 @@ export default function SelectBidPage({ params }: Props) {
             </div>
           </main>
 
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D5D5D0] p-4 space-y-2">
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] p-4 space-y-2">
             <Link
               href="/mypage/matches"
               className="btn-primary w-full text-center block"
@@ -228,12 +228,12 @@ export default function SelectBidPage({ params }: Props) {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#F4F3F0]">
+      <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
-        <header className="bg-white border-b border-[#D5D5D0] px-4 py-3 sticky top-0 z-10">
+        <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-1 text-[#0F6E56]"
+            className="flex items-center gap-1 text-[#2563EB]"
           >
             <svg
               className="w-5 h-5"
@@ -254,10 +254,10 @@ export default function SelectBidPage({ params }: Props) {
 
         <main className="p-4 pb-24">
           <div className="card p-4 mb-4">
-            <h1 className="text-lg font-bold text-[#2C2C2A] mb-2">
+            <h1 className="text-lg font-bold text-[#1E293B] mb-2">
               この企業に決める
             </h1>
-            <p className="text-sm text-[#73726C]">
+            <p className="text-sm text-[#64748B]">
               {project.title}
             </p>
           </div>
@@ -278,9 +278,9 @@ export default function SelectBidPage({ params }: Props) {
                   className="w-16 h-16 rounded-full"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-[#D5D5D0] flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-[#E2E8F0] flex items-center justify-center">
                   <svg
-                    className="w-8 h-8 text-[#73726C]"
+                    className="w-8 h-8 text-[#64748B]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -295,16 +295,16 @@ export default function SelectBidPage({ params }: Props) {
                 </div>
               )}
               <div className="flex-1">
-                <h2 className="text-xl font-bold text-[#2C2C2A]">
+                <h2 className="text-xl font-bold text-[#1E293B]">
                   {bid.bidder.companyName || '未設定'}
                 </h2>
-                <p className="text-sm text-[#73726C]">
+                <p className="text-sm text-[#64748B]">
                   {bid.bidder.businessType
                     ? BUSINESS_TYPE_LABELS[bid.bidder.businessType as BusinessType]
                     : '未設定'}
                 </p>
                 {bid.bidder.representativeName && (
-                  <p className="text-sm text-[#73726C]">
+                  <p className="text-sm text-[#64748B]">
                     代表: {bid.bidder.representativeName}
                   </p>
                 )}
@@ -312,10 +312,10 @@ export default function SelectBidPage({ params }: Props) {
             </div>
 
             {/* 見積金額 */}
-            <div className="bg-[#F4F3F0] rounded-lg p-4 mb-4">
+            <div className="bg-[#F8FAFC] rounded-lg p-4 mb-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-[#73726C]">見積金額</span>
-                <span className="text-xl font-bold text-[#2C2C2A]">
+                <span className="text-sm text-[#64748B]">見積金額</span>
+                <span className="text-xl font-bold text-[#1E293B]">
                   {bid.amount
                     ? `${parseInt(bid.amount).toLocaleString()}円`
                     : '未入力'}
@@ -325,10 +325,10 @@ export default function SelectBidPage({ params }: Props) {
 
             {/* メッセージ */}
             <div className="mb-4">
-              <h3 className="text-sm font-medium text-[#73726C] mb-2">
+              <h3 className="text-sm font-medium text-[#64748B] mb-2">
                 アピールメッセージ
               </h3>
-              <p className="text-sm text-[#2C2C2A] whitespace-pre-wrap">
+              <p className="text-sm text-[#1E293B] whitespace-pre-wrap">
                 {bid.message}
               </p>
             </div>
@@ -336,10 +336,10 @@ export default function SelectBidPage({ params }: Props) {
             {/* 会社情報 */}
             {bid.bidder.companyDescription && (
               <div className="mb-4">
-                <h3 className="text-sm font-medium text-[#73726C] mb-2">
+                <h3 className="text-sm font-medium text-[#64748B] mb-2">
                   会社紹介
                 </h3>
-                <p className="text-sm text-[#2C2C2A] whitespace-pre-wrap">
+                <p className="text-sm text-[#1E293B] whitespace-pre-wrap">
                   {bid.bidder.companyDescription}
                 </p>
               </div>
@@ -347,14 +347,14 @@ export default function SelectBidPage({ params }: Props) {
 
             {bid.bidder.coverageAreas.length > 0 && (
               <div className="mb-4">
-                <h3 className="text-sm font-medium text-[#73726C] mb-2">
+                <h3 className="text-sm font-medium text-[#64748B] mb-2">
                   対応エリア
                 </h3>
                 <div className="flex flex-wrap gap-1">
                   {bid.bidder.coverageAreas.map((area) => (
                     <span
                       key={area}
-                      className="px-2 py-1 bg-[#E1F5EE] text-[#0F6E56] text-xs rounded"
+                      className="px-2 py-1 bg-[#EFF6FF] text-[#2563EB] text-xs rounded"
                     >
                       {area}
                     </span>
@@ -365,14 +365,14 @@ export default function SelectBidPage({ params }: Props) {
 
             {bid.bidder.licenses.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-[#73726C] mb-2">
+                <h3 className="text-sm font-medium text-[#64748B] mb-2">
                   保有資格
                 </h3>
                 <div className="flex flex-wrap gap-1">
                   {bid.bidder.licenses.map((license) => (
                     <span
                       key={license}
-                      className="px-2 py-1 bg-[#F4F3F0] text-[#73726C] text-xs rounded"
+                      className="px-2 py-1 bg-[#F8FAFC] text-[#64748B] text-xs rounded"
                     >
                       {license}
                     </span>
@@ -383,8 +383,8 @@ export default function SelectBidPage({ params }: Props) {
           </div>
 
           {/* 注意事項 */}
-          <div className="card p-4 bg-[#F4F3F0] border-[#D5D5D0]">
-            <p className="text-xs text-[#73726C]">
+          <div className="card p-4 bg-[#F8FAFC] border-[#E2E8F0]">
+            <p className="text-xs text-[#64748B]">
               ※ 選定すると相互の連絡先が開示され、直接やり取りができるようになります。
               <br />※ 選定は1社のみです。選定後の変更はできません。
               <br />※ 選定されなかった企業には自動で通知されます。
@@ -393,7 +393,7 @@ export default function SelectBidPage({ params }: Props) {
         </main>
 
         {/* 選定ボタン */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D5D5D0] p-4">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] p-4">
           <button
             onClick={handleSelect}
             disabled={isSubmitting}

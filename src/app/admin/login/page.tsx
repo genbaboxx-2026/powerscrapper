@@ -36,9 +36,9 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] px-4">
       <div className="card p-8 max-w-sm w-full">
-        <h1 className="text-xl font-bold text-[#2C2C2A] text-center mb-6">
+        <h1 className="text-xl font-bold text-[#1E293B] text-center mb-6">
           管理者ログイン
         </h1>
 
@@ -50,7 +50,7 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1">
+            <label className="block text-sm font-medium text-[#1E293B] mb-1">
               ユーザー名
             </label>
             <input
@@ -64,7 +64,7 @@ export default function AdminLoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1">
+            <label className="block text-sm font-medium text-[#1E293B] mb-1">
               パスワード
             </label>
             <input

@@ -43,10 +43,10 @@ export function AuthGuard({
   // ローディング中
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0]">
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F6E56] mx-auto"></div>
-          <p className="mt-4 text-[#73726C]">読み込み中...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563EB] mx-auto"></div>
+          <p className="mt-4 text-[#64748B]">読み込み中...</p>
         </div>
       </div>
     );
@@ -55,10 +55,10 @@ export function AuthGuard({
   // エラー
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F4F3F0]">
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
         <div className="text-center px-4">
           <p className="text-[#E24B4A]">エラーが発生しました</p>
-          <p className="mt-2 text-[#73726C] text-sm">{error}</p>
+          <p className="mt-2 text-[#64748B] text-sm">{error}</p>
         </div>
       </div>
     );

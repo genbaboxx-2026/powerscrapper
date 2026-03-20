@@ -45,14 +45,14 @@ export default function EventsPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#F4F3F0]">
+      <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
-        <header className="bg-white border-b border-[#D5D5D0] px-4 py-3">
+        <header className="bg-white border-b border-[#E2E8F0] px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-lg font-bold text-[#2C2C2A]">イベント・セミナー</h1>
+            <h1 className="text-lg font-bold text-[#1E293B]">イベント・セミナー</h1>
             <Link
               href="/projects"
-              className="text-sm text-[#0F6E56]"
+              className="text-sm text-[#2563EB]"
             >
               案件一覧へ
             </Link>
@@ -62,11 +62,11 @@ export default function EventsPage() {
         <main className="p-4 pb-24">
           {isLoading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F6E56] mx-auto"></div>
-              <p className="mt-4 text-[#73726C] text-sm">読み込み中...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
+              <p className="mt-4 text-[#64748B] text-sm">読み込み中...</p>
             </div>
           ) : events.length === 0 ? (
-            <div className="text-center py-12 text-[#73726C]">
+            <div className="text-center py-12 text-[#64748B]">
               <p>予定されているイベントはありません</p>
             </div>
           ) : (
@@ -76,7 +76,7 @@ export default function EventsPage() {
                   {/* 日時 */}
                   <div className="flex items-center gap-2 mb-2">
                     <svg
-                      className="w-4 h-4 text-[#0F6E56]"
+                      className="w-4 h-4 text-[#2563EB]"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -88,19 +88,19 @@ export default function EventsPage() {
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
-                    <span className="text-sm text-[#0F6E56] font-medium">
+                    <span className="text-sm text-[#2563EB] font-medium">
                       {formatDate(event.eventDate)}
                     </span>
                   </div>
 
                   {/* タイトル */}
-                  <h2 className="text-base font-bold text-[#2C2C2A] mb-2">
+                  <h2 className="text-base font-bold text-[#1E293B] mb-2">
                     {event.title}
                   </h2>
 
                   {/* 説明 */}
                   {event.description && (
-                    <p className="text-sm text-[#73726C] mb-3 whitespace-pre-wrap">
+                    <p className="text-sm text-[#64748B] mb-3 whitespace-pre-wrap">
                       {event.description}
                     </p>
                   )}
@@ -108,7 +108,7 @@ export default function EventsPage() {
                   {/* 詳細情報 */}
                   <div className="space-y-1 text-sm mb-3">
                     {event.location && (
-                      <div className="flex items-center gap-2 text-[#73726C]">
+                      <div className="flex items-center gap-2 text-[#64748B]">
                         <svg
                           className="w-4 h-4"
                           fill="none"
@@ -132,7 +132,7 @@ export default function EventsPage() {
                       </div>
                     )}
                     {event.capacity && (
-                      <div className="flex items-center gap-2 text-[#73726C]">
+                      <div className="flex items-center gap-2 text-[#64748B]">
                         <svg
                           className="w-4 h-4"
                           fill="none"
@@ -150,7 +150,7 @@ export default function EventsPage() {
                       </div>
                     )}
                     {event.fee !== null && (
-                      <div className="flex items-center gap-2 text-[#73726C]">
+                      <div className="flex items-center gap-2 text-[#64748B]">
                         <svg
                           className="w-4 h-4"
                           fill="none"

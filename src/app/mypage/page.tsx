@@ -115,36 +115,36 @@ export default function MyPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
-        return 'text-[#0F6E56]';
+        return 'text-[#2563EB]';
       case 'pending':
         return 'text-[#BA7517]';
       case 'rejected':
         return 'text-[#E24B4A]';
       case 'matched':
-        return 'text-[#0F6E56]';
+        return 'text-[#2563EB]';
       default:
-        return 'text-[#73726C]';
+        return 'text-[#64748B]';
     }
   };
 
   const getBidStatusColor = (status: string) => {
     switch (status) {
       case 'selected':
-        return 'text-[#0F6E56]';
+        return 'text-[#2563EB]';
       case 'submitted':
         return 'text-[#BA7517]';
       case 'rejected':
         return 'text-[#E24B4A]';
       default:
-        return 'text-[#73726C]';
+        return 'text-[#64748B]';
     }
   };
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#F4F3F0]">
+      <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
-        <header className="bg-white border-b border-[#D5D5D0] px-4 py-4">
+        <header className="bg-white border-b border-[#E2E8F0] px-4 py-4">
           <div className="flex items-center gap-3">
             {pictureUrl ? (
               <img
@@ -153,9 +153,9 @@ export default function MyPage() {
                 className="w-12 h-12 rounded-full"
               />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-[#D5D5D0] flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-[#E2E8F0] flex items-center justify-center">
                 <svg
-                  className="w-6 h-6 text-[#73726C]"
+                  className="w-6 h-6 text-[#64748B]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -170,20 +170,20 @@ export default function MyPage() {
               </div>
             )}
             <div>
-              <h1 className="text-lg font-bold text-[#2C2C2A]">
+              <h1 className="text-lg font-bold text-[#1E293B]">
                 {displayName || 'ユーザー'}
               </h1>
-              <p className="text-sm text-[#73726C]">マイページ</p>
+              <p className="text-sm text-[#64748B]">マイページ</p>
             </div>
           </div>
         </header>
 
         {/* クイックリンク */}
-        <div className="bg-white border-b border-[#D5D5D0] px-4 py-3">
+        <div className="bg-white border-b border-[#E2E8F0] px-4 py-3">
           <div className="flex gap-3">
             <Link
               href="/profile/edit"
-              className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#F4F3F0] rounded-lg text-sm text-[#2C2C2A]"
+              className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#F8FAFC] rounded-lg text-sm text-[#1E293B]"
             >
               <svg
                 className="w-4 h-4"
@@ -202,7 +202,7 @@ export default function MyPage() {
             </Link>
             <Link
               href="/members"
-              className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#F4F3F0] rounded-lg text-sm text-[#2C2C2A]"
+              className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#F8FAFC] rounded-lg text-sm text-[#1E293B]"
             >
               <svg
                 className="w-4 h-4"
@@ -222,7 +222,7 @@ export default function MyPage() {
             {role === 'admin' && (
               <Link
                 href="/admin"
-                className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#0F6E56] rounded-lg text-sm text-white"
+                className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#2563EB] rounded-lg text-sm text-white"
               >
                 <svg
                   className="w-4 h-4"
@@ -250,7 +250,7 @@ export default function MyPage() {
         </div>
 
         {/* タブ */}
-        <div className="bg-white border-b border-[#D5D5D0]">
+        <div className="bg-white border-b border-[#E2E8F0]">
           <div className="flex">
             {TABS.map((tab) => (
               <button
@@ -258,8 +258,8 @@ export default function MyPage() {
                 onClick={() => setActiveTab(tab.value)}
                 className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${
                   activeTab === tab.value
-                    ? 'border-[#0F6E56] text-[#0F6E56]'
-                    : 'border-transparent text-[#73726C]'
+                    ? 'border-[#2563EB] text-[#2563EB]'
+                    : 'border-transparent text-[#64748B]'
                 }`}
               >
                 {tab.label}
@@ -271,12 +271,12 @@ export default function MyPage() {
         <main className="p-4 pb-24">
           {isLoading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F6E56] mx-auto"></div>
-              <p className="mt-4 text-[#73726C] text-sm">読み込み中...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
+              <p className="mt-4 text-[#64748B] text-sm">読み込み中...</p>
             </div>
           ) : activeTab === 'projects' ? (
             projects.length === 0 ? (
-              <div className="text-center py-12 text-[#73726C]">
+              <div className="text-center py-12 text-[#64748B]">
                 <p>登録した案件はありません</p>
                 <Link
                   href="/projects/new"
@@ -312,15 +312,15 @@ export default function MyPage() {
                         {STATUS_LABELS[project.status] || project.status}
                       </span>
                     </div>
-                    <h2 className="text-base font-bold text-[#2C2C2A] mb-2">
+                    <h2 className="text-base font-bold text-[#1E293B] mb-2">
                       {project.title}
                     </h2>
-                    <div className="flex items-center justify-between text-sm text-[#73726C]">
+                    <div className="flex items-center justify-between text-sm text-[#64748B]">
                       <span>
                         {project.sitePrefecture || '未設定'} | {project.periodStart}
                         〜{project.periodEnd}
                       </span>
-                      <span className="text-[#0F6E56] font-medium">
+                      <span className="text-[#2563EB] font-medium">
                         興味あり {project.bidCount}件
                       </span>
                     </div>
@@ -330,7 +330,7 @@ export default function MyPage() {
             )
           ) : activeTab === 'bids' ? (
             bids.length === 0 ? (
-              <div className="text-center py-12 text-[#73726C]">
+              <div className="text-center py-12 text-[#64748B]">
                 <p>興味ありを送った案件はありません</p>
                 <Link href="/projects" className="btn-primary inline-block mt-4">
                   案件を探す
@@ -354,10 +354,10 @@ export default function MyPage() {
                         {BID_STATUS_LABELS[bid.status] || bid.status}
                       </span>
                     </div>
-                    <h2 className="text-base font-bold text-[#2C2C2A] mb-2">
+                    <h2 className="text-base font-bold text-[#1E293B] mb-2">
                       {bid.project.title}
                     </h2>
-                    <div className="flex items-center justify-between text-sm text-[#73726C]">
+                    <div className="flex items-center justify-between text-sm text-[#64748B]">
                       <span>送信日</span>
                       <span>{formatDate(bid.createdAt)}</span>
                     </div>
@@ -368,7 +368,7 @@ export default function MyPage() {
           ) : (
             // 成約済みタブ
             <div className="text-center py-6">
-              <p className="text-[#73726C] mb-4">
+              <p className="text-[#64748B] mb-4">
                 {matchCount > 0
                   ? `成約済み案件が ${matchCount} 件あります`
                   : '成約済みの案件はありません'}
@@ -386,11 +386,11 @@ export default function MyPage() {
         </main>
 
         {/* ナビゲーション */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D5D5D0]">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0]">
           <div className="flex">
             <Link
               href="/projects"
-              className="flex-1 flex flex-col items-center py-3 text-[#73726C]"
+              className="flex-1 flex flex-col items-center py-3 text-[#64748B]"
             >
               <svg
                 className="w-6 h-6"
@@ -409,7 +409,7 @@ export default function MyPage() {
             </Link>
             <Link
               href="/mypage"
-              className="flex-1 flex flex-col items-center py-3 text-[#0F6E56]"
+              className="flex-1 flex flex-col items-center py-3 text-[#2563EB]"
             >
               <svg
                 className="w-6 h-6"
