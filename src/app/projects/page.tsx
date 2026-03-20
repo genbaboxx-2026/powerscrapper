@@ -332,7 +332,7 @@ function MainContent() {
                             {consultation.user.companyName || '未設定'}
                           </p>
                           <p className="text-xs text-[#64748B]">
-                            {consultation.user.representativeName || consultation.user.displayName || ''}
+                            {consultation.user.displayName || ''}
                           </p>
                         </div>
                         <span className="text-xs text-[#64748B] whitespace-nowrap">
