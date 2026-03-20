@@ -83,7 +83,7 @@ const BID_STATUS_LABELS: Record<string, string> = {
   rejected: '落選',
 };
 
-type TabCounts = {
+type UnreadCounts = {
   consultations: number;
   projects: number;
   bids: number;
@@ -97,7 +97,7 @@ export default function MyPage() {
   const [bids, setBids] = useState<MyBid[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
-  const [tabCounts, setTabCounts] = useState<TabCounts>({
+  const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({
     consultations: 0,
     projects: 0,
     bids: 0,
@@ -121,54 +121,21 @@ export default function MyPage() {
     fetchProfile();
   }, [userId]);
 
-  // タブの件数を取得
+  // 未読件数を取得
   useEffect(() => {
-    const fetchAllCounts = async () => {
+    const fetchUnreadCounts = async () => {
       if (!userId) return;
       try {
-        const [consultationsRes, projectsRes, bidsRes] = await Promise.all([
-          authFetch('/api/mypage/consultations', userId),
-          authFetch('/api/mypage/projects', userId),
-          authFetch('/api/bids', userId),
-        ]);
-
-        const counts: TabCounts = {
-          consultations: 0,
-          projects: 0,
-          bids: 0,
-        };
-
-        if (consultationsRes.ok) {
-          const data = await consultationsRes.json();
-          counts.consultations = data.consultations?.length || 0;
-          if (activeTab === 'consultations') {
-            setConsultations(data.consultations);
-          }
+        const res = await authFetch('/api/mypage/unread-counts', userId);
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCounts(data);
         }
-        if (projectsRes.ok) {
-          const data = await projectsRes.json();
-          counts.projects = data.projects?.length || 0;
-          if (activeTab === 'projects') {
-            setProjects(data.projects);
-          }
-        }
-        if (bidsRes.ok) {
-          const data = await bidsRes.json();
-          counts.bids = data.bids?.length || 0;
-          if (activeTab === 'bids') {
-            setBids(data.bids);
-          }
-        }
-
-        setTabCounts(counts);
-        setIsLoading(false);
       } catch (err) {
-        console.error('Failed to fetch counts:', err);
-        setIsLoading(false);
+        console.error('Failed to fetch unread counts:', err);
       }
     };
-    fetchAllCounts();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchUnreadCounts();
   }, [userId]);
 
   const fetchData = useCallback(async () => {
@@ -181,21 +148,21 @@ export default function MyPage() {
         if (res.ok) {
           const data = await res.json();
           setConsultations(data.consultations);
-          setTabCounts((prev) => ({ ...prev, consultations: data.consultations?.length || 0 }));
         }
       } else if (activeTab === 'projects') {
         const res = await authFetch('/api/mypage/projects', userId);
         if (res.ok) {
           const data = await res.json();
           setProjects(data.projects);
-          setTabCounts((prev) => ({ ...prev, projects: data.projects?.length || 0 }));
         }
       } else if (activeTab === 'bids') {
         const res = await authFetch('/api/bids', userId);
         if (res.ok) {
           const data = await res.json();
           setBids(data.bids);
-          setTabCounts((prev) => ({ ...prev, bids: data.bids?.length || 0 }));
+          // 未読件数を更新（isNewのカード数）
+          const newCount = data.bids?.filter((b: MyBid) => b.isNew).length || 0;
+          setUnreadCounts((prev) => ({ ...prev, bids: newCount }));
         }
       }
     } catch (err) {
@@ -366,20 +333,22 @@ export default function MyPage() {
         <div className="bg-white border-b border-[#E2E8F0]">
           <div className="flex">
             {TABS.map((tab) => {
-              const count = tabCounts[tab.value as keyof TabCounts];
+              const unreadCount = unreadCounts[tab.value as keyof UnreadCounts];
               return (
                 <button
                   key={tab.value}
                   onClick={() => setActiveTab(tab.value)}
-                  className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${
+                  className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors relative ${
                     activeTab === tab.value
                       ? 'border-[#2563EB] text-[#2563EB]'
                       : 'border-transparent text-[#64748B]'
                   }`}
                 >
                   {tab.label}
-                  {count > 0 && (
-                    <span className="ml-1 text-xs">({count})</span>
+                  {unreadCount > 0 && (
+                    <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-[#E24B4A] text-white text-xs rounded-full">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
                   )}
                 </button>
               );
