@@ -46,7 +46,7 @@ type MyBid = {
 
 const TABS = [
   { value: 'projects', label: '登録案件' },
-  { value: 'bids', label: '入札中' },
+  { value: 'bids', label: '興味あり' },
   { value: 'matches', label: '成約済み' },
 ];
 
@@ -59,7 +59,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const BID_STATUS_LABELS: Record<string, string> = {
-  submitted: '入札中',
+  submitted: '送信済み',
   selected: '選定済み',
   rejected: '落選',
 };
@@ -302,7 +302,7 @@ export default function MyPage() {
                         〜{project.periodEnd}
                       </span>
                       <span className="text-[#0F6E56] font-medium">
-                        入札 {project.bidCount}件
+                        興味あり {project.bidCount}件
                       </span>
                     </div>
                   </Link>
@@ -312,7 +312,7 @@ export default function MyPage() {
           ) : activeTab === 'bids' ? (
             bids.length === 0 ? (
               <div className="text-center py-12 text-[#73726C]">
-                <p>入札した案件はありません</p>
+                <p>興味ありを送った案件はありません</p>
                 <Link href="/projects" className="btn-primary inline-block mt-4">
                   案件を探す
                 </Link>
@@ -339,12 +339,7 @@ export default function MyPage() {
                       {bid.project.title}
                     </h2>
                     <div className="flex items-center justify-between text-sm text-[#73726C]">
-                      <span>
-                        入札額:{' '}
-                        {bid.amount
-                          ? `${parseInt(bid.amount).toLocaleString()}円`
-                          : '未入力'}
-                      </span>
+                      <span>送信日</span>
                       <span>{formatDate(bid.createdAt)}</span>
                     </div>
                   </Link>

@@ -151,7 +151,7 @@ async function handlePostback(
                 },
                 {
                   type: 'text',
-                  text: '最新の案件をチェックして入札しましょう。',
+                  text: '最新の案件をチェックしましょう。',
                   wrap: true,
                   size: 'sm',
                   color: '#73726C',
@@ -249,7 +249,7 @@ async function handlePostback(
                 },
                 {
                   type: 'text',
-                  text: '登録案件、入札状況、成約済み案件を確認できます。',
+                  text: '登録案件、興味あり状況、成約済み案件を確認できます。',
                   wrap: true,
                   size: 'sm',
                   color: '#73726C',

@@ -80,13 +80,13 @@ export default function BidPage({ params }: Props) {
 
         // 自分の案件の場合
         if (projectData.isOwner) {
-          setError('自分の案件には入札できません');
+          setError('自分の案件には興味ありを送れません');
           return;
         }
 
-        // 既に入札済みの場合
+        // 既に興味あり送信済みの場合
         if (projectData.hasBid) {
-          setError('既にこの案件に入札しています');
+          setError('既にこの案件に興味ありを送信済みです');
           return;
         }
 
@@ -126,7 +126,7 @@ export default function BidPage({ params }: Props) {
   // プロフィール未完了の場合
   useEffect(() => {
     if (!isLoading && !profileCompleted && !error) {
-      setError('入札するには会社プロフィールの登録が必要です');
+      setError('興味ありを送るには会社プロフィールの登録が必要です');
     }
   }, [isLoading, profileCompleted, error]);
 
@@ -148,13 +148,13 @@ export default function BidPage({ params }: Props) {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || '入札に失敗しました');
+        throw new Error(data.error || '送信に失敗しました');
       }
 
       // 成功時は案件一覧に遷移
       router.push('/projects?bid=success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : '入札に失敗しました');
+      setError(err instanceof Error ? err.message : '送信に失敗しました');
       setStep('input');
     } finally {
       setIsSubmitting(false);
@@ -423,7 +423,7 @@ export default function BidPage({ params }: Props) {
                   </dl>
 
                   <p className="text-xs text-[#73726C] mt-3 pt-3 border-t border-[#D5D5D0]">
-                    ※ この情報が入札時に登録者へ送られます
+                    ※ この情報が興味あり送信時に登録者へ送られます
                   </p>
                 </div>
               )}
@@ -440,7 +440,7 @@ export default function BidPage({ params }: Props) {
               {/* 確認画面 */}
               <div className="card p-4 mb-4">
                 <h2 className="text-sm font-medium text-[#73726C] mb-3">
-                  入札内容の確認
+                  送信内容の確認
                 </h2>
 
                 <dl className="space-y-3 text-sm">
@@ -494,7 +494,7 @@ export default function BidPage({ params }: Props) {
 
               <div className="card p-4 bg-[#F4F3F0] border-[#D5D5D0]">
                 <p className="text-xs text-[#73726C]">
-                  ※ 入札後の取り消しはできません。内容をよくご確認ください。
+                  ※ 送信後の取り消しはできません。内容をよくご確認ください。
                   <br />※ 選定されると、相互の連絡先が開示されます。
                 </p>
               </div>
@@ -506,7 +506,7 @@ export default function BidPage({ params }: Props) {
                   disabled={isSubmitting}
                   className="btn-primary w-full disabled:opacity-50"
                 >
-                  {isSubmitting ? '送信中...' : '入札する'}
+                  {isSubmitting ? '送信中...' : '興味ありを送る'}
                 </button>
               </div>
             </>

@@ -59,7 +59,7 @@ export default function ProjectBidsPage({ params }: Props) {
 
         if (!res.ok) {
           if (res.status === 403) {
-            setError('この案件の入札一覧を閲覧する権限がありません');
+            setError('この案件の興味ありリストを閲覧する権限がありません');
           } else if (res.status === 404) {
             setError('案件が見つかりません');
           } else {
@@ -172,14 +172,14 @@ export default function ProjectBidsPage({ params }: Props) {
           <div className="card p-4 mb-4">
             <h1 className="text-lg font-bold text-[#2C2C2A]">{project.title}</h1>
             <p className="text-sm text-[#73726C] mt-1">
-              入札数: {bids.length}件
+              興味あり: {bids.length}件
             </p>
           </div>
 
           {/* 入札一覧 */}
           {bids.length === 0 ? (
             <div className="text-center py-12 text-[#73726C]">
-              <p>まだ入札がありません</p>
+              <p>まだ興味ありがありません</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -299,7 +299,7 @@ export default function ProjectBidsPage({ params }: Props) {
                         href={`/projects/${projectId}/bids/${bid.id}/select`}
                         className="text-sm text-[#0F6E56] font-medium"
                       >
-                        選定する
+                        この企業に決める
                       </Link>
                     )}
                   </div>

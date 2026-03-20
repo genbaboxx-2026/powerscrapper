@@ -52,7 +52,7 @@ const PREFECTURES = [
 ];
 
 const BID_STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  submitted: { label: '入札中', color: 'text-[#BA7517] bg-[#FAEEDA]' },
+  submitted: { label: '興味あり送信済', color: 'text-[#BA7517] bg-[#FAEEDA]' },
   selected: { label: '選定', color: 'text-[#0F6E56] bg-[#E1F5EE]' },
   rejected: { label: '非選定', color: 'text-[#73726C] bg-[#E8E8E6]' },
 };
@@ -73,7 +73,7 @@ function RegistrationMessage() {
   if (bidSuccess) {
     return (
       <div className="mx-4 mt-4 p-3 bg-[#E1F5EE] border border-[#0F6E56] rounded-lg text-[#0F6E56] text-sm">
-        入札が完了しました。結果をお待ちください。
+        興味ありを送信しました。結果をお待ちください。
       </div>
     );
   }
@@ -91,6 +91,7 @@ function ProjectsContent() {
     recruitmentType: '',
     prefecture: '',
     urgentOnly: false,
+    excludeBidded: true, // デフォルトで入札済みを除外
   });
 
   const fetchProjects = useCallback(async () => {
@@ -107,6 +108,9 @@ function ProjectsContent() {
       }
       if (filters.urgentOnly) {
         params.set('urgentOnly', 'true');
+      }
+      if (filters.excludeBidded) {
+        params.set('excludeBidded', 'true');
       }
 
       const res = await authFetch(`/api/projects?${params.toString()}`, userId);
@@ -183,7 +187,7 @@ function ProjectsContent() {
                 : 'border-transparent text-[#73726C]'
             }`}
           >
-            入札済み
+            興味あり済
           </button>
         </div>
       </div>
@@ -231,6 +235,17 @@ function ProjectsContent() {
                   }
                 />
                 急募のみ
+              </label>
+              <label className="flex items-center gap-1 text-sm whitespace-nowrap px-2">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4"
+                  checked={filters.excludeBidded}
+                  onChange={(e) =>
+                    setFilters({ ...filters, excludeBidded: e.target.checked })
+                  }
+                />
+                興味あり済を除外
               </label>
             </div>
           </div>
@@ -347,7 +362,7 @@ function ProjectsContent() {
         </>
       ) : (
         <>
-          {/* 入札済み一覧 */}
+          {/* 興味あり済み一覧 */}
           <main className="p-4 pb-24">
             {isLoading ? (
               <div className="text-center py-12">
@@ -356,8 +371,8 @@ function ProjectsContent() {
               </div>
             ) : bids.length === 0 ? (
               <div className="text-center py-12 text-[#73726C]">
-                <p>入札した案件がありません</p>
-                <p className="text-sm mt-2">案件に入札するとここに表示されます</p>
+                <p>興味ありを送った案件がありません</p>
+                <p className="text-sm mt-2">案件に興味ありを送るとここに表示されます</p>
               </div>
             ) : (
               <div className="space-y-4">

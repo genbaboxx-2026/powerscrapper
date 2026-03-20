@@ -186,7 +186,7 @@ export default function SelectBidPage({ params }: Props) {
                 選定が完了しました
               </h2>
               <p className="text-sm text-[#73726C] mb-4">
-                {bid.bidder.companyName || '入札者'}を選定しました。
+                {bid.bidder.companyName || '企業'}を選定しました。
                 <br />
                 相手の連絡先がマイページで確認できます。
               </p>
@@ -248,14 +248,14 @@ export default function SelectBidPage({ params }: Props) {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            入札一覧
+            興味ありリスト
           </button>
         </header>
 
         <main className="p-4 pb-24">
           <div className="card p-4 mb-4">
             <h1 className="text-lg font-bold text-[#2C2C2A] mb-2">
-              入札者を選定
+              この企業に決める
             </h1>
             <p className="text-sm text-[#73726C]">
               {project.title}
@@ -387,7 +387,7 @@ export default function SelectBidPage({ params }: Props) {
             <p className="text-xs text-[#73726C]">
               ※ 選定すると相互の連絡先が開示され、直接やり取りができるようになります。
               <br />※ 選定は1社のみです。選定後の変更はできません。
-              <br />※ 選定されなかった入札者には自動で通知されます。
+              <br />※ 選定されなかった企業には自動で通知されます。
             </p>
           </div>
         </main>
@@ -399,7 +399,7 @@ export default function SelectBidPage({ params }: Props) {
             disabled={isSubmitting}
             className="btn-primary w-full disabled:opacity-50"
           >
-            {isSubmitting ? '選定中...' : 'この会社を選定する'}
+            {isSubmitting ? '選定中...' : 'この企業に決める'}
           </button>
         </div>
       </div>

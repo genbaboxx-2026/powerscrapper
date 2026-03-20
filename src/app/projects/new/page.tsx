@@ -596,7 +596,7 @@ export default function ProjectNewPage() {
               <div className="card p-4 bg-[#FAEEDA] border-[#BA7517]">
                 <p className="text-sm text-[#BA7517]">
                   案件を登録すると、管理者による審査が行われます。
-                  承認後に案件が公開され、入札が届いたらLINEでお知らせします。
+                  承認後に案件が公開され、興味ありが届いたらLINEでお知らせします。
                 </p>
               </div>
             </div>

@@ -130,7 +130,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       // 発注者（自分）に確認メッセージ
       await pushMessage(user.lineUserId, [
         createTextMessage(
-          `「${bid.project.title}」で${bid.user.companyName || '入札者'}を選定しました。\n\n相手の連絡先がマイページで確認できます。`
+          `「${bid.project.title}」で${bid.user.companyName || '企業'}を選定しました。\n\n相手の連絡先がマイページで確認できます。`
         ),
       ]);
 

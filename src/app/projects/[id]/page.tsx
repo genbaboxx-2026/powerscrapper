@@ -245,7 +245,7 @@ export default function ProjectDetailPage({ params }: Props) {
                 </dd>
               </div>
               <div className="flex">
-                <dt className="w-20 text-[#73726C] shrink-0">入札数</dt>
+                <dt className="w-20 text-[#73726C] shrink-0">興味あり</dt>
                 <dd className="flex-1 text-[#2C2C2A]">{project.bidCount}件</dd>
               </div>
             </dl>
@@ -265,7 +265,7 @@ export default function ProjectDetailPage({ params }: Props) {
           {!project.isOwner && (
             <div className="card p-4 bg-[#F4F3F0] border-[#D5D5D0]">
               <p className="text-xs text-[#73726C]">
-                ※ 登録者の企業名・連絡先は入札後、選定された場合にのみ開示されます。
+                ※ 登録者の企業名・連絡先は興味ありを送信後、選定された場合にのみ開示されます。
               </p>
             </div>
           )}
@@ -278,11 +278,11 @@ export default function ProjectDetailPage({ params }: Props) {
               href={`/projects/${project.id}/bids`}
               className="btn-primary w-full text-center block"
             >
-              入札一覧を見る（{project.bidCount}件）
+              興味ありリスト（{project.bidCount}件）
             </Link>
           ) : project.hasBid ? (
             <button disabled className="btn-primary w-full opacity-50 cursor-not-allowed">
-              入札済みです
+              興味ありを送信済み
             </button>
           ) : isExpired ? (
             <button disabled className="btn-primary w-full opacity-50 cursor-not-allowed">
@@ -293,7 +293,7 @@ export default function ProjectDetailPage({ params }: Props) {
               href={`/bid/${project.id}`}
               className="btn-primary w-full text-center block"
             >
-              入札する
+              興味あり
             </Link>
           )}
         </div>

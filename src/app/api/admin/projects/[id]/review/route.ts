@@ -127,7 +127,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         // 投稿者に承認通知
         await pushMessage(project.user.lineUserId, [
           createTextMessage(
-            `「${project.title}」が承認され、公開されました。\n入札を待ちましょう。`
+            `「${project.title}」が承認され、公開されました。\n興味ありが届くのを待ちましょう。`
           ),
         ]);
 

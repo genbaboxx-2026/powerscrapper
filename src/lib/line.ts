@@ -599,7 +599,7 @@ export function createBidNotification(
 
   return {
     type: 'flex',
-    altText: `新しい入札: ${projectTitle}`,
+    altText: `新しく興味ありが届きました: ${projectTitle}`,
     contents: {
       type: 'bubble',
       hero: {
@@ -610,7 +610,7 @@ export function createBidNotification(
         contents: [
           {
             type: 'text',
-            text: '新しい入札がありました',
+            text: '新しく興味ありが届きました',
             color: '#FFFFFF',
             size: 'lg',
             weight: 'bold',
@@ -652,7 +652,7 @@ export function createBidNotification(
             type: 'button',
             action: {
               type: 'uri',
-              label: '入札一覧を確認する',
+              label: '興味ありリスト',
               uri: `https://liff.line.me/${liffId}/projects/${projectId}/bids`,
             },
             style: 'primary',
@@ -964,7 +964,7 @@ export function createApprovalNotification(projectTitle: string, projectId: stri
           },
           {
             type: 'text',
-            text: '管理者の審査を通過し、案件一覧に掲載されました。入札が届いたらLINEで通知します。',
+            text: '管理者の審査を通過し、案件一覧に掲載されました。興味ありが届いたらLINEで通知します。',
             size: 'sm',
             color: '#73726C',
             wrap: true,
