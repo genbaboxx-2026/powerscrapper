@@ -370,7 +370,7 @@ export function createWelcomeMessage() {
               },
               {
                 type: 'text',
-                text: '解体案件の募集・入札ができるマッチング機能も使えます。よかったら覗いてみてください！',
+                text: '解体案件の募集・入札ができるマッチング機能も使えます。よかったら覗いてみてください！まずは自己紹介を登録しておくと、案件への入札もスムーズです。',
                 size: 'xs',
                 color: '#73726C',
                 wrap: true,
@@ -383,8 +383,20 @@ export function createWelcomeMessage() {
       footer: {
         type: 'box',
         layout: 'vertical',
+        spacing: 'sm',
         paddingAll: '12px',
         contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '自己紹介を登録する',
+              uri: `https://liff.line.me/${liffId}/profile/edit`,
+            },
+            style: 'primary',
+            color: BRAND_COLOR,
+            height: 'sm',
+          },
           {
             type: 'button',
             action: {
