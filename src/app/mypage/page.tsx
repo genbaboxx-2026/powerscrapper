@@ -83,6 +83,12 @@ const BID_STATUS_LABELS: Record<string, string> = {
   rejected: '落選',
 };
 
+type TabCounts = {
+  consultations: number;
+  projects: number;
+  bids: number;
+};
+
 export default function MyPage() {
   const { userId, displayName, pictureUrl, role } = useLiff();
   const [activeTab, setActiveTab] = useState('consultations');
@@ -91,6 +97,11 @@ export default function MyPage() {
   const [bids, setBids] = useState<MyBid[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
+  const [tabCounts, setTabCounts] = useState<TabCounts>({
+    consultations: 0,
+    projects: 0,
+    bids: 0,
+  });
 
   // ユーザープロフィールを取得
   useEffect(() => {
@@ -110,6 +121,56 @@ export default function MyPage() {
     fetchProfile();
   }, [userId]);
 
+  // タブの件数を取得
+  useEffect(() => {
+    const fetchAllCounts = async () => {
+      if (!userId) return;
+      try {
+        const [consultationsRes, projectsRes, bidsRes] = await Promise.all([
+          authFetch('/api/mypage/consultations', userId),
+          authFetch('/api/mypage/projects', userId),
+          authFetch('/api/bids', userId),
+        ]);
+
+        const counts: TabCounts = {
+          consultations: 0,
+          projects: 0,
+          bids: 0,
+        };
+
+        if (consultationsRes.ok) {
+          const data = await consultationsRes.json();
+          counts.consultations = data.consultations?.length || 0;
+          if (activeTab === 'consultations') {
+            setConsultations(data.consultations);
+          }
+        }
+        if (projectsRes.ok) {
+          const data = await projectsRes.json();
+          counts.projects = data.projects?.length || 0;
+          if (activeTab === 'projects') {
+            setProjects(data.projects);
+          }
+        }
+        if (bidsRes.ok) {
+          const data = await bidsRes.json();
+          counts.bids = data.bids?.length || 0;
+          if (activeTab === 'bids') {
+            setBids(data.bids);
+          }
+        }
+
+        setTabCounts(counts);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Failed to fetch counts:', err);
+        setIsLoading(false);
+      }
+    };
+    fetchAllCounts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
   const fetchData = useCallback(async () => {
     if (!userId) return;
 
@@ -120,18 +181,21 @@ export default function MyPage() {
         if (res.ok) {
           const data = await res.json();
           setConsultations(data.consultations);
+          setTabCounts((prev) => ({ ...prev, consultations: data.consultations?.length || 0 }));
         }
       } else if (activeTab === 'projects') {
         const res = await authFetch('/api/mypage/projects', userId);
         if (res.ok) {
           const data = await res.json();
           setProjects(data.projects);
+          setTabCounts((prev) => ({ ...prev, projects: data.projects?.length || 0 }));
         }
       } else if (activeTab === 'bids') {
         const res = await authFetch('/api/bids', userId);
         if (res.ok) {
           const data = await res.json();
           setBids(data.bids);
+          setTabCounts((prev) => ({ ...prev, bids: data.bids?.length || 0 }));
         }
       }
     } catch (err) {
@@ -301,19 +365,25 @@ export default function MyPage() {
         {/* タブ */}
         <div className="bg-white border-b border-[#E2E8F0]">
           <div className="flex">
-            {TABS.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => setActiveTab(tab.value)}
-                className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${
-                  activeTab === tab.value
-                    ? 'border-[#2563EB] text-[#2563EB]'
-                    : 'border-transparent text-[#64748B]'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+            {TABS.map((tab) => {
+              const count = tabCounts[tab.value as keyof TabCounts];
+              return (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveTab(tab.value)}
+                  className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${
+                    activeTab === tab.value
+                      ? 'border-[#2563EB] text-[#2563EB]'
+                      : 'border-transparent text-[#64748B]'
+                  }`}
+                >
+                  {tab.label}
+                  {count > 0 && (
+                    <span className="ml-1 text-xs">({count})</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
