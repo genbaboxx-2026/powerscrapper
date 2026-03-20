@@ -111,6 +111,11 @@ const MAIN_TABS = [
   { value: 'matching', label: 'マッチング管理' },
 ];
 
+const STATUS_TABS = [
+  { value: 'pending', label: '未審査' },
+  { value: 'approved', label: '承認済み' },
+  { value: 'rejected', label: '却下' },
+];
 
 const MATCH_STATUS_LABELS: Record<string, string> = {
   contacted: '連絡済み',
@@ -129,6 +134,7 @@ const MATCH_STATUS_STYLES: Record<string, string> = {
 export default function AdminPage() {
   const router = useRouter();
   const [mainTab, setMainTab] = useState('overview');
+  const [reviewTab, setReviewTab] = useState('pending');
   const [matchFilter, setMatchFilter] = useState('all');
 
   // Overview state
@@ -137,10 +143,8 @@ export default function AdminPage() {
   const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
   const [isLoadingOverview, setIsLoadingOverview] = useState(true);
 
-  // Review state (Kanban)
-  const [pendingProjects, setPendingProjects] = useState<Project[]>([]);
-  const [approvedProjects, setApprovedProjects] = useState<Project[]>([]);
-  const [rejectedProjects, setRejectedProjects] = useState<Project[]>([]);
+  // Review state
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
 
   // Matching state
@@ -182,32 +186,17 @@ export default function AdminPage() {
     fetchDashboard();
   }, [mainTab]);
 
-  // Fetch projects for review (all statuses for Kanban)
+  // Fetch projects for review
   useEffect(() => {
     if (mainTab !== 'review') return;
 
-    const fetchAllProjects = async () => {
+    const fetchProjects = async () => {
       setIsLoadingProjects(true);
       try {
-        const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
-          fetch('/api/admin/projects?status=pending'),
-          fetch('/api/admin/projects?status=approved'),
-          fetch('/api/admin/projects?status=rejected'),
-        ]);
-
-        if (!pendingRes.ok || !approvedRes.ok || !rejectedRes.ok) {
-          throw new Error('データの取得に失敗しました');
-        }
-
-        const [pendingData, approvedData, rejectedData] = await Promise.all([
-          pendingRes.json(),
-          approvedRes.json(),
-          rejectedRes.json(),
-        ]);
-
-        setPendingProjects(pendingData.projects);
-        setApprovedProjects(approvedData.projects);
-        setRejectedProjects(rejectedData.projects);
+        const res = await fetch(`/api/admin/projects?status=${reviewTab}`);
+        if (!res.ok) throw new Error('データの取得に失敗しました');
+        const data = await res.json();
+        setProjects(data.projects);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'エラーが発生しました');
       } finally {
@@ -215,8 +204,8 @@ export default function AdminPage() {
       }
     };
 
-    fetchAllProjects();
-  }, [mainTab]);
+    fetchProjects();
+  }, [mainTab, reviewTab]);
 
   // Fetch matches
   const fetchMatches = useCallback(async () => {
@@ -493,137 +482,85 @@ export default function AdminPage() {
             </>
           )}
 
-          {/* 案件審査タブ - カンバンボード */}
+          {/* 案件審査タブ */}
           {mainTab === 'review' && (
             <>
+              {/* サブタブ */}
+              <div className="flex gap-2 mb-4">
+                {STATUS_TABS.map((tab) => (
+                  <button
+                    key={tab.value}
+                    onClick={() => setReviewTab(tab.value)}
+                    className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+                      reviewTab === tab.value
+                        ? 'bg-[#1E293B] text-white'
+                        : 'bg-[#E2E8F0] text-[#64748B]'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
               {isLoadingProjects ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
                 </div>
+              ) : projects.length === 0 ? (
+                <div className="text-center py-12 text-[#64748B]">
+                  <p>
+                    {reviewTab === 'pending'
+                      ? '未審査の案件はありません'
+                      : reviewTab === 'approved'
+                      ? '承認済みの案件はありません'
+                      : '却下された案件はありません'}
+                  </p>
+                </div>
               ) : (
-                <div className="grid grid-cols-3 gap-4">
-                  {/* 未審査カラム */}
-                  <div className="bg-[#FEF3C7] rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-bold text-[#92400E]">未審査</h3>
-                      <span className="px-2 py-0.5 bg-[#FDE68A] text-[#92400E] text-sm font-medium rounded">
-                        {pendingProjects.length}
-                      </span>
-                    </div>
-                    <div className="space-y-3">
-                      {pendingProjects.length === 0 ? (
-                        <p className="text-sm text-[#92400E]/60 text-center py-4">案件なし</p>
-                      ) : (
-                        pendingProjects.map((project) => (
-                          <Link
-                            key={project.id}
-                            href={`/admin/projects/${project.id}`}
-                            className="block bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
-                          >
-                            <div className="flex items-center gap-2 mb-2">
-                              {project.isUrgent && (
-                                <span className="badge badge-urgent text-xs">急募</span>
-                              )}
-                              <span className="text-xs text-[#64748B]">
-                                {formatDate(project.createdAt)}
-                              </span>
-                            </div>
-                            <h4 className="text-sm font-bold text-[#1E293B] mb-1 line-clamp-2">
-                              {project.title}
-                            </h4>
-                            <p className="text-xs text-[#64748B] mb-1">
-                              {project.owner.companyName || '未設定'}
-                            </p>
-                            <p className="text-xs text-[#64748B]">
-                              {project.sitePrefecture || '未設定'}
-                            </p>
-                          </Link>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 承認済みカラム */}
-                  <div className="bg-[#D1FAE5] rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-bold text-[#065F46]">承認済み</h3>
-                      <span className="px-2 py-0.5 bg-[#A7F3D0] text-[#065F46] text-sm font-medium rounded">
-                        {approvedProjects.length}
-                      </span>
-                    </div>
-                    <div className="space-y-3">
-                      {approvedProjects.length === 0 ? (
-                        <p className="text-sm text-[#065F46]/60 text-center py-4">案件なし</p>
-                      ) : (
-                        approvedProjects.map((project) => (
-                          <Link
-                            key={project.id}
-                            href={`/admin/projects/${project.id}`}
-                            className="block bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
-                          >
-                            <div className="flex items-center gap-2 mb-2">
-                              {project.isUrgent && (
-                                <span className="badge badge-urgent text-xs">急募</span>
-                              )}
-                              <span className="text-xs text-[#64748B]">
-                                {formatDate(project.createdAt)}
-                              </span>
-                            </div>
-                            <h4 className="text-sm font-bold text-[#1E293B] mb-1 line-clamp-2">
-                              {project.title}
-                            </h4>
-                            <p className="text-xs text-[#64748B] mb-1">
-                              {project.owner.companyName || '未設定'}
-                            </p>
-                            <p className="text-xs text-[#64748B]">
-                              {project.sitePrefecture || '未設定'}
-                            </p>
-                          </Link>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 却下カラム */}
-                  <div className="bg-[#FEE2E2] rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-bold text-[#991B1B]">却下</h3>
-                      <span className="px-2 py-0.5 bg-[#FECACA] text-[#991B1B] text-sm font-medium rounded">
-                        {rejectedProjects.length}
-                      </span>
-                    </div>
-                    <div className="space-y-3">
-                      {rejectedProjects.length === 0 ? (
-                        <p className="text-sm text-[#991B1B]/60 text-center py-4">案件なし</p>
-                      ) : (
-                        rejectedProjects.map((project) => (
-                          <Link
-                            key={project.id}
-                            href={`/admin/projects/${project.id}`}
-                            className="block bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
-                          >
-                            <div className="flex items-center gap-2 mb-2">
-                              {project.isUrgent && (
-                                <span className="badge badge-urgent text-xs">急募</span>
-                              )}
-                              <span className="text-xs text-[#64748B]">
-                                {formatDate(project.createdAt)}
-                              </span>
-                            </div>
-                            <h4 className="text-sm font-bold text-[#1E293B] mb-1 line-clamp-2">
-                              {project.title}
-                            </h4>
-                            <p className="text-xs text-[#64748B] mb-1">
-                              {project.owner.companyName || '未設定'}
-                            </p>
-                            <p className="text-xs text-[#64748B]">
-                              {project.sitePrefecture || '未設定'}
-                            </p>
-                          </Link>
-                        ))
-                      )}
-                    </div>
-                  </div>
+                <div className="space-y-4">
+                  {projects.map((project) => (
+                    <Link
+                      key={project.id}
+                      href={`/admin/projects/${project.id}`}
+                      className="card block p-4"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          {project.isUrgent && (
+                            <span className="badge badge-urgent">急募</span>
+                          )}
+                          <span className="badge badge-type">
+                            {RECRUITMENT_TYPE_LABELS[project.recruitmentType as RecruitmentType]}
+                          </span>
+                        </div>
+                        <span className="text-sm text-[#64748B]">
+                          {formatDate(project.createdAt)}
+                        </span>
+                      </div>
+                      <h2 className="text-base font-bold text-[#1E293B] mb-2">
+                        {project.title}
+                      </h2>
+                      <div className="bg-[#F8FAFC] rounded p-2 mb-2">
+                        <p className="text-sm text-[#1E293B]">
+                          投稿者: {project.owner.companyName || project.owner.displayName || '未設定'}
+                        </p>
+                        {project.owner.businessType && (
+                          <p className="text-xs text-[#64748B]">
+                            {BUSINESS_TYPE_LABELS[project.owner.businessType as BusinessType]}
+                          </p>
+                        )}
+                      </div>
+                      <p className="text-sm text-[#64748B] mb-2">
+                        {project.sitePrefecture || '未設定'} | {project.periodStart}〜{project.periodEnd}
+                      </p>
+                      <div className="flex items-center justify-between pt-2 border-t border-[#E2E8F0]">
+                        <span className="text-sm text-[#2563EB]">詳細を確認</span>
+                        {reviewTab === 'pending' && (
+                          <span className="text-sm text-[#BA7517] font-medium">審査待ち</span>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               )}
             </>
