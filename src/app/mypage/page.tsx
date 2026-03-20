@@ -414,8 +414,11 @@ export default function MyPage() {
                     <h2 className="text-base font-bold text-[#1E293B] mb-2">
                       {project.title}
                     </h2>
-                    <div className="text-sm text-[#64748B] mb-3">
+                    <div className="text-sm text-[#64748B] mb-1">
                       {project.sitePrefecture || '未設定'} | {project.periodStart}〜{project.periodEnd}
+                    </div>
+                    <div className="text-sm text-[#64748B] mb-3">
+                      募集期限: {new Date(project.deadline).toLocaleDateString('ja-JP')}
                     </div>
 
                     {/* 興味あり件数を目立つように表示 */}
