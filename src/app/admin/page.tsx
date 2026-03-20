@@ -318,7 +318,7 @@ export default function AdminPage() {
       <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
         <header className="bg-[#2563EB] text-white py-3">
-          <div className="px-20 flex items-center justify-between">
+          <div className="px-40 flex items-center justify-between">
             <h1 className="text-lg font-bold">管理者ダッシュボード</h1>
             <button
               onClick={handleLogout}
@@ -331,7 +331,7 @@ export default function AdminPage() {
 
         {/* メインタブ */}
         <div className="bg-white border-b border-[#E2E8F0]">
-          <div className="flex px-20">
+          <div className="flex px-40">
             {MAIN_TABS.map((tab) => (
               <button
                 key={tab.value}
@@ -348,7 +348,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <main className="py-4 pb-24 px-20">
+        <main className="py-4 pb-24 px-40">
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-[#E24B4A] rounded-lg text-[#E24B4A] text-sm">
               {error}
@@ -763,7 +763,7 @@ export default function AdminPage() {
 
         {/* ナビゲーション */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0]">
-          <div className="py-4 px-20">
+          <div className="py-4 px-40">
             <Link
               href="/projects"
               className="btn-secondary w-full text-center block"
