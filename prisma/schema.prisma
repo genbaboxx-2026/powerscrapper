@@ -41,6 +41,7 @@ model User {
   consultations         Consultation[]
   consultationComments  ConsultationComment[]
   consultationReactions ConsultationReaction[]
+  readStatuses          UserReadStatus[]
 
   @@map("users")
 }
@@ -174,4 +175,16 @@ model ConsultationReaction {
 
   @@unique([consultationId, userId, type])
   @@map("consultation_reactions")
+}
+
+model UserReadStatus {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  type       String   // 'consultations', 'projects', 'bids'
+  lastReadAt DateTime @default(now()) @map("last_read_at")
+
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, type])
+  @@map("user_read_statuses")
 }
