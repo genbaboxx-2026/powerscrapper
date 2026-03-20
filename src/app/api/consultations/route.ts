@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
               lineDisplayName: true,
               companyName: true,
               linePictureUrl: true,
+              representativeName: true,
             },
           },
           _count: {
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
         createdAt: c.createdAt.toISOString(),
         user: {
           id: c.user.id,
-          displayName: c.user.lineDisplayName,
+          displayName: c.user.representativeName || c.user.lineDisplayName,
           companyName: c.user.companyName,
           pictureUrl: c.user.linePictureUrl,
         },

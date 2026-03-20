@@ -27,6 +27,7 @@ export async function GET(request: NextRequest, { params }: Props) {
             lineDisplayName: true,
             companyName: true,
             linePictureUrl: true,
+            representativeName: true,
           },
         },
         comments: {
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest, { params }: Props) {
                 lineDisplayName: true,
                 companyName: true,
                 linePictureUrl: true,
+                representativeName: true,
               },
             },
           },
@@ -67,7 +69,7 @@ export async function GET(request: NextRequest, { params }: Props) {
         createdAt: consultation.createdAt.toISOString(),
         user: {
           id: consultation.user.id,
-          displayName: consultation.user.lineDisplayName,
+          displayName: consultation.user.representativeName || consultation.user.lineDisplayName,
           companyName: consultation.user.companyName,
           pictureUrl: consultation.user.linePictureUrl,
         },
@@ -82,7 +84,7 @@ export async function GET(request: NextRequest, { params }: Props) {
           createdAt: c.createdAt.toISOString(),
           user: {
             id: c.user.id,
-            displayName: c.user.lineDisplayName,
+            displayName: c.user.representativeName || c.user.lineDisplayName,
             companyName: c.user.companyName,
             pictureUrl: c.user.linePictureUrl,
           },
