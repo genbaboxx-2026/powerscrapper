@@ -191,36 +191,57 @@ export default function MyPage() {
       <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
         <header className="bg-white border-b border-[#E2E8F0] px-4 py-4">
-          <div className="flex items-center gap-3">
-            {pictureUrl ? (
-              <img
-                src={pictureUrl}
-                alt=""
-                className="w-12 h-12 rounded-full"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-[#E2E8F0] flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-[#64748B]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {pictureUrl ? (
+                <img
+                  src={pictureUrl}
+                  alt=""
+                  className="w-12 h-12 rounded-full"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-[#E2E8F0] flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-[#64748B]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+              )}
+              <div>
+                <h1 className="text-lg font-bold text-[#1E293B]">
+                  {userName || displayName || 'ユーザー'}
+                </h1>
+                <p className="text-sm text-[#64748B]">マイページ</p>
               </div>
-            )}
-            <div>
-              <h1 className="text-lg font-bold text-[#1E293B]">
-                {userName || displayName || 'ユーザー'}
-              </h1>
-              <p className="text-sm text-[#64748B]">マイページ</p>
             </div>
+            <Link
+              href="/projects"
+              className="flex items-center gap-1 text-sm text-[#2563EB]"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
+              </svg>
+              一覧に戻る
+            </Link>
           </div>
         </header>
 
@@ -295,7 +316,7 @@ export default function MyPage() {
           </div>
         </div>
 
-        <main className="p-4 pb-24">
+        <main className="p-4">
           {isLoading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
@@ -459,50 +480,6 @@ export default function MyPage() {
             )
           )}
         </main>
-
-        {/* ナビゲーション */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0]">
-          <div className="flex">
-            <Link
-              href="/projects"
-              className="flex-1 flex flex-col items-center py-3 text-[#64748B]"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                />
-              </svg>
-              <span className="text-xs mt-1">案件</span>
-            </Link>
-            <Link
-              href="/mypage"
-              className="flex-1 flex flex-col items-center py-3 text-[#2563EB]"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-              <span className="text-xs mt-1">マイページ</span>
-            </Link>
-          </div>
-        </nav>
       </div>
     </AuthGuard>
   );
