@@ -317,19 +317,21 @@ export default function AdminPage() {
     <AdminAuthGuard>
       <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
-        <header className="bg-[#2563EB] text-white px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-bold">管理者ダッシュボード</h1>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-white/80 hover:text-white"
-          >
-            ログアウト
-          </button>
+        <header className="bg-[#2563EB] text-white px-6 py-3">
+          <div className="max-w-screen-sm mx-auto flex items-center justify-between">
+            <h1 className="text-lg font-bold">管理者ダッシュボード</h1>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-white/80 hover:text-white"
+            >
+              ログアウト
+            </button>
+          </div>
         </header>
 
         {/* メインタブ */}
         <div className="bg-white border-b border-[#E2E8F0]">
-          <div className="flex">
+          <div className="flex max-w-screen-sm mx-auto">
             {MAIN_TABS.map((tab) => (
               <button
                 key={tab.value}
@@ -346,7 +348,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <main className="p-4 pb-24">
+        <main className="px-6 py-4 pb-24 max-w-screen-sm mx-auto">
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-[#E24B4A] rounded-lg text-[#E24B4A] text-sm">
               {error}
@@ -760,13 +762,15 @@ export default function AdminPage() {
         </main>
 
         {/* ナビゲーション */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] p-4">
-          <Link
-            href="/projects"
-            className="btn-secondary w-full text-center block"
-          >
-            ユーザー画面に戻る
-          </Link>
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0]">
+          <div className="px-6 py-4 max-w-screen-sm mx-auto">
+            <Link
+              href="/projects"
+              className="btn-secondary w-full text-center block"
+            >
+              ユーザー画面に戻る
+            </Link>
+          </div>
         </div>
       </div>
     </AdminAuthGuard>
