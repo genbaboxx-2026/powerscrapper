@@ -223,3 +223,55 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+/**
+ * PATCH /api/projects/[id] - 案件ステータス更新（停止など）
+ */
+export async function PATCH(req: NextRequest, { params }: Params) {
+  try {
+    const user = await getUserFromRequest(req);
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const project = await prisma.project.findUnique({
+      where: { id },
+    });
+
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // オーナーのみ変更可能
+    if (project.userId !== user.id) {
+      return NextResponse.json({ error: '変更権限がありません' }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { status } = body;
+
+    // 許可されたステータス変更のみ
+    if (status !== 'closed') {
+      return NextResponse.json(
+        { error: '無効なステータスです' },
+        { status: 400 }
+      );
+    }
+
+    const updatedProject = await prisma.project.update({
+      where: { id },
+      data: { status },
+    });
+
+    return NextResponse.json({
+      id: updatedProject.id,
+      status: updatedProject.status,
+    });
+  } catch (error) {
+    console.error('Project PATCH error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

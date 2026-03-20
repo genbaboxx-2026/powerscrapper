@@ -52,6 +52,8 @@ export default function ProjectDetailPage({ params }: Props) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCancelBidConfirm, setShowCancelBidConfirm] = useState(false);
   const [isCancellingBid, setIsCancellingBid] = useState(false);
+  const [showStopConfirm, setShowStopConfirm] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -105,6 +107,35 @@ export default function ProjectDetailPage({ params }: Props) {
       setShowDeleteConfirm(false);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleStop = async () => {
+    if (!userId) return;
+
+    setIsStopping(true);
+
+    try {
+      const res = await authFetch(`/api/projects/${id}`, userId, {
+        method: 'PATCH',
+        body: { status: 'closed' },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '停止に失敗しました');
+      }
+
+      // 成功したらprojectのstatusを更新
+      if (project) {
+        setProject({ ...project, status: 'closed' });
+      }
+      setShowStopConfirm(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '停止に失敗しました');
+      setShowStopConfirm(false);
+    } finally {
+      setIsStopping(false);
     }
   };
 
@@ -334,7 +365,7 @@ export default function ProjectDetailPage({ params }: Props) {
               <h3 className="text-sm font-medium text-[#64748B] mb-3">
                 案件の管理
               </h3>
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-2">
                 <Link
                   href={`/projects/${id}/edit`}
                   className="flex-1 py-2 px-4 border border-[#2563EB] text-[#2563EB] rounded-lg text-sm font-medium text-center"
@@ -348,6 +379,19 @@ export default function ProjectDetailPage({ params }: Props) {
                   削除する
                 </button>
               </div>
+              {project.status !== 'closed' && (
+                <button
+                  onClick={() => setShowStopConfirm(true)}
+                  className="w-full py-2 px-4 border border-[#64748B] text-[#64748B] rounded-lg text-sm font-medium"
+                >
+                  募集を停止する
+                </button>
+              )}
+              {project.status === 'closed' && (
+                <p className="text-sm text-[#64748B] text-center py-2">
+                  この案件は停止中です
+                </p>
+              )}
             </div>
           )}
         </main>
@@ -443,6 +487,36 @@ export default function ProjectDetailPage({ params }: Props) {
                   className="flex-1 py-3 bg-[#E24B4A] text-white rounded-lg font-medium disabled:opacity-50"
                 >
                   {isDeleting ? '削除中...' : '削除する'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 停止確認モーダル */}
+        {showStopConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 max-w-sm w-full">
+              <h3 className="text-lg font-bold text-[#1E293B] mb-2">
+                募集を停止しますか？
+              </h3>
+              <p className="text-sm text-[#64748B] mb-6">
+                案件一覧から非表示になります。停止後も編集から再公開できます。
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowStopConfirm(false)}
+                  disabled={isStopping}
+                  className="flex-1 py-3 border border-[#E2E8F0] text-[#1E293B] rounded-lg font-medium"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleStop}
+                  disabled={isStopping}
+                  className="flex-1 py-3 bg-[#64748B] text-white rounded-lg font-medium disabled:opacity-50"
+                >
+                  {isStopping ? '停止中...' : '停止する'}
                 </button>
               </div>
             </div>
