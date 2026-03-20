@@ -177,7 +177,25 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ bids });
+    // 既読情報を取得
+    const itemReads = await prisma.userItemRead.findMany({
+      where: {
+        userId: user.id,
+        itemType: 'bid',
+        itemId: { in: bids.map((b) => b.id) },
+      },
+    });
+    const readMap = new Map(itemReads.map((r) => [r.itemId, r.readAt]));
+
+    // isNewフラグを追加（ステータスが変わったもので未読のもの）
+    const bidsWithNew = bids.map((bid) => {
+      const readAt = readMap.get(bid.id);
+      // submitted以外のステータス＝返答あり、かつ未読または更新後に読んでいない
+      const isNew = bid.status !== 'submitted' && (!readAt || bid.updatedAt > readAt);
+      return { ...bid, isNew };
+    });
+
+    return NextResponse.json({ bids: bidsWithNew });
   } catch (error) {
     console.error('Failed to fetch bids:', error);
     return NextResponse.json(

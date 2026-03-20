@@ -52,6 +52,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     const isOwner = project.userId === user.id;
     const userBid = project.bids[0] || null;
     const hasBid = !!userBid;
+    const bidId = userBid?.id || null;
     const bidStatus = userBid?.status || null;
 
     // 返答あり（connected）の場合のみオーナー情報を開示
@@ -81,6 +82,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       bidCount: project._count.bids,
       isOwner,
       hasBid,
+      bidId,
       bidStatus,
       ownerInfo,
       createdAt: project.createdAt,

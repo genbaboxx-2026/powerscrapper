@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { AuthGuard } from '@/components/AuthGuard';
 import { useLiff } from '@/components/LiffProvider';
@@ -11,12 +11,6 @@ import {
   type RecruitmentType,
   type ConsultationCategory,
 } from '@/types';
-
-type UnreadCounts = {
-  consultations: number;
-  projects: number;
-  bids: number;
-};
 
 type MyConsultation = {
   id: string;
@@ -55,6 +49,7 @@ type MyBid = {
   message: string;
   status: string;
   createdAt: string;
+  isNew: boolean;
   project: {
     id: string;
     title: string;
@@ -96,12 +91,6 @@ export default function MyPage() {
   const [bids, setBids] = useState<MyBid[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
-  const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({
-    consultations: 0,
-    projects: 0,
-    bids: 0,
-  });
-  const markedReadRef = useRef<Set<string>>(new Set());
 
   // ユーザープロフィールを取得
   useEffect(() => {
@@ -121,45 +110,6 @@ export default function MyPage() {
     fetchProfile();
   }, [userId]);
 
-  // 未読件数を取得
-  useEffect(() => {
-    const fetchUnreadCounts = async () => {
-      if (!userId) return;
-      try {
-        const res = await authFetch('/api/mypage/unread-counts', userId);
-        if (res.ok) {
-          const data = await res.json();
-          setUnreadCounts(data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch unread counts:', err);
-      }
-    };
-    fetchUnreadCounts();
-  }, [userId]);
-
-  // タブを閲覧済みにする
-  const markTabAsRead = useCallback(async (tabType: string) => {
-    if (!userId) return;
-    if (markedReadRef.current.has(tabType)) return; // 既にマーク済み
-
-    markedReadRef.current.add(tabType);
-
-    try {
-      await authFetch('/api/mypage/mark-read', userId, {
-        method: 'POST',
-        body: { type: tabType },
-      });
-      // ローカルの未読件数をリセット
-      setUnreadCounts((prev) => ({
-        ...prev,
-        [tabType]: 0,
-      }));
-    } catch (err) {
-      console.error('Failed to mark as read:', err);
-    }
-  }, [userId]);
-
   const fetchData = useCallback(async () => {
     if (!userId) return;
 
@@ -171,31 +121,25 @@ export default function MyPage() {
           const data = await res.json();
           setConsultations(data.consultations);
         }
-        // 閲覧済みにマーク
-        markTabAsRead('consultations');
       } else if (activeTab === 'projects') {
         const res = await authFetch('/api/mypage/projects', userId);
         if (res.ok) {
           const data = await res.json();
           setProjects(data.projects);
         }
-        // 閲覧済みにマーク
-        markTabAsRead('projects');
       } else if (activeTab === 'bids') {
         const res = await authFetch('/api/bids', userId);
         if (res.ok) {
           const data = await res.json();
           setBids(data.bids);
         }
-        // 閲覧済みにマーク
-        markTabAsRead('bids');
       }
     } catch (err) {
       console.error('Failed to fetch data:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [userId, activeTab, markTabAsRead]);
+  }, [userId, activeTab]);
 
   useEffect(() => {
     fetchData();
@@ -357,27 +301,19 @@ export default function MyPage() {
         {/* タブ */}
         <div className="bg-white border-b border-[#E2E8F0]">
           <div className="flex">
-            {TABS.map((tab) => {
-              const unreadCount = unreadCounts[tab.value as keyof UnreadCounts] || 0;
-              return (
-                <button
-                  key={tab.value}
-                  onClick={() => setActiveTab(tab.value)}
-                  className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors relative ${
-                    activeTab === tab.value
-                      ? 'border-[#2563EB] text-[#2563EB]'
-                      : 'border-transparent text-[#64748B]'
-                  }`}
-                >
-                  {tab.label}
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1/4 transform translate-x-1/2 min-w-[18px] h-[18px] bg-[#E24B4A] text-white text-xs rounded-full flex items-center justify-center px-1">
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+            {TABS.map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => setActiveTab(tab.value)}
+                className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${
+                  activeTab === tab.value
+                    ? 'border-[#2563EB] text-[#2563EB]'
+                    : 'border-transparent text-[#64748B]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -525,8 +461,13 @@ export default function MyPage() {
                   <Link
                     key={bid.id}
                     href={`/projects/${bid.project.id}`}
-                    className="card block p-4"
+                    className={`card block p-4 relative ${bid.isNew ? 'border-[#E24B4A] border-2' : ''}`}
                   >
+                    {bid.isNew && (
+                      <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-[#E24B4A] text-white text-xs font-bold rounded">
+                        NEW
+                      </span>
+                    )}
                     <div className="flex items-center justify-between mb-2">
                       <span className="badge badge-type">
                         {RECRUITMENT_TYPE_LABELS[bid.project.recruitmentType as RecruitmentType]}

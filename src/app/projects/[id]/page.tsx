@@ -34,6 +34,7 @@ type Project = {
   bidCount: number;
   isOwner: boolean;
   hasBid: boolean;
+  bidId: string | null;
   bidStatus: string | null;
   ownerInfo: {
     companyName: string;
@@ -80,6 +81,18 @@ export default function ProjectDetailPage({ params }: Props) {
 
         const data = await res.json();
         setProject(data);
+
+        // 入札がある場合は既読にマーク
+        if (data.hasBid && data.bidId) {
+          try {
+            await authFetch('/api/mypage/mark-item-read', userId, {
+              method: 'POST',
+              body: { itemType: 'bid', itemId: data.bidId },
+            });
+          } catch (e) {
+            console.error('Failed to mark bid as read:', e);
+          }
+        }
       } catch (err) {
         console.error('Failed to fetch project:', err);
         setError('エラーが発生しました');
