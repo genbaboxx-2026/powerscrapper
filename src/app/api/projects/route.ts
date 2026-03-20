@@ -54,16 +54,33 @@ export async function GET(req: NextRequest) {
     const recruitmentType = searchParams.get('recruitmentType');
     const prefecture = searchParams.get('prefecture');
     const urgentOnly = searchParams.get('urgentOnly') === 'true';
+    const excludeBidded = searchParams.get('excludeBidded') === 'true';
+    const myProjects = searchParams.get('myProjects') === 'true';
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const skip = (page - 1) * limit;
 
+    // 入札済み案件を除外する場合、ユーザーが入札した案件IDを取得
+    let biddedProjectIds: string[] = [];
+    if (excludeBidded) {
+      const userBids = await prisma.bid.findMany({
+        where: { userId: user.id },
+        select: { projectId: true },
+      });
+      biddedProjectIds = userBids.map((b) => b.projectId);
+    }
+
     const where = {
-      status: 'approved',
-      deadline: { gt: new Date() },
+      // myProjectsの場合は自分の案件全て、それ以外は承認済みの公開案件のみ
+      ...(myProjects
+        ? { userId: user.id }
+        : { status: 'approved', deadline: { gt: new Date() } }),
       ...(recruitmentType && { recruitmentType }),
       ...(prefecture && { sitePrefecture: prefecture }),
       ...(urgentOnly && { isUrgent: true }),
+      ...(excludeBidded && biddedProjectIds.length > 0 && {
+        id: { notIn: biddedProjectIds },
+      }),
     };
 
     const [projects, total] = await Promise.all([

@@ -13,6 +13,8 @@ import {
   type WorkType,
 } from '@/types';
 
+// ===== Types =====
+
 type Project = {
   id: string;
   title: string;
@@ -31,36 +33,55 @@ type Project = {
   isOwner: boolean;
 };
 
-type Bid = {
+type Consultation = {
   id: string;
+  category: string;
+  title: string;
+  body: string;
   status: string;
   createdAt: string;
-  project: {
+  user: {
     id: string;
-    title: string;
-    recruitmentType: string;
-    sitePrefecture: string | null;
-    periodStart: string;
-    periodEnd: string;
-    status: string;
-    deadline: string;
+    displayName: string | null;
+    companyName: string | null;
+    pictureUrl: string | null;
   };
+  commentCount: number;
+  isOwner: boolean;
 };
+
+// ===== Constants =====
 
 const PREFECTURES = [
   '東京都', '神奈川県', '埼玉県', '千葉県', '茨城県', '栃木県', '群馬県',
 ];
 
-const BID_STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  submitted: { label: '興味あり送信済', color: 'text-[#BA7517] bg-[#FAEEDA]' },
-  selected: { label: '選定', color: 'text-[#0F6E56] bg-[#E1F5EE]' },
-  rejected: { label: '非選定', color: 'text-[#73726C] bg-[#E8E8E6]' },
+const CONSULTATION_CATEGORIES = [
+  { value: '', label: '全て' },
+  { value: 'general', label: '一般相談' },
+  { value: 'technical', label: '技術相談' },
+  { value: 'equipment', label: '重機・機材' },
+  { value: 'waste', label: '産廃関連' },
+  { value: 'regulation', label: '法規・許可' },
+  { value: 'other', label: 'その他' },
+];
+
+const CATEGORY_BADGES: Record<string, { label: string; color: string }> = {
+  general: { label: '一般相談', color: 'bg-[#E8E8E6] text-[#73726C]' },
+  technical: { label: '技術相談', color: 'bg-[#E3EDF7] text-[#4A6FA5]' },
+  equipment: { label: '重機・機材', color: 'bg-[#FAEEDA] text-[#BA7517]' },
+  waste: { label: '産廃関連', color: 'bg-[#E1F5EE] text-[#0F6E56]' },
+  regulation: { label: '法規・許可', color: 'bg-[#FDEAEA] text-[#E24B4A]' },
+  other: { label: 'その他', color: 'bg-[#E8E8E6] text-[#73726C]' },
 };
 
-function RegistrationMessage() {
+// ===== Message Component =====
+
+function ToastMessage() {
   const searchParams = useSearchParams();
   const registered = searchParams.get('registered') === 'true';
   const bidSuccess = searchParams.get('bid') === 'success';
+  const posted = searchParams.get('posted') === 'true';
 
   if (registered) {
     return (
@@ -78,39 +99,93 @@ function RegistrationMessage() {
     );
   }
 
+  if (posted) {
+    return (
+      <div className="mx-4 mt-4 p-3 bg-[#E1F5EE] border border-[#0F6E56] rounded-lg text-[#0F6E56] text-sm">
+        相談を投稿しました。
+      </div>
+    );
+  }
+
   return null;
 }
 
-function ProjectsContent() {
+// ===== Main Content Component =====
+
+function MainContent() {
   const { userId } = useLiff();
-  const [activeTab, setActiveTab] = useState<'projects' | 'bids'>('projects');
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab') === 'project' ? 'project' : 'consultation';
+
+  const [activeTab, setActiveTab] = useState<'consultation' | 'project'>(initialTab);
+
+  // Consultation state
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [consultationFilters, setConsultationFilters] = useState({
+    category: '',
+    myPosts: false,
+  });
+
+  // Project state
   const [projects, setProjects] = useState<Project[]>([]);
-  const [bids, setBids] = useState<Bid[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState({
+  const [projectFilters, setProjectFilters] = useState({
     recruitmentType: '',
     prefecture: '',
     urgentOnly: false,
-    excludeBidded: true, // デフォルトで入札済みを除外
+    excludeBidded: false,
+    myProjects: false,
   });
 
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch consultations
+  const fetchConsultations = useCallback(async () => {
+    if (!userId) return;
+
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (consultationFilters.category) {
+        params.set('category', consultationFilters.category);
+      }
+      if (consultationFilters.myPosts) {
+        params.set('myPosts', 'true');
+      }
+
+      const res = await authFetch(`/api/consultations?${params.toString()}`, userId);
+
+      if (res.ok) {
+        const data = await res.json();
+        setConsultations(data.consultations);
+      }
+    } catch (err) {
+      console.error('Failed to fetch consultations:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [consultationFilters, userId]);
+
+  // Fetch projects
   const fetchProjects = useCallback(async () => {
     if (!userId) return;
 
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filters.recruitmentType) {
-        params.set('recruitmentType', filters.recruitmentType);
+      if (projectFilters.recruitmentType) {
+        params.set('recruitmentType', projectFilters.recruitmentType);
       }
-      if (filters.prefecture) {
-        params.set('prefecture', filters.prefecture);
+      if (projectFilters.prefecture) {
+        params.set('prefecture', projectFilters.prefecture);
       }
-      if (filters.urgentOnly) {
+      if (projectFilters.urgentOnly) {
         params.set('urgentOnly', 'true');
       }
-      if (filters.excludeBidded) {
+      if (projectFilters.excludeBidded) {
         params.set('excludeBidded', 'true');
+      }
+      if (projectFilters.myProjects) {
+        params.set('myProjects', 'true');
       }
 
       const res = await authFetch(`/api/projects?${params.toString()}`, userId);
@@ -124,33 +199,15 @@ function ProjectsContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [filters, userId]);
-
-  const fetchBids = useCallback(async () => {
-    if (!userId) return;
-
-    setIsLoading(true);
-    try {
-      const res = await authFetch('/api/bids', userId);
-
-      if (res.ok) {
-        const data = await res.json();
-        setBids(data.bids);
-      }
-    } catch (err) {
-      console.error('Failed to fetch bids:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId]);
+  }, [projectFilters, userId]);
 
   useEffect(() => {
-    if (activeTab === 'projects') {
-      fetchProjects();
+    if (activeTab === 'consultation') {
+      fetchConsultations();
     } else {
-      fetchBids();
+      fetchProjects();
     }
-  }, [activeTab, fetchProjects, fetchBids]);
+  }, [activeTab, fetchConsultations, fetchProjects]);
 
   const getDaysRemaining = (deadline: string) => {
     const now = new Date();
@@ -164,44 +221,186 @@ function ProjectsContent() {
     return `${date.getMonth() + 1}/${date.getDate()}`;
   };
 
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const getUserDisplayName = (user: Consultation['user']) => {
+    return user.companyName || user.displayName || '匿名';
+  };
+
+  const truncateText = (text: string, lines: number = 2) => {
+    const lineArray = text.split('\n');
+    if (lineArray.length <= lines) {
+      const joined = lineArray.join('\n');
+      return joined.length > 100 ? joined.slice(0, 100) + '...' : joined;
+    }
+    return lineArray.slice(0, lines).join('\n') + '...';
+  };
+
   return (
     <>
       {/* タブ */}
       <div className="bg-white border-b border-[#D5D5D0]">
         <div className="flex">
           <button
-            onClick={() => setActiveTab('projects')}
+            onClick={() => setActiveTab('consultation')}
             className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${
-              activeTab === 'projects'
+              activeTab === 'consultation'
                 ? 'border-[#0F6E56] text-[#0F6E56]'
                 : 'border-transparent text-[#73726C]'
             }`}
           >
-            案件一覧
+            パワスク相談
           </button>
           <button
-            onClick={() => setActiveTab('bids')}
+            onClick={() => setActiveTab('project')}
             className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${
-              activeTab === 'bids'
+              activeTab === 'project'
                 ? 'border-[#0F6E56] text-[#0F6E56]'
                 : 'border-transparent text-[#73726C]'
             }`}
           >
-            興味あり済
+            案件
           </button>
         </div>
       </div>
 
-      {activeTab === 'projects' ? (
+      {activeTab === 'consultation' ? (
         <>
-          {/* フィルタバー */}
+          {/* 相談フィルタ */}
+          <div className="bg-white border-b border-[#D5D5D0] px-4 py-3">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              <select
+                className="input text-sm py-2 px-3 min-w-[120px]"
+                value={consultationFilters.category}
+                onChange={(e) =>
+                  setConsultationFilters({ ...consultationFilters, category: e.target.value })
+                }
+              >
+                {CONSULTATION_CATEGORIES.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+              <label className="flex items-center gap-1 text-sm whitespace-nowrap px-2">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4"
+                  checked={consultationFilters.myPosts}
+                  onChange={(e) =>
+                    setConsultationFilters({ ...consultationFilters, myPosts: e.target.checked })
+                  }
+                />
+                自分の投稿
+              </label>
+            </div>
+          </div>
+
+          {/* 相談一覧 */}
+          <main className="p-4 pb-24">
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F6E56] mx-auto"></div>
+                <p className="mt-4 text-[#73726C] text-sm">読み込み中...</p>
+              </div>
+            ) : consultations.length === 0 ? (
+              <div className="text-center py-12 text-[#73726C]">
+                <p>相談がありません</p>
+                <p className="text-sm mt-2">最初の相談を投稿してみましょう</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {consultations.map((consultation) => {
+                  const categoryInfo = CATEGORY_BADGES[consultation.category] || CATEGORY_BADGES.other;
+                  return (
+                    <Link
+                      key={consultation.id}
+                      href={`/consultations/${consultation.id}`}
+                      className={`card block p-4 ${consultation.isOwner ? 'card-own' : ''}`}
+                    >
+                      {/* バッジ・日時行 */}
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`px-2 py-0.5 text-xs rounded font-medium ${categoryInfo.color}`}>
+                          {categoryInfo.label}
+                        </span>
+                        <span className="text-xs text-[#73726C]">
+                          {formatDateTime(consultation.createdAt)}
+                        </span>
+                      </div>
+
+                      {/* タイトル */}
+                      <h2 className="text-base font-bold text-[#2C2C2A] mb-2">
+                        {consultation.title}
+                      </h2>
+
+                      {/* 本文プレビュー */}
+                      <p className="text-sm text-[#73726C] mb-3 line-clamp-2">
+                        {truncateText(consultation.body)}
+                      </p>
+
+                      {/* フッター */}
+                      <div className="flex items-center justify-between pt-2 border-t border-[#D5D5D0]">
+                        <div className="flex items-center gap-2">
+                          {consultation.user.pictureUrl ? (
+                            <img
+                              src={consultation.user.pictureUrl}
+                              alt=""
+                              className="w-5 h-5 rounded-full"
+                            />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-[#D5D5D0]"></div>
+                          )}
+                          <span className="text-xs text-[#73726C]">
+                            {getUserDisplayName(consultation.user)}
+                          </span>
+                        </div>
+                        <span className="text-xs text-[#0F6E56]">
+                          💬 {consultation.commentCount}件
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </main>
+
+          {/* 相談投稿ボタン */}
+          <div className="fixed bottom-6 right-4">
+            <Link
+              href="/consultations/new"
+              className="btn-primary flex items-center gap-2 shadow-lg"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              相談する
+            </Link>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* 案件フィルタ */}
           <div className="bg-white border-b border-[#D5D5D0] px-4 py-3">
             <div className="flex gap-2 overflow-x-auto pb-1">
               <select
                 className="input text-sm py-2 px-3 min-w-[130px]"
-                value={filters.recruitmentType}
+                value={projectFilters.recruitmentType}
                 onChange={(e) =>
-                  setFilters({ ...filters, recruitmentType: e.target.value })
+                  setProjectFilters({ ...projectFilters, recruitmentType: e.target.value })
                 }
               >
                 <option value="">募集タイプ</option>
@@ -213,9 +412,9 @@ function ProjectsContent() {
               </select>
               <select
                 className="input text-sm py-2 px-3 min-w-[100px]"
-                value={filters.prefecture}
+                value={projectFilters.prefecture}
                 onChange={(e) =>
-                  setFilters({ ...filters, prefecture: e.target.value })
+                  setProjectFilters({ ...projectFilters, prefecture: e.target.value })
                 }
               >
                 <option value="">エリア</option>
@@ -229,9 +428,9 @@ function ProjectsContent() {
                 <input
                   type="checkbox"
                   className="w-4 h-4"
-                  checked={filters.urgentOnly}
+                  checked={projectFilters.urgentOnly}
                   onChange={(e) =>
-                    setFilters({ ...filters, urgentOnly: e.target.checked })
+                    setProjectFilters({ ...projectFilters, urgentOnly: e.target.checked })
                   }
                 />
                 急募のみ
@@ -240,12 +439,23 @@ function ProjectsContent() {
                 <input
                   type="checkbox"
                   className="w-4 h-4"
-                  checked={filters.excludeBidded}
+                  checked={projectFilters.excludeBidded}
                   onChange={(e) =>
-                    setFilters({ ...filters, excludeBidded: e.target.checked })
+                    setProjectFilters({ ...projectFilters, excludeBidded: e.target.checked })
                   }
                 />
                 興味あり済を除外
+              </label>
+              <label className="flex items-center gap-1 text-sm whitespace-nowrap px-2">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4"
+                  checked={projectFilters.myProjects}
+                  onChange={(e) =>
+                    setProjectFilters({ ...projectFilters, myProjects: e.target.checked })
+                  }
+                />
+                自分が登録
               </label>
             </div>
           </div>
@@ -360,79 +570,12 @@ function ProjectsContent() {
             </Link>
           </div>
         </>
-      ) : (
-        <>
-          {/* 興味あり済み一覧 */}
-          <main className="p-4 pb-24">
-            {isLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F6E56] mx-auto"></div>
-                <p className="mt-4 text-[#73726C] text-sm">読み込み中...</p>
-              </div>
-            ) : bids.length === 0 ? (
-              <div className="text-center py-12 text-[#73726C]">
-                <p>興味ありを送った案件がありません</p>
-                <p className="text-sm mt-2">案件に興味ありを送るとここに表示されます</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {bids.map((bid) => {
-                  const statusInfo = BID_STATUS_LABELS[bid.status] || BID_STATUS_LABELS.submitted;
-                  return (
-                    <Link
-                      key={bid.id}
-                      href={`/projects/${bid.project.id}`}
-                      className="card block p-4"
-                    >
-                      {/* バッジ行 */}
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 text-xs rounded font-medium ${statusInfo.color}`}>
-                            {statusInfo.label}
-                          </span>
-                          <span className="badge badge-type">
-                            {RECRUITMENT_TYPE_LABELS[bid.project.recruitmentType as RecruitmentType]}
-                          </span>
-                        </div>
-                        <span className="text-sm text-[#73726C]">
-                          {formatDate(bid.createdAt)}
-                        </span>
-                      </div>
-
-                      {/* タイトル */}
-                      <h2 className="text-base font-bold text-[#2C2C2A] mb-2">
-                        {bid.project.title}
-                      </h2>
-
-                      {/* エリア・工期 */}
-                      <p className="text-sm text-[#73726C] mb-2">
-                        {bid.project.sitePrefecture || '未設定'} | {bid.project.periodStart}〜{bid.project.periodEnd}
-                      </p>
-
-                      {/* フッター */}
-                      <div className="flex items-center justify-between pt-2 border-t border-[#D5D5D0]">
-                        <span className="text-sm text-[#0F6E56]">詳細を見る</span>
-                        {bid.project.status === 'approved' && new Date(bid.project.deadline) > new Date() ? (
-                          <span className="text-sm text-[#73726C]">
-                            残り{getDaysRemaining(bid.project.deadline)}日
-                          </span>
-                        ) : (
-                          <span className="text-sm text-[#73726C]">
-                            募集終了
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </main>
-        </>
       )}
     </>
   );
 }
+
+// ===== Main Page =====
 
 export default function ProjectsPage() {
   return (
@@ -440,7 +583,7 @@ export default function ProjectsPage() {
       <div className="min-h-screen bg-[#F4F3F0]">
         {/* ヘッダー */}
         <header className="bg-white border-b border-[#D5D5D0] px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-[#2C2C2A]">案件</h1>
+          <h1 className="text-lg font-bold text-[#2C2C2A]">PowerScrapper</h1>
           <Link
             href="/profile/edit"
             className="flex items-center gap-1 text-sm text-[#0F6E56]"
@@ -462,12 +605,19 @@ export default function ProjectsPage() {
           </Link>
         </header>
 
-        {/* 登録完了メッセージ（Suspense で囲む） */}
+        {/* トーストメッセージ */}
         <Suspense fallback={null}>
-          <RegistrationMessage />
+          <ToastMessage />
         </Suspense>
 
-        <ProjectsContent />
+        {/* メインコンテンツ */}
+        <Suspense fallback={
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F6E56] mx-auto"></div>
+          </div>
+        }>
+          <MainContent />
+        </Suspense>
       </div>
     </AuthGuard>
   );

@@ -36,6 +36,8 @@ model User {
   reviewedProjects      Project[] @relation("ReviewedBy")
   matchesAsPoster       Match[]   @relation("MatchPoster")
   matchesAsBidder       Match[]   @relation("MatchBidder")
+  consultations         Consultation[]
+  consultationComments  ConsultationComment[]
 
   @@map("users")
 }
@@ -123,4 +125,33 @@ model Event {
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("events")
+}
+
+model Consultation {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  category    String
+  title       String
+  body        String
+  status      String   @default("open")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User     @relation(fields: [userId], references: [id])
+  comments    ConsultationComment[]
+
+  @@map("consultations")
+}
+
+model ConsultationComment {
+  id              String   @id @default(uuid())
+  consultationId  String   @map("consultation_id")
+  userId          String   @map("user_id")
+  body            String
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  consultation    Consultation @relation(fields: [consultationId], references: [id])
+  user            User         @relation(fields: [userId], references: [id])
+
+  @@map("consultation_comments")
 }
