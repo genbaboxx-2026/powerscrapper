@@ -91,20 +91,20 @@ async function main() {
     }
   }
 
-  // 最初の承認済み案件を取得
-  const project = await prisma.project.findFirst({
+  // すべての承認済み案件を取得
+  const projects = await prisma.project.findMany({
     where: { status: 'approved' },
     orderBy: { createdAt: 'desc' },
   });
 
-  if (!project) {
+  if (projects.length === 0) {
     console.log('No approved project found. Please create and approve a project first.');
     return;
   }
 
-  console.log(`Found project: ${project.title}`);
+  console.log(`Found ${projects.length} approved projects`);
 
-  // 入札を作成
+  // 入札メッセージ
   const bidMessages = [
     {
       message: '御社の案件に大変興味があります。弊社は30年の実績があり、安全で確実な施工をお約束します。ぜひご検討ください。',
@@ -120,45 +120,50 @@ async function main() {
     },
   ];
 
-  for (let i = 0; i < createdBidders.length; i++) {
-    const bidder = createdBidders[i];
-    const bidData = bidMessages[i];
+  // 各案件に入札を追加
+  for (const project of projects) {
+    console.log(`\nProcessing project: ${project.title}`);
 
-    // 案件オーナー自身には入札させない
-    if (bidder.id === project.userId) {
-      console.log(`Skipping bid from project owner: ${bidder.lineDisplayName}`);
-      continue;
-    }
+    for (let i = 0; i < createdBidders.length; i++) {
+      const bidder = createdBidders[i];
+      const bidData = bidMessages[i];
 
-    // 既存の入札をチェック
-    const existingBid = await prisma.bid.findUnique({
-      where: {
-        projectId_userId: {
+      // 案件オーナー自身には入札させない
+      if (bidder.id === project.userId) {
+        console.log(`  Skipping bid from project owner: ${bidder.lineDisplayName}`);
+        continue;
+      }
+
+      // 既存の入札をチェック
+      const existingBid = await prisma.bid.findUnique({
+        where: {
+          projectId_userId: {
+            projectId: project.id,
+            userId: bidder.id,
+          },
+        },
+      });
+
+      if (existingBid) {
+        console.log(`  Bid from ${bidder.lineDisplayName} already exists, skipping...`);
+        continue;
+      }
+
+      await prisma.bid.create({
+        data: {
           projectId: project.id,
           userId: bidder.id,
+          message: bidData.message,
+          amount: bidData.amount,
+          status: 'submitted',
         },
-      },
-    });
+      });
 
-    if (existingBid) {
-      console.log(`Bid from ${bidder.lineDisplayName} already exists, skipping...`);
-      continue;
+      console.log(`  Created bid from ${bidder.lineDisplayName} (${bidder.companyName})`);
     }
-
-    const bid = await prisma.bid.create({
-      data: {
-        projectId: project.id,
-        userId: bidder.id,
-        message: bidData.message,
-        amount: bidData.amount,
-        status: 'submitted',
-      },
-    });
-
-    console.log(`Created bid from ${bidder.lineDisplayName} (${bidder.companyName})`);
   }
 
-  console.log('Seeding completed!');
+  console.log('\nSeeding completed!');
 }
 
 main()
