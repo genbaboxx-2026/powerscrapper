@@ -5,34 +5,44 @@ import { useRouter } from 'next/navigation';
 import { useLiff } from '@/components/LiffProvider';
 import { authFetch } from '@/lib/api';
 import {
-  BUSINESS_TYPE_LABELS,
   COVERAGE_AREAS,
   LICENSES,
-  type BusinessType,
 } from '@/types';
+
+const JOB_TITLES = [
+  '代表取締役',
+  '取締役',
+  '部長',
+  '課長',
+  '主任',
+  '一般社員',
+  'その他',
+] as const;
 
 type ProfileFormData = {
   companyName: string;
-  businessType: string;
   representativeName: string;
+  jobTitle: string;
   phone: string;
   email: string;
   address: string;
   coverageAreas: string[];
   licenses: string[];
+  websiteUrl: string;
   companyDescription: string;
   lineFriendLinkConsent: boolean;
 };
 
 const initialFormData: ProfileFormData = {
   companyName: '',
-  businessType: '',
   representativeName: '',
+  jobTitle: '',
   phone: '',
   email: '',
   address: '',
   coverageAreas: [],
   licenses: [],
+  websiteUrl: '',
   companyDescription: '',
   lineFriendLinkConsent: false,
 };
@@ -66,13 +76,14 @@ export default function ProfileEditPage() {
           const data = await res.json();
           setFormData({
             companyName: data.companyName || '',
-            businessType: data.businessType || '',
             representativeName: data.representativeName || '',
+            jobTitle: data.jobTitle || '',
             phone: data.phone || '',
             email: data.email || '',
             address: data.address || '',
             coverageAreas: data.coverageAreas || [],
             licenses: data.licenses || [],
+            websiteUrl: data.websiteUrl || '',
             companyDescription: data.companyDescription || '',
             lineFriendLinkConsent: data.lineFriendLinkConsent || false,
           });
@@ -182,48 +193,43 @@ export default function ProfileEditPage() {
           />
         </div>
 
-        {/* 業種カテゴリ */}
+        {/* 名前 */}
         <div className="card p-4 mb-4">
           <label className="block text-sm font-medium text-[#1E293B] mb-2">
-            業種カテゴリ <span className="text-[#E24B4A]">*</span>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {(Object.entries(BUSINESS_TYPE_LABELS) as [BusinessType, string][]).map(
-              ([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() =>
-                    setFormData({ ...formData, businessType: value })
-                  }
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    formData.businessType === value
-                      ? 'bg-[#2563EB] text-white'
-                      : 'bg-white border border-[#E2E8F0] text-[#1E293B]'
-                  }`}
-                >
-                  {label}
-                </button>
-              )
-            )}
-          </div>
-        </div>
-
-        {/* 代表者名 */}
-        <div className="card p-4 mb-4">
-          <label className="block text-sm font-medium text-[#1E293B] mb-2">
-            代表者名 <span className="text-[#E24B4A]">*</span>
+            名前 <span className="text-[#E24B4A]">*</span>
           </label>
           <input
             type="text"
             className="input"
-            placeholder="田中太郎"
+            placeholder="山田太郎"
             value={formData.representativeName}
             onChange={(e) =>
               setFormData({ ...formData, representativeName: e.target.value })
             }
             required
           />
+        </div>
+
+        {/* 役職 */}
+        <div className="card p-4 mb-4">
+          <label className="block text-sm font-medium text-[#1E293B] mb-2">
+            役職 <span className="text-[#E24B4A]">*</span>
+          </label>
+          <select
+            className="input"
+            value={formData.jobTitle}
+            onChange={(e) =>
+              setFormData({ ...formData, jobTitle: e.target.value })
+            }
+            required
+          >
+            <option value="">選択してください</option>
+            {JOB_TITLES.map((title) => (
+              <option key={title} value={title}>
+                {title}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* 電話番号 */}
@@ -321,6 +327,22 @@ export default function ProfileEditPage() {
           </div>
         </div>
 
+        {/* HP URL */}
+        <div className="card p-4 mb-4">
+          <label className="block text-sm font-medium text-[#1E293B] mb-2">
+            HP URL
+          </label>
+          <input
+            type="url"
+            className="input"
+            placeholder="https://example.com"
+            value={formData.websiteUrl}
+            onChange={(e) =>
+              setFormData({ ...formData, websiteUrl: e.target.value })
+            }
+          />
+        </div>
+
         {/* 会社紹介 */}
         <div className="card p-4 mb-4">
           <label className="block text-sm font-medium text-[#1E293B] mb-2">
@@ -341,7 +363,7 @@ export default function ProfileEditPage() {
           <label className="flex items-start gap-3">
             <input
               type="checkbox"
-              className="w-5 h-5 mt-0.5 rounded border-[#E2E8F0]"
+              className="w-5 h-5 mt-0.5 rounded border-[#E2E8F0] accent-[#2563EB]"
               checked={formData.lineFriendLinkConsent}
               onChange={(e) =>
                 setFormData({
@@ -349,9 +371,11 @@ export default function ProfileEditPage() {
                   lineFriendLinkConsent: e.target.checked,
                 })
               }
+              required
             />
             <span className="text-sm text-[#1E293B]">
               マッチング成立時に、相手にLINE友だち追加リンクを送付することに同意します
+              <span className="text-[#E24B4A]"> *</span>
             </span>
           </label>
         </div>
@@ -360,7 +384,7 @@ export default function ProfileEditPage() {
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] p-4">
           <button
             type="submit"
-            disabled={isSaving}
+            disabled={isSaving || !formData.lineFriendLinkConsent}
             className="btn-primary w-full disabled:opacity-50"
           >
             {isSaving ? '保存中...' : 'プロフィールを保存'}

@@ -18,9 +18,11 @@ model User {
   companyName           String?  @map("company_name")
   businessType          String?  @map("business_type")
   representativeName    String?  @map("representative_name")
+  jobTitle              String?  @map("job_title")
   phone                 String?
   email                 String?
   address               String?
+  websiteUrl            String?  @map("website_url")
   coverageAreas         String[] @map("coverage_areas")
   licenses              String[]
   companyDescription    String?  @map("company_description")

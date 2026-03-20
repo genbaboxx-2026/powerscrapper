@@ -20,9 +20,11 @@ export async function GET(req: NextRequest) {
       companyName: user.companyName,
       businessType: user.businessType,
       representativeName: user.representativeName,
+      jobTitle: user.jobTitle,
       phone: user.phone,
       email: user.email,
       address: user.address,
+      websiteUrl: user.websiteUrl,
       coverageAreas: user.coverageAreas,
       licenses: user.licenses,
       companyDescription: user.companyDescription,
@@ -51,11 +53,12 @@ export async function PUT(req: NextRequest) {
 
     const {
       companyName,
-      businessType,
       representativeName,
+      jobTitle,
       phone,
       email,
       address,
+      websiteUrl,
       coverageAreas,
       licenses,
       companyDescription,
@@ -63,9 +66,17 @@ export async function PUT(req: NextRequest) {
     } = body;
 
     // バリデーション
-    if (!companyName || !businessType || !representativeName || !phone) {
+    if (!companyName || !representativeName || !jobTitle || !phone) {
       return NextResponse.json(
         { error: '必須項目が入力されていません' },
+        { status: 400 }
+      );
+    }
+
+    // LINE友だち追加リンク送付同意の確認
+    if (!lineFriendLinkConsent) {
+      return NextResponse.json(
+        { error: 'LINE友だち追加リンク送付への同意が必要です' },
         { status: 400 }
       );
     }
@@ -74,15 +85,16 @@ export async function PUT(req: NextRequest) {
       where: { id: user.id },
       data: {
         companyName,
-        businessType,
         representativeName,
+        jobTitle,
         phone,
         email,
         address,
+        websiteUrl,
         coverageAreas: coverageAreas || [],
         licenses: licenses || [],
         companyDescription,
-        lineFriendLinkConsent: lineFriendLinkConsent || false,
+        lineFriendLinkConsent: true,
         profileCompleted: true,
       },
     });
@@ -90,11 +102,12 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({
       id: updatedUser.id,
       companyName: updatedUser.companyName,
-      businessType: updatedUser.businessType,
       representativeName: updatedUser.representativeName,
+      jobTitle: updatedUser.jobTitle,
       phone: updatedUser.phone,
       email: updatedUser.email,
       address: updatedUser.address,
+      websiteUrl: updatedUser.websiteUrl,
       coverageAreas: updatedUser.coverageAreas,
       licenses: updatedUser.licenses,
       companyDescription: updatedUser.companyDescription,
