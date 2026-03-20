@@ -245,18 +245,8 @@ export default function ProjectBidsPage({ params }: Props) {
               {bids.map((bid) => (
                 <div
                   key={bid.id}
-                  className={`card p-4 ${
-                    bid.isMatched ? 'border-2 border-[#06C755]' : ''
-                  }`}
+                  className="card p-4"
                 >
-                  {/* 連絡済みバッジ */}
-                  {bid.isMatched && (
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="px-3 py-1 bg-[#06C755] text-white text-xs rounded-full font-medium">
-                        連絡済み
-                      </span>
-                    </div>
-                  )}
 
                   {/* LINEプロフィール + 会社情報 */}
                   <div className="flex items-start gap-3 mb-3">
@@ -369,7 +359,24 @@ export default function ProjectBidsPage({ params }: Props) {
                     <span className="text-xs text-[#64748B]">
                       {formatDate(bid.createdAt)}
                     </span>
-                    {!bid.isMatched && (
+                    {bid.isMatched ? (
+                      <span className="px-4 py-2 bg-[#94A3B8] text-white text-sm font-medium rounded-lg flex items-center gap-1">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        連絡完了
+                      </span>
+                    ) : (
                       <button
                         onClick={() => openConnectModal(bid)}
                         className="px-4 py-2 bg-[#06C755] text-white text-sm font-medium rounded-lg flex items-center gap-1"

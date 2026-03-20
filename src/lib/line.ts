@@ -1472,8 +1472,6 @@ export function createMatchNotification(
   partnerEmail: string | null,
   partnerLineDisplayName: string | null
 ) {
-  const liffId = getLiffId();
-
   const contactInfoContents: unknown[] = [];
 
   // 会社名
@@ -1666,24 +1664,6 @@ export function createMatchNotification(
             color: TEXT_SECONDARY_COLOR,
             margin: 'lg',
             align: 'center',
-          },
-        ],
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        paddingAll: '12px',
-        contents: [
-          {
-            type: 'button',
-            action: {
-              type: 'uri',
-              label: '連絡済み一覧を見る',
-              uri: `https://liff.line.me/${liffId}/mypage/matches`,
-            },
-            style: 'primary',
-            color: BUTTON_PRIMARY_COLOR,
-            height: 'sm',
           },
         ],
       },
