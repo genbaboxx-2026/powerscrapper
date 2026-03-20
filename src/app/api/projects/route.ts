@@ -162,20 +162,19 @@ export async function POST(req: NextRequest) {
     } = body;
 
     // バリデーション
-    if (
-      !title ||
-      !recruitmentType ||
-      !structureType ||
-      !siteAddress ||
-      !periodStart ||
-      !periodEnd ||
-      !workTypes ||
-      workTypes.length === 0 ||
-      !description ||
-      !deadline
-    ) {
+    const missingFields: string[] = [];
+    if (!title) missingFields.push('案件名');
+    if (!recruitmentType) missingFields.push('募集種別');
+    if (!structureType) missingFields.push('構造種別');
+    if (!siteAddress) missingFields.push('現場所在地');
+    if (!periodStart) missingFields.push('工期開始');
+    if (!periodEnd) missingFields.push('工期終了');
+    if (!description) missingFields.push('案件詳細・条件');
+    if (!deadline) missingFields.push('募集期限');
+
+    if (missingFields.length > 0) {
       return NextResponse.json(
-        { error: '必須項目が入力されていません' },
+        { error: `以下の必須項目が入力されていません：${missingFields.join('、')}` },
         { status: 400 }
       );
     }
