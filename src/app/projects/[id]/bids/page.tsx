@@ -400,15 +400,19 @@ export default function ProjectBidsPage({ params }: Props) {
             <div className="bg-white rounded-xl p-6 max-w-sm w-full">
               {!connectSuccess ? (
                 <>
-                  <h3 className="text-lg font-bold text-[#1E293B] mb-2">
+                  <h3 className="text-lg font-bold text-[#1E293B] mb-3">
                     この企業に連絡しますか？
                   </h3>
-                  <p className="text-sm text-[#64748B] mb-2">
-                    <span className="font-bold text-[#1E293B]">{selectedBid.bidder.companyName}</span>
+                  <p className="text-sm text-[#1E293B] mb-3">
+                    <span className="font-bold">{selectedBid.bidder.companyName}</span> に
+                    あなたの連絡先がLINEで届きます。
                   </p>
-                  <p className="text-sm text-[#64748B] mb-6">
-                    双方にPowerScrapper公式LINEから連絡先が送信されます。
-                  </p>
+                  <div className="bg-[#F8FAFC] rounded-lg p-3 mb-4 text-sm text-[#64748B]">
+                    <p className="font-medium text-[#1E293B] mb-1">送信される情報:</p>
+                    <p>・会社名、担当者名</p>
+                    <p>・電話番号、メールアドレス</p>
+                    <p>・LINE表示名</p>
+                  </div>
                   <div className="flex gap-3">
                     <button
                       onClick={closeModal}
