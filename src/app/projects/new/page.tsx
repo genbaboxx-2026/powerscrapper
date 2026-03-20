@@ -217,7 +217,7 @@ export default function ProjectNewPage() {
 
   return (
     <AuthGuard requireProfile>
-      <div className="min-h-screen bg-[#F8FAFC]">
+      <div className="min-h-screen bg-[#F8FAFC] overflow-x-hidden">
         {/* ヘッダー */}
         <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
           <h1 className="text-lg font-bold text-[#1E293B]">案件登録</h1>
@@ -252,7 +252,7 @@ export default function ProjectNewPage() {
           </p>
         </div>
 
-        <div className="p-4 pb-24">
+        <div className="p-4 pb-24 overflow-x-hidden">
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-[#E24B4A] rounded-lg text-[#E24B4A] text-sm">
               {error}
@@ -610,13 +610,13 @@ export default function ProjectNewPage() {
               </div>
 
               {/* 募集期限 */}
-              <div className="card p-4 overflow-hidden">
+              <div className="card p-4">
                 <label className="block text-sm font-medium text-[#1E293B] mb-2">
                   募集期限 <span className="text-[#E24B4A]">*</span>
                 </label>
                 <input
                   type="date"
-                  className="input w-full max-w-full"
+                  className="w-full px-4 py-3 border border-[#E2E8F0] rounded-xl text-base bg-white box-border"
                   value={formData.deadline}
                   onChange={(e) =>
                     setFormData({ ...formData, deadline: e.target.value })
