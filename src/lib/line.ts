@@ -376,12 +376,28 @@ export function createWelcomeMessage() {
                 wrap: true,
                 margin: 'sm',
               },
+              {
+                type: 'button',
+                action: {
+                  type: 'uri',
+                  label: '会社情報を登録する',
+                  uri: `https://liff.line.me/${liffId}/profile/edit`,
+                },
+                style: 'primary',
+                color: BRAND_COLOR,
+                height: 'sm',
+                margin: 'lg',
+              },
             ],
+          },
+          {
+            type: 'separator',
+            margin: 'xl',
           },
           {
             type: 'box',
             layout: 'vertical',
-            margin: 'lg',
+            margin: 'xl',
             contents: [
               {
                 type: 'text',
@@ -405,20 +421,8 @@ export function createWelcomeMessage() {
       footer: {
         type: 'box',
         layout: 'vertical',
-        spacing: 'sm',
         paddingAll: '12px',
         contents: [
-          {
-            type: 'button',
-            action: {
-              type: 'uri',
-              label: '会社情報を登録する',
-              uri: `https://liff.line.me/${liffId}/profile/edit`,
-            },
-            style: 'primary',
-            color: BRAND_COLOR,
-            height: 'sm',
-          },
           {
             type: 'button',
             action: {
