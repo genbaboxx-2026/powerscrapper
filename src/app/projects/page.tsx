@@ -316,13 +316,34 @@ function MainContent() {
                       href={`/consultations/${consultation.id}`}
                       className={`card block p-4 ${consultation.isOwner ? 'card-own' : ''}`}
                     >
-                      {/* バッジ・日時行 */}
-                      <div className="flex items-center justify-between mb-2">
+                      {/* ユーザー情報ヘッダー */}
+                      <div className="flex items-start gap-3 mb-3">
+                        {consultation.user.pictureUrl ? (
+                          <img
+                            src={consultation.user.pictureUrl}
+                            alt=""
+                            className="w-10 h-10 rounded-full"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-[#E2E8F0]"></div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[#1E293B] truncate">
+                            {consultation.user.companyName || '未設定'}
+                          </p>
+                          <p className="text-xs text-[#64748B]">
+                            {consultation.user.representativeName || consultation.user.displayName || ''}
+                          </p>
+                        </div>
+                        <span className="text-xs text-[#64748B] whitespace-nowrap">
+                          {formatDateTime(consultation.createdAt)}
+                        </span>
+                      </div>
+
+                      {/* カテゴリバッジ */}
+                      <div className="mb-2">
                         <span className={`px-2 py-0.5 text-xs rounded font-medium ${categoryInfo.color}`}>
                           {categoryInfo.label}
-                        </span>
-                        <span className="text-xs text-[#64748B]">
-                          {formatDateTime(consultation.createdAt)}
                         </span>
                       </div>
 
@@ -337,29 +358,13 @@ function MainContent() {
                       </p>
 
                       {/* フッター */}
-                      <div className="flex items-center justify-between pt-2 border-t border-[#E2E8F0]">
-                        <div className="flex items-center gap-2">
-                          {consultation.user.pictureUrl ? (
-                            <img
-                              src={consultation.user.pictureUrl}
-                              alt=""
-                              className="w-5 h-5 rounded-full"
-                            />
-                          ) : (
-                            <div className="w-5 h-5 rounded-full bg-[#E2E8F0]"></div>
-                          )}
-                          <span className="text-xs text-[#64748B]">
-                            {getUserDisplayName(consultation.user)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-[#64748B]">
-                            ❤️ {consultation.likeCount}件
-                          </span>
-                          <span className="text-xs text-[#2563EB]">
-                            💬 {consultation.commentCount}件
-                          </span>
-                        </div>
+                      <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#E2E8F0]">
+                        <span className="text-xs text-[#64748B]">
+                          ❤️ {consultation.likeCount}件
+                        </span>
+                        <span className="text-xs text-[#2563EB]">
+                          💬 {consultation.commentCount}件
+                        </span>
                       </div>
                     </Link>
                   );
