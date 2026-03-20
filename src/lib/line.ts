@@ -1284,6 +1284,178 @@ export function createEventInfoMessage() {
 }
 
 /**
+ * 週次まとめ配信メッセージを作成
+ */
+export type WeeklyDigestProject = {
+  id: string;
+  title: string;
+  sitePrefecture: string | null;
+  recruitmentType: string;
+};
+
+export function createWeeklyDigestMessage(projects: WeeklyDigestProject[]) {
+  const liffId = getLiffId();
+
+  // 最大5件まで表示
+  const displayProjects = projects.slice(0, 5);
+  const hasMore = projects.length > 5;
+
+  const projectCards: unknown[] = displayProjects.map((project) => ({
+    type: 'box',
+    layout: 'horizontal',
+    paddingAll: '12px',
+    backgroundColor: '#F9F9F7',
+    cornerRadius: '8px',
+    contents: [
+      {
+        type: 'box',
+        layout: 'vertical',
+        flex: 1,
+        contents: [
+          {
+            type: 'text',
+            text: project.title,
+            size: 'sm',
+            weight: 'bold',
+            color: '#2C2C2A',
+            wrap: true,
+            maxLines: 2,
+          },
+          {
+            type: 'box',
+            layout: 'horizontal',
+            margin: 'sm',
+            contents: [
+              {
+                type: 'text',
+                text: project.sitePrefecture || '未設定',
+                size: 'xs',
+                color: '#73726C',
+              },
+              {
+                type: 'text',
+                text: '|',
+                size: 'xs',
+                color: '#D5D5D0',
+                margin: 'sm',
+              },
+              {
+                type: 'text',
+                text: project.recruitmentType === 'subcontract' ? '元請け募集' : '協力会社募集',
+                size: 'xs',
+                color: '#73726C',
+                margin: 'sm',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        type: 'box',
+        layout: 'vertical',
+        width: '60px',
+        alignItems: 'center',
+        justifyContent: 'center',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '詳細',
+              uri: `https://liff.line.me/${liffId}/projects/${project.id}`,
+            },
+            style: 'primary',
+            color: BRAND_COLOR,
+            height: 'sm',
+          },
+        ],
+      },
+    ],
+  }));
+
+  // 各カード間にスペーサーを追加
+  const bodyContents: unknown[] = [];
+  projectCards.forEach((card, index) => {
+    bodyContents.push(card);
+    if (index < projectCards.length - 1) {
+      bodyContents.push({
+        type: 'box',
+        layout: 'vertical',
+        height: '8px',
+        contents: [],
+      });
+    }
+  });
+
+  if (hasMore) {
+    bodyContents.push({
+      type: 'text',
+      text: `他${projects.length - 5}件の案件があります`,
+      size: 'xs',
+      color: '#73726C',
+      align: 'center',
+      margin: 'lg',
+    });
+  }
+
+  return {
+    type: 'flex',
+    altText: `今週の新着案件（${projects.length}件）`,
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: BRAND_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: '今週の新着案件',
+            color: '#FFFFFF',
+            size: 'xl',
+            weight: 'bold',
+            align: 'center',
+          },
+          {
+            type: 'text',
+            text: `${projects.length}件の案件が追加されました`,
+            color: '#FFFFFF',
+            size: 'sm',
+            align: 'center',
+            margin: 'sm',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '16px',
+        contents: bodyContents,
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '12px',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '全ての案件を見る',
+              uri: `https://liff.line.me/${liffId}/projects?tab=project`,
+            },
+            style: 'primary',
+            color: BRAND_COLOR,
+            height: 'sm',
+          },
+        ],
+      },
+    },
+  };
+}
+
+/**
  * お問い合わせメッセージを作成
  */
 export function createContactInfoMessage() {

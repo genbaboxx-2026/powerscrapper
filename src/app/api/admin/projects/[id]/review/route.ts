@@ -3,9 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import {
   pushMessage,
-  multicastMessage,
   createTextMessage,
-  createProjectNotification,
 } from '@/lib/line';
 
 type Params = {
@@ -130,37 +128,7 @@ export async function POST(request: NextRequest, { params }: Params) {
             `「${project.title}」が承認され、公開されました。\n興味ありが届くのを待ちましょう。`
           ),
         ]);
-
-        // 会員に新着案件通知（notifyMembersがtrueの場合）
-        if (project.notifyMembers) {
-          const members = await prisma.user.findMany({
-            where: {
-              isActive: true,
-              profileCompleted: true,
-              id: { not: project.userId },
-            },
-            select: { lineUserId: true },
-          });
-
-          if (members.length > 0) {
-            const notification = createProjectNotification(
-              project.title,
-              project.sitePrefecture || '',
-              project.periodStart,
-              project.periodEnd,
-              project.id,
-              project.isUrgent
-            );
-
-            // 100人ずつに分けて送信（LINE APIの制限）
-            const chunkSize = 100;
-            for (let i = 0; i < members.length; i += chunkSize) {
-              const chunk = members.slice(i, i + chunkSize);
-              const userIds = chunk.map((m) => m.lineUserId);
-              await multicastMessage(userIds, [notification]);
-            }
-          }
-        }
+        // 会員への通知は週次まとめ配信で行う（/api/cron/weekly-digest）
       } else {
         // 投稿者に却下通知
         await pushMessage(project.user.lineUserId, [
