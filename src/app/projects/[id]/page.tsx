@@ -461,7 +461,7 @@ export default function ProjectDetailPage({ params }: Props) {
             </Link>
           ) : project.hasBid && project.bidStatus === 'connected' ? (
             <div className="text-center text-sm text-[#06C755] font-medium">
-              返答済み - 下記の連絡先をご確認ください
+              返答済み - 上記の連絡先をご確認ください
             </div>
           ) : project.hasBid ? (
             <button
