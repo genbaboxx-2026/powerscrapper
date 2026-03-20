@@ -367,41 +367,41 @@ export default function ConsultationDetailPage({ params }: Props) {
         <main className="p-4 pb-32">
           {/* 相談本文 */}
           <div className="card p-4 mb-4">
-            {/* ヘッダー: 投稿者・カテゴリ・日時・メニュー */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                {consultation.user.pictureUrl ? (
-                  <img
-                    src={consultation.user.pictureUrl}
-                    alt=""
-                    className="w-8 h-8 rounded-full"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-[#E2E8F0] flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-[#64748B]"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                  </div>
-                )}
-                <span className="text-sm font-medium text-[#1E293B]">
-                  {getUserDisplayName(consultation.user)}
-                </span>
-                <span className={`px-2 py-0.5 text-xs rounded font-medium ${categoryInfo.color}`}>
-                  {categoryInfo.label}
-                </span>
+            {/* ヘッダー: 投稿者・日時・メニュー */}
+            <div className="flex items-start gap-3 mb-3">
+              {consultation.user.pictureUrl ? (
+                <img
+                  src={consultation.user.pictureUrl}
+                  alt=""
+                  className="w-10 h-10 rounded-full flex-shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-[#E2E8F0] flex items-center justify-center flex-shrink-0">
+                  <svg
+                    className="w-5 h-5 text-[#64748B]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-[#1E293B] truncate">
+                  {consultation.user.companyName || '未設定'}
+                </p>
+                <p className="text-xs text-[#64748B]">
+                  {consultation.user.displayName || ''}
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-[#64748B]">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs text-[#64748B] whitespace-nowrap">
                   {formatDateTime(consultation.createdAt)}
                 </span>
                 {/* 3点リーダーメニュー（オーナーのみ） */}
@@ -448,6 +448,13 @@ export default function ConsultationDetailPage({ params }: Props) {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* カテゴリバッジ */}
+            <div className="mb-2">
+              <span className={`px-2 py-0.5 text-xs rounded font-medium ${categoryInfo.color}`}>
+                {categoryInfo.label}
+              </span>
             </div>
 
             {/* タイトル */}

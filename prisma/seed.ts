@@ -29,6 +29,40 @@ const prisma = createPrismaClient();
 async function main() {
   console.log('Seeding database...');
 
+  // 既存のテストデータを削除
+  console.log('Deleting existing test data...');
+
+  // テスト入札者のIDを取得
+  const testBidderIds = [
+    'test_bidder_001',
+    'test_bidder_002',
+    'test_bidder_003',
+    'test_bidder_004',
+    'test_bidder_005',
+    'test_bidder_006',
+    'test_bidder_007',
+  ];
+
+  const testUsers = await prisma.user.findMany({
+    where: { lineUserId: { in: testBidderIds } },
+  });
+
+  if (testUsers.length > 0) {
+    const userIds = testUsers.map(u => u.id);
+
+    // マッチを削除
+    await prisma.match.deleteMany({
+      where: { bidderUserId: { in: userIds } },
+    });
+    console.log('  Deleted matches');
+
+    // 入札を削除
+    await prisma.bid.deleteMany({
+      where: { userId: { in: userIds } },
+    });
+    console.log('  Deleted bids');
+  }
+
   // テスト用の興味ありユーザーを作成（7者）
   const bidders = [
     {
@@ -143,18 +177,17 @@ async function main() {
     }
   }
 
-  // すべての承認済み案件を取得
+  // すべての案件を取得
   const projects = await prisma.project.findMany({
-    where: { status: 'approved' },
     orderBy: { createdAt: 'desc' },
   });
 
   if (projects.length === 0) {
-    console.log('No approved project found. Please create and approve a project first.');
+    console.log('No projects found. Please create a project first.');
     return;
   }
 
-  console.log(`Found ${projects.length} approved projects`);
+  console.log(`Found ${projects.length} projects`);
 
   // 入札メッセージ（7件）
   const bidMessages = [
@@ -231,45 +264,6 @@ async function main() {
     }
   }
 
-  // 連絡済み（マッチ）を作成（4件）
-  console.log('\nCreating connected matches...');
-
-  const allBids = await prisma.bid.findMany({
-    where: {
-      match: null, // まだマッチがないもの
-    },
-    include: {
-      project: true,
-    },
-    take: 4,
-  });
-
-  for (const bid of allBids) {
-    // 入札ステータスを更新
-    await prisma.bid.update({
-      where: { id: bid.id },
-      data: {
-        status: 'connected',
-        selectedAt: new Date(),
-      },
-    });
-
-    // マッチを作成
-    await prisma.match.create({
-      data: {
-        projectId: bid.projectId,
-        bidId: bid.id,
-        posterUserId: bid.project.userId,
-        bidderUserId: bid.userId,
-        posterNotified: true,
-        bidderNotified: true,
-      },
-    });
-
-    console.log(`  Connected bid for project: ${bid.project.title}`);
-  }
-
-  console.log(`\nCreated ${allBids.length} connected matches!`);
   console.log('\nSeeding completed!');
 }
 
