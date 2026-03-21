@@ -3,8 +3,12 @@ import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import {
   pushMessage,
-  createTextMessage,
+  broadcastMessage,
+  createApprovalNotification,
+  createRejectionNotification,
+  createProjectNotification,
 } from '@/lib/line';
+import { isNotificationEnabled } from '@/lib/notification-helper';
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -122,20 +126,38 @@ export async function POST(request: NextRequest, { params }: Params) {
     // LINE通知を送信
     try {
       if (action === 'approve') {
-        // 投稿者に承認通知
-        await pushMessage(project.user.lineUserId, [
-          createTextMessage(
-            `「${project.title}」が承認され、公開されました。\n興味ありが届くのを待ちましょう。`
-          ),
-        ]);
-        // 会員への通知は週次まとめ配信で行う（/api/cron/weekly-digest）
+        // B-7: 投稿者に承認通知（Flex Message）
+        const isApprovalEnabled = await isNotificationEnabled('b_project_approved');
+        if (isApprovalEnabled) {
+          await pushMessage(project.user.lineUserId, [
+            createApprovalNotification(project.title, projectId),
+          ]);
+        }
+
+        // B-10: 全会員に新着案件通知（デフォルトOFF）
+        const isBroadcastEnabled = await isNotificationEnabled('b_new_project_broadcast');
+        if (isBroadcastEnabled) {
+          await broadcastMessage([
+            createProjectNotification(
+              project.title,
+              project.sitePrefecture || '',
+              project.periodStart || '',
+              project.periodEnd || '',
+              projectId,
+              project.isUrgent || false,
+              project.description || undefined
+            ),
+          ]);
+        }
       } else {
-        // 投稿者に却下通知
-        await pushMessage(project.user.lineUserId, [
-          createTextMessage(
-            `「${project.title}」は審査の結果、掲載を見送らせていただきました。\n${rejectionReason ? `理由: ${rejectionReason}` : '詳細はお問い合わせください。'}`
-          ),
-        ]);
+        // B-8: 投稿者に却下通知（Flex Message）
+        const isRejectionEnabled = await isNotificationEnabled('b_project_rejected');
+        if (isRejectionEnabled) {
+          const reason = rejectionReason || '詳細はお問い合わせください。';
+          await pushMessage(project.user.lineUserId, [
+            createRejectionNotification(project.title, reason),
+          ]);
+        }
       }
     } catch (notifyError) {
       console.error('Failed to send review notification:', notifyError);

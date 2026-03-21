@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { pushMessage, createMatchNotification } from '@/lib/line';
+import { isNotificationEnabled } from '@/lib/notification-helper';
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -86,38 +87,41 @@ export async function POST(request: NextRequest, { params }: Params) {
       return newMatch;
     });
 
-    // LINE通知を送信
+    // B-5: LINE通知を送信（連絡先交換通知）
     try {
-      // Aさん（案件登録者）に相手企業の連絡先を送信
-      const posterNotification = createMatchNotification(
-        bid.project.title,
-        bid.user.companyName || '未設定',
-        bid.user.representativeName || null,
-        bid.user.phone || null,
-        bid.user.email || null,
-        bid.user.lineDisplayName || null
-      );
-      await pushMessage(user.lineUserId, [posterNotification]);
+      const isMatchContactEnabled = await isNotificationEnabled('b_match_contact');
+      if (isMatchContactEnabled) {
+        // Aさん（案件登録者）に相手企業の連絡先を送信
+        const posterNotification = createMatchNotification(
+          bid.project.title,
+          bid.user.companyName || '未設定',
+          bid.user.representativeName || null,
+          bid.user.phone || null,
+          bid.user.email || null,
+          bid.user.lineDisplayName || null
+        );
+        await pushMessage(user.lineUserId, [posterNotification]);
 
-      // Bさん（興味ありを送った側）に案件登録者の連絡先を送信
-      const bidderNotification = createMatchNotification(
-        bid.project.title,
-        bid.project.user.companyName || '未設定',
-        bid.project.user.representativeName || null,
-        bid.project.user.phone || null,
-        bid.project.user.email || null,
-        bid.project.user.lineDisplayName || null
-      );
-      await pushMessage(bid.user.lineUserId, [bidderNotification]);
+        // Bさん（興味ありを送った側）に案件登録者の連絡先を送信
+        const bidderNotification = createMatchNotification(
+          bid.project.title,
+          bid.project.user.companyName || '未設定',
+          bid.project.user.representativeName || null,
+          bid.project.user.phone || null,
+          bid.project.user.email || null,
+          bid.project.user.lineDisplayName || null
+        );
+        await pushMessage(bid.user.lineUserId, [bidderNotification]);
 
-      // マッチの通知フラグを更新
-      await prisma.match.update({
-        where: { id: match.id },
-        data: {
-          posterNotified: true,
-          bidderNotified: true,
-        },
-      });
+        // マッチの通知フラグを更新
+        await prisma.match.update({
+          where: { id: match.id },
+          data: {
+            posterNotified: true,
+            bidderNotified: true,
+          },
+        });
+      }
     } catch (notifyError) {
       // 通知失敗はログのみ
       console.error('Failed to send match notifications:', notifyError);

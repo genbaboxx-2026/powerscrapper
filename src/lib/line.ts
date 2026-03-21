@@ -1762,3 +1762,337 @@ export function createContactInfoMessage() {
     },
   };
 }
+
+/**
+ * 新規案件登録通知メッセージを作成（管理者向け）
+ */
+export function createNewProjectAdminNotification(
+  projectTitle: string,
+  companyName: string,
+  projectId: string
+) {
+  const liffId = getLiffId();
+
+  return {
+    type: 'flex',
+    altText: `新規案件が投稿されました: ${projectTitle}`,
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_URGENT_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: '新規案件が投稿されました',
+            color: '#FFFFFF',
+            size: 'lg',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: projectTitle,
+            weight: 'bold',
+            size: 'lg',
+            color: TEXT_PRIMARY_COLOR,
+            wrap: true,
+          },
+          {
+            type: 'separator',
+            margin: 'lg',
+          },
+          {
+            type: 'box',
+            layout: 'horizontal',
+            margin: 'lg',
+            contents: [
+              {
+                type: 'text',
+                text: '投稿者',
+                size: 'sm',
+                color: TEXT_SECONDARY_COLOR,
+                flex: 2,
+              },
+              {
+                type: 'text',
+                text: companyName || '未設定',
+                size: 'sm',
+                color: TEXT_PRIMARY_COLOR,
+                flex: 5,
+                wrap: true,
+              },
+            ],
+          },
+          {
+            type: 'box',
+            layout: 'horizontal',
+            margin: 'xl',
+            backgroundColor: '#FEF3C7',
+            cornerRadius: '8px',
+            paddingAll: '12px',
+            contents: [
+              {
+                type: 'text',
+                text: '審査をお願いします',
+                size: 'sm',
+                color: '#92400E',
+                weight: 'bold',
+                wrap: true,
+              },
+            ],
+          },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '12px',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '審査画面を開く',
+              uri: `https://liff.line.me/${liffId}/admin/projects/${projectId}`,
+            },
+            style: 'primary',
+            color: BUTTON_PRIMARY_COLOR,
+            height: 'sm',
+          },
+        ],
+      },
+    },
+  };
+}
+
+/**
+ * 配信用Flex Messageを作成（イベント/お知らせ/記事）
+ */
+export function createBroadcastFlexMessage(broadcast: {
+  type: string;
+  title: string;
+  body?: string | null;
+  eventDate?: string | null;
+  eventVenue?: string | null;
+  formUrl?: string | null;
+  imageUrl?: string | null;
+  pdfUrl?: string | null;
+  youtubeUrl?: string | null;
+}) {
+  const messages: unknown[] = [];
+
+  // 画像がある場合は先に画像メッセージを追加
+  if (broadcast.imageUrl) {
+    messages.push({
+      type: 'image',
+      originalContentUrl: broadcast.imageUrl,
+      previewImageUrl: broadcast.imageUrl,
+    });
+  }
+
+  // ヘッダーテキストを種別に応じて設定
+  let headerText = 'お知らせ';
+  if (broadcast.type === 'event') {
+    headerText = 'イベントのお知らせ';
+  } else if (broadcast.type === 'article') {
+    headerText = 'PowerScrapper通信';
+  }
+
+  // 本文コンテンツを構築
+  const bodyContents: unknown[] = [
+    {
+      type: 'text',
+      text: broadcast.title,
+      weight: 'bold',
+      size: 'lg',
+      color: TEXT_PRIMARY_COLOR,
+      wrap: true,
+    },
+    {
+      type: 'separator',
+      margin: 'lg',
+    },
+  ];
+
+  // イベント固有の情報
+  if (broadcast.type === 'event') {
+    if (broadcast.eventDate) {
+      bodyContents.push({
+        type: 'box',
+        layout: 'horizontal',
+        margin: 'lg',
+        contents: [
+          {
+            type: 'text',
+            text: '📅',
+            size: 'sm',
+            flex: 0,
+          },
+          {
+            type: 'text',
+            text: broadcast.eventDate,
+            size: 'sm',
+            color: TEXT_PRIMARY_COLOR,
+            margin: 'sm',
+            flex: 1,
+          },
+        ],
+      });
+    }
+    if (broadcast.eventVenue) {
+      bodyContents.push({
+        type: 'box',
+        layout: 'horizontal',
+        margin: 'sm',
+        contents: [
+          {
+            type: 'text',
+            text: '📍',
+            size: 'sm',
+            flex: 0,
+          },
+          {
+            type: 'text',
+            text: broadcast.eventVenue,
+            size: 'sm',
+            color: TEXT_PRIMARY_COLOR,
+            margin: 'sm',
+            flex: 1,
+          },
+        ],
+      });
+    }
+  }
+
+  // 本文
+  if (broadcast.body) {
+    bodyContents.push({
+      type: 'text',
+      text: broadcast.body,
+      size: 'sm',
+      color: TEXT_PRIMARY_COLOR,
+      wrap: true,
+      margin: 'lg',
+      maxLines: 5,
+    });
+  }
+
+  // フッターボタン
+  const footerButtons: unknown[] = [];
+
+  // 申し込み/続きを読むボタン
+  if (broadcast.formUrl) {
+    const buttonLabel = broadcast.type === 'event' ? '申し込む' : '続きを読む';
+    footerButtons.push({
+      type: 'button',
+      action: {
+        type: 'uri',
+        label: buttonLabel,
+        uri: broadcast.formUrl,
+      },
+      style: 'primary',
+      color: BUTTON_PRIMARY_COLOR,
+      height: 'sm',
+    });
+  }
+
+  // YouTube動画ボタン
+  if (broadcast.youtubeUrl) {
+    footerButtons.push({
+      type: 'button',
+      action: {
+        type: 'uri',
+        label: '動画を見る',
+        uri: broadcast.youtubeUrl,
+      },
+      style: 'secondary',
+      height: 'sm',
+      margin: footerButtons.length > 0 ? 'sm' : undefined,
+    });
+  }
+
+  // PDFボタン
+  if (broadcast.pdfUrl) {
+    footerButtons.push({
+      type: 'button',
+      action: {
+        type: 'uri',
+        label: 'PDFを見る',
+        uri: broadcast.pdfUrl,
+      },
+      style: 'secondary',
+      height: 'sm',
+      margin: footerButtons.length > 0 ? 'sm' : undefined,
+    });
+  }
+
+  // 署名
+  bodyContents.push({
+    type: 'separator',
+    margin: 'lg',
+  });
+  bodyContents.push({
+    type: 'text',
+    text: '※ PowerScrapper公式からの配信です',
+    size: 'xxs',
+    color: TEXT_SECONDARY_COLOR,
+    margin: 'md',
+    align: 'center',
+  });
+
+  // Flex Message構築
+  const flexMessage: Record<string, unknown> = {
+    type: 'flex',
+    altText: `${headerText}: ${broadcast.title}`,
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: headerText,
+            color: '#FFFFFF',
+            size: 'lg',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        contents: bodyContents,
+      },
+    },
+  };
+
+  // フッターがある場合のみ追加
+  if (footerButtons.length > 0) {
+    (flexMessage.contents as Record<string, unknown>).footer = {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '12px',
+      spacing: 'sm',
+      contents: footerButtons,
+    };
+  }
+
+  messages.push(flexMessage);
+
+  return messages;
+}

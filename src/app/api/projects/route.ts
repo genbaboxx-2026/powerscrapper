@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
+import { multicastMessage, createNewProjectAdminNotification } from '@/lib/line';
+import { isNotificationEnabled } from '@/lib/notification-helper';
 
 /**
  * 住所から都道府県を抽出
@@ -203,12 +205,30 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // TODO: LINE通知 - 管理者に新規案件登録を通知
-    console.log('TODO: LINE通知 - 管理者へ', {
-      type: 'new_project',
-      projectId: project.id,
-      title: project.title,
-    });
+    // B-9: 管理者に新規案件登録を通知
+    try {
+      const isAdminNotifyEnabled = await isNotificationEnabled('b_new_project_admin');
+      if (isAdminNotifyEnabled) {
+        // 管理者（role='admin'）のLINE userIdを取得
+        const admins = await prisma.user.findMany({
+          where: { role: 'admin', isActive: true },
+          select: { lineUserId: true },
+        });
+        const adminLineUserIds = admins.map((a) => a.lineUserId);
+
+        if (adminLineUserIds.length > 0) {
+          await multicastMessage(adminLineUserIds, [
+            createNewProjectAdminNotification(
+              project.title,
+              user.companyName || user.lineDisplayName || '未設定',
+              project.id
+            ),
+          ]);
+        }
+      }
+    } catch (notifyError) {
+      console.error('Failed to send admin notification:', notifyError);
+    }
 
     return NextResponse.json({
       id: project.id,

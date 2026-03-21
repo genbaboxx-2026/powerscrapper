@@ -104,11 +104,30 @@ type StatusCounts = {
   closed_lost: number;
 };
 
+type Broadcast = {
+  id: string;
+  type: string;
+  status: string;
+  title: string;
+  body: string | null;
+  eventDate: string | null;
+  eventVenue: string | null;
+  formUrl: string | null;
+  imageUrl: string | null;
+  pdfUrl: string | null;
+  youtubeUrl: string | null;
+  scheduledAt: string | null;
+  sentAt: string | null;
+  sentCount: number | null;
+  createdAt: string;
+};
+
 // Constants
 const MAIN_TABS = [
   { value: 'overview', label: '概要' },
   { value: 'review', label: '案件審査' },
   { value: 'matching', label: 'マッチング管理' },
+  { value: 'broadcast', label: '配信管理' },
 ];
 
 const STATUS_TABS = [
@@ -160,6 +179,27 @@ export default function AdminPage() {
   const [editingMemo, setEditingMemo] = useState<string | null>(null);
   const [memoText, setMemoText] = useState('');
   const [changingStatus, setChangingStatus] = useState<string | null>(null);
+
+  // Broadcast state
+  const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
+  const [isLoadingBroadcasts, setIsLoadingBroadcasts] = useState(true);
+  const [broadcastFilter, setBroadcastFilter] = useState('all');
+  const [showBroadcastForm, setShowBroadcastForm] = useState(false);
+  const [editingBroadcast, setEditingBroadcast] = useState<Broadcast | null>(null);
+  const [broadcastForm, setBroadcastForm] = useState({
+    type: 'news',
+    title: '',
+    body: '',
+    eventDate: '',
+    eventVenue: '',
+    formUrl: '',
+    imageUrl: '',
+    pdfUrl: '',
+    youtubeUrl: '',
+    scheduledAt: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState<'image' | 'pdf' | null>(null);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -227,6 +267,144 @@ export default function AdminPage() {
     if (mainTab !== 'matching') return;
     fetchMatches();
   }, [mainTab, matchFilter, fetchMatches]);
+
+  // Fetch broadcasts
+  const fetchBroadcasts = useCallback(async () => {
+    setIsLoadingBroadcasts(true);
+    try {
+      const statusParam = broadcastFilter !== 'all' ? `&status=${broadcastFilter}` : '';
+      const res = await fetch(`/api/admin/broadcasts?${statusParam}`);
+      if (!res.ok) throw new Error('データの取得に失敗しました');
+      const data = await res.json();
+      setBroadcasts(data.broadcasts);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsLoadingBroadcasts(false);
+    }
+  }, [broadcastFilter]);
+
+  useEffect(() => {
+    if (mainTab !== 'broadcast') return;
+    fetchBroadcasts();
+  }, [mainTab, broadcastFilter, fetchBroadcasts]);
+
+  const handleBroadcastSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const url = editingBroadcast
+        ? `/api/admin/broadcasts/${editingBroadcast.id}`
+        : '/api/admin/broadcasts';
+      const method = editingBroadcast ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(broadcastForm),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '保存に失敗しました');
+      }
+      setShowBroadcastForm(false);
+      setEditingBroadcast(null);
+      setBroadcastForm({
+        type: 'news',
+        title: '',
+        body: '',
+        eventDate: '',
+        eventVenue: '',
+        formUrl: '',
+        imageUrl: '',
+        pdfUrl: '',
+        youtubeUrl: '',
+        scheduledAt: '',
+      });
+      fetchBroadcasts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSendBroadcast = async (id: string) => {
+    if (!confirm('この配信を今すぐ送信しますか？')) return;
+    try {
+      const res = await fetch(`/api/admin/broadcasts/${id}/send`, { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '送信に失敗しました');
+      }
+      const data = await res.json();
+      alert(`${data.sentCount}名に配信しました`);
+      fetchBroadcasts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    }
+  };
+
+  const handleDeleteBroadcast = async (id: string) => {
+    if (!confirm('この配信を削除しますか？')) return;
+    try {
+      const res = await fetch(`/api/admin/broadcasts/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '削除に失敗しました');
+      }
+      fetchBroadcasts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fileType: 'image' | 'pdf') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFile(fileType);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', fileType);
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'アップロードに失敗しました');
+      }
+      const data = await res.json();
+      setBroadcastForm((prev) => ({
+        ...prev,
+        [fileType === 'image' ? 'imageUrl' : 'pdfUrl']: data.url,
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setUploadingFile(null);
+    }
+  };
+
+  const openEditForm = (broadcast: Broadcast) => {
+    setEditingBroadcast(broadcast);
+    setBroadcastForm({
+      type: broadcast.type,
+      title: broadcast.title,
+      body: broadcast.body || '',
+      eventDate: broadcast.eventDate || '',
+      eventVenue: broadcast.eventVenue || '',
+      formUrl: broadcast.formUrl || '',
+      imageUrl: broadcast.imageUrl || '',
+      pdfUrl: broadcast.pdfUrl || '',
+      youtubeUrl: broadcast.youtubeUrl || '',
+      scheduledAt: broadcast.scheduledAt ? broadcast.scheduledAt.slice(0, 16) : '',
+    });
+    setShowBroadcastForm(true);
+  };
 
   const handleLogout = async () => {
     await fetch('/api/admin/auth', { method: 'DELETE' });
@@ -752,6 +930,328 @@ export default function AdminPage() {
                             </div>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* 配信管理タブ */}
+          {mainTab === 'broadcast' && (
+            <>
+              {/* 新規作成ボタン */}
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex gap-2">
+                  {['all', 'draft', 'scheduled', 'sent'].map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => setBroadcastFilter(status)}
+                      className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                        broadcastFilter === status
+                          ? 'bg-[#1E293B] text-white'
+                          : 'bg-[#E2E8F0] text-[#64748B]'
+                      }`}
+                    >
+                      {status === 'all' ? 'すべて' : status === 'draft' ? '下書き' : status === 'scheduled' ? '予約済み' : '送信済み'}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingBroadcast(null);
+                    setBroadcastForm({
+                      type: 'news',
+                      title: '',
+                      body: '',
+                      eventDate: '',
+                      eventVenue: '',
+                      formUrl: '',
+                      imageUrl: '',
+                      pdfUrl: '',
+                      youtubeUrl: '',
+                      scheduledAt: '',
+                    });
+                    setShowBroadcastForm(true);
+                  }}
+                  className="px-4 py-2 bg-[#2563EB] text-white text-sm rounded-lg font-medium"
+                >
+                  新規作成
+                </button>
+              </div>
+
+              {/* 配信フォーム */}
+              {showBroadcastForm && (
+                <div className="bg-white rounded-lg border border-[#E2E8F0] p-4 mb-4">
+                  <h3 className="font-bold text-[#1E293B] mb-4">
+                    {editingBroadcast ? '配信を編集' : '新規配信を作成'}
+                  </h3>
+                  <form onSubmit={handleBroadcastSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                        種別
+                      </label>
+                      <select
+                        value={broadcastForm.type}
+                        onChange={(e) => setBroadcastForm({ ...broadcastForm, type: e.target.value })}
+                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                      >
+                        <option value="event">イベント</option>
+                        <option value="news">お知らせ</option>
+                        <option value="article">記事</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                        タイトル *
+                      </label>
+                      <input
+                        type="text"
+                        value={broadcastForm.title}
+                        onChange={(e) => setBroadcastForm({ ...broadcastForm, title: e.target.value })}
+                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                        本文
+                      </label>
+                      <textarea
+                        value={broadcastForm.body}
+                        onChange={(e) => setBroadcastForm({ ...broadcastForm, body: e.target.value })}
+                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                        rows={4}
+                      />
+                    </div>
+
+                    {broadcastForm.type === 'event' && (
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                              開催日時
+                            </label>
+                            <input
+                              type="text"
+                              value={broadcastForm.eventDate}
+                              onChange={(e) => setBroadcastForm({ ...broadcastForm, eventDate: e.target.value })}
+                              placeholder="例: 2024年4月15日 14:00〜"
+                              className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                              会場
+                            </label>
+                            <input
+                              type="text"
+                              value={broadcastForm.eventVenue}
+                              onChange={(e) => setBroadcastForm({ ...broadcastForm, eventVenue: e.target.value })}
+                              className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                        {broadcastForm.type === 'event' ? '申込フォームURL' : '詳細URL'}
+                      </label>
+                      <input
+                        type="url"
+                        value={broadcastForm.formUrl}
+                        onChange={(e) => setBroadcastForm({ ...broadcastForm, formUrl: e.target.value })}
+                        placeholder="https://"
+                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                          画像
+                        </label>
+                        {broadcastForm.imageUrl ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-[#1D9E75]">アップロード済み</span>
+                            <button
+                              type="button"
+                              onClick={() => setBroadcastForm({ ...broadcastForm, imageUrl: '' })}
+                              className="text-xs text-[#E24B4A]"
+                            >
+                              削除
+                            </button>
+                          </div>
+                        ) : (
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileUpload(e, 'image')}
+                            disabled={uploadingFile !== null}
+                            className="w-full text-sm"
+                          />
+                        )}
+                        {uploadingFile === 'image' && (
+                          <p className="text-xs text-[#64748B] mt-1">アップロード中...</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                          PDF
+                        </label>
+                        {broadcastForm.pdfUrl ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-[#1D9E75]">アップロード済み</span>
+                            <button
+                              type="button"
+                              onClick={() => setBroadcastForm({ ...broadcastForm, pdfUrl: '' })}
+                              className="text-xs text-[#E24B4A]"
+                            >
+                              削除
+                            </button>
+                          </div>
+                        ) : (
+                          <input
+                            type="file"
+                            accept="application/pdf"
+                            onChange={(e) => handleFileUpload(e, 'pdf')}
+                            disabled={uploadingFile !== null}
+                            className="w-full text-sm"
+                          />
+                        )}
+                        {uploadingFile === 'pdf' && (
+                          <p className="text-xs text-[#64748B] mt-1">アップロード中...</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                        YouTube URL
+                      </label>
+                      <input
+                        type="url"
+                        value={broadcastForm.youtubeUrl}
+                        onChange={(e) => setBroadcastForm({ ...broadcastForm, youtubeUrl: e.target.value })}
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                        予約配信日時（空欄の場合は下書き保存）
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={broadcastForm.scheduledAt}
+                        onChange={(e) => setBroadcastForm({ ...broadcastForm, scheduledAt: e.target.value })}
+                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                      />
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="px-4 py-2 bg-[#2563EB] text-white text-sm rounded-lg font-medium disabled:opacity-50"
+                      >
+                        {isSubmitting ? '保存中...' : '保存'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowBroadcastForm(false);
+                          setEditingBroadcast(null);
+                        }}
+                        className="px-4 py-2 bg-[#E2E8F0] text-[#64748B] text-sm rounded-lg font-medium"
+                      >
+                        キャンセル
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* 配信一覧 */}
+              {isLoadingBroadcasts ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
+                </div>
+              ) : broadcasts.length === 0 ? (
+                <div className="text-center py-12 text-[#64748B]">
+                  <p>配信はまだありません</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {broadcasts.map((broadcast) => (
+                    <div
+                      key={broadcast.id}
+                      className="bg-white rounded-lg border border-[#E2E8F0] p-4"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 text-xs rounded ${
+                            broadcast.type === 'event' ? 'bg-[#E6F1FB] text-[#185FA5]' :
+                            broadcast.type === 'news' ? 'bg-[#FAEEDA] text-[#854F0B]' :
+                            'bg-[#E2E8F0] text-[#64748B]'
+                          }`}>
+                            {broadcast.type === 'event' ? 'イベント' : broadcast.type === 'news' ? 'お知らせ' : '記事'}
+                          </span>
+                          <span className={`px-2 py-0.5 text-xs rounded ${
+                            broadcast.status === 'sent' ? 'bg-[#D1FAE5] text-[#1D9E75]' :
+                            broadcast.status === 'scheduled' ? 'bg-[#E6F1FB] text-[#185FA5]' :
+                            'bg-[#E2E8F0] text-[#64748B]'
+                          }`}>
+                            {broadcast.status === 'sent' ? '送信済み' : broadcast.status === 'scheduled' ? '予約済み' : '下書き'}
+                          </span>
+                        </div>
+                        <span className="text-xs text-[#94A3B8]">
+                          {formatDate(broadcast.createdAt)}
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-[#1E293B] mb-1">{broadcast.title}</h4>
+                      {broadcast.body && (
+                        <p className="text-sm text-[#64748B] line-clamp-2 mb-2">{broadcast.body}</p>
+                      )}
+                      {broadcast.sentAt && (
+                        <p className="text-xs text-[#1D9E75] mb-2">
+                          {formatDate(broadcast.sentAt)} に {broadcast.sentCount}名に送信
+                        </p>
+                      )}
+                      {broadcast.scheduledAt && broadcast.status === 'scheduled' && (
+                        <p className="text-xs text-[#185FA5] mb-2">
+                          {formatDate(broadcast.scheduledAt)} に送信予定
+                        </p>
+                      )}
+                      <div className="flex gap-2 pt-2 border-t border-[#E2E8F0]">
+                        {broadcast.status !== 'sent' && (
+                          <>
+                            <button
+                              onClick={() => openEditForm(broadcast)}
+                              className="px-3 py-1 text-xs bg-[#E2E8F0] text-[#64748B] rounded hover:bg-[#D1D5DB]"
+                            >
+                              編集
+                            </button>
+                            <button
+                              onClick={() => handleSendBroadcast(broadcast.id)}
+                              className="px-3 py-1 text-xs bg-[#2563EB] text-white rounded hover:bg-[#1D4ED8]"
+                            >
+                              今すぐ送信
+                            </button>
+                            <button
+                              onClick={() => handleDeleteBroadcast(broadcast.id)}
+                              className="px-3 py-1 text-xs bg-[#E24B4A] text-white rounded hover:bg-[#DC2626]"
+                            >
+                              削除
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}

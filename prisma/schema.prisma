@@ -208,3 +208,43 @@ model UserItemRead {
   @@unique([userId, itemType, itemId])
   @@map("user_item_reads")
 }
+
+model NotificationSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  label       String
+  category    String   // A | B | C
+  description String?
+  enabled     Boolean  @default(true)
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("notification_settings")
+}
+
+model Broadcast {
+  id            String    @id @default(uuid())
+  type          String    // event | news | article
+  status        String    @default("draft") // draft | published | sent | scheduled
+  title         String
+  body          String?
+
+  // イベント固有
+  eventDate     String?   @map("event_date")
+  eventVenue    String?   @map("event_venue")
+  formUrl       String?   @map("form_url")
+
+  // メディア添付
+  imageUrl      String?   @map("image_url")
+  pdfUrl        String?   @map("pdf_url")
+  youtubeUrl    String?   @map("youtube_url")
+
+  // 配信関連
+  scheduledAt   DateTime? @map("scheduled_at")
+  sentAt        DateTime? @map("sent_at")
+  sentCount     Int?      @map("sent_count")
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("broadcasts")
+}

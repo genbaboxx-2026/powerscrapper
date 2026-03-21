@@ -6,10 +6,12 @@ import {
   createWelcomeMessage,
   createEventInfoMessage,
   createContactInfoMessage,
+  createBroadcastFlexMessage,
   type WebhookEvent,
   type MessageEvent,
 } from '@/lib/line';
 import { prisma } from '@/lib/prisma';
+import { isNotificationEnabled } from '@/lib/notification-helper';
 
 /**
  * LINE Webhook エンドポイント
@@ -89,8 +91,11 @@ async function handleFollow(userId: string, replyToken: string): Promise<void> {
       },
     });
 
-    // ウェルカムメッセージを送信
-    await replyMessage(replyToken, [createWelcomeMessage()]);
+    // A-1: ウェルカムメッセージを送信
+    const isWelcomeEnabled = await isNotificationEnabled('a_welcome');
+    if (isWelcomeEnabled) {
+      await replyMessage(replyToken, [createWelcomeMessage()]);
+    }
   } catch (error) {
     console.error('Failed to handle follow:', error);
   }
@@ -131,8 +136,10 @@ async function handlePostback(
   const action = params.get('action');
 
   switch (action) {
-    case 'projects':
-      // 案件一覧への誘導
+    case 'projects': {
+      // A-4: 案件一覧への誘導
+      const isProjectsEnabled = await isNotificationEnabled('a_postback_projects');
+      if (!isProjectsEnabled) break;
       await replyMessage(replyToken, [
         {
           type: 'flex',
@@ -179,9 +186,12 @@ async function handlePostback(
         },
       ]);
       break;
+    }
 
-    case 'register':
-      // 案件登録への誘導
+    case 'register': {
+      // A-5: 案件登録への誘導
+      const isRegisterEnabled = await isNotificationEnabled('a_postback_register');
+      if (!isRegisterEnabled) break;
       await replyMessage(replyToken, [
         {
           type: 'flex',
@@ -228,9 +238,12 @@ async function handlePostback(
         },
       ]);
       break;
+    }
 
-    case 'mypage':
-      // マイページへの誘導
+    case 'mypage': {
+      // A-6: マイページへの誘導
+      const isMypageEnabled = await isNotificationEnabled('a_postback_mypage');
+      if (!isMypageEnabled) break;
       await replyMessage(replyToken, [
         {
           type: 'flex',
@@ -277,9 +290,12 @@ async function handlePostback(
         },
       ]);
       break;
+    }
 
-    case 'profile':
-      // プロフィール編集への誘導
+    case 'profile': {
+      // A-7: プロフィール編集への誘導
+      const isProfileEnabled = await isNotificationEnabled('a_postback_profile');
+      if (!isProfileEnabled) break;
       await replyMessage(replyToken, [
         {
           type: 'flex',
@@ -326,6 +342,7 @@ async function handlePostback(
         },
       ]);
       break;
+    }
 
     default:
       // 不明なアクション
@@ -348,13 +365,49 @@ async function handleMessage(event: MessageEvent): Promise<void> {
   const text = message.text.trim();
 
   switch (text) {
-    case 'イベント案内':
-      await replyMessage(replyToken, [createEventInfoMessage()]);
-      break;
+    case 'イベント案内': {
+      // A-2: イベント案内応答（Broadcastテーブルから動的取得）
+      const isEventInfoEnabled = await isNotificationEnabled('a_event_info');
+      if (isEventInfoEnabled) {
+        // 最新のイベント配信を取得（送信済みまたは予約済み）
+        const latestEvent = await prisma.broadcast.findFirst({
+          where: {
+            type: 'event',
+            status: { in: ['sent', 'scheduled'] },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
 
-    case 'お問い合わせ':
-      await replyMessage(replyToken, [createContactInfoMessage()]);
+        if (latestEvent) {
+          // Broadcastテーブルのイベント情報からFlex Messageを生成
+          const messages = createBroadcastFlexMessage({
+            type: latestEvent.type,
+            title: latestEvent.title,
+            body: latestEvent.body,
+            eventDate: latestEvent.eventDate,
+            eventVenue: latestEvent.eventVenue,
+            formUrl: latestEvent.formUrl,
+            imageUrl: latestEvent.imageUrl,
+            pdfUrl: latestEvent.pdfUrl,
+            youtubeUrl: latestEvent.youtubeUrl,
+          });
+          await replyMessage(replyToken, messages);
+        } else {
+          // イベントがない場合はデフォルトメッセージ
+          await replyMessage(replyToken, [createEventInfoMessage()]);
+        }
+      }
       break;
+    }
+
+    case 'お問い合わせ': {
+      // A-3: お問い合わせ応答
+      const isContactInfoEnabled = await isNotificationEnabled('a_contact_info');
+      if (isContactInfoEnabled) {
+        await replyMessage(replyToken, [createContactInfoMessage()]);
+      }
+      break;
+    }
 
     default:
       // 対応していないメッセージは無視（または汎用応答）

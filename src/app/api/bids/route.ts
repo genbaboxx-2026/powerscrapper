@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { pushMessage, createBidNotification } from '@/lib/line';
+import { isNotificationEnabled } from '@/lib/notification-helper';
 
 /**
  * POST /api/bids - 入札を作成
@@ -105,15 +106,23 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 案件オーナーにLINE通知を送信
+    // B-1: 案件オーナーにLINE通知を送信（興味あり受信通知）
     try {
-      const notification = createBidNotification(
-        project.title,
-        user.companyName || '未設定',
-        availableFrom || '',
-        project.id
-      );
-      await pushMessage(project.user.lineUserId, [notification]);
+      const isBidNotifyEnabled = await isNotificationEnabled('b_bid_received');
+      if (isBidNotifyEnabled) {
+        const notification = createBidNotification(
+          project.title,
+          user.companyName || '未設定',
+          availableFrom || '',
+          project.id,
+          user.businessType || undefined,
+          user.coverageAreas || undefined,
+          user.licenses || undefined,
+          message,
+          availableFrom || undefined
+        );
+        await pushMessage(project.user.lineUserId, [notification]);
+      }
     } catch (notifyError) {
       // 通知失敗はログのみ、入札自体は成功させる
       console.error('Failed to send bid notification:', notifyError);

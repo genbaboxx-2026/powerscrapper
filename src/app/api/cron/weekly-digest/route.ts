@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { multicastMessage, createWeeklyDigestMessage } from '@/lib/line';
+import { isNotificationEnabled } from '@/lib/notification-helper';
 
 /**
  * POST /api/cron/weekly-digest - 週次新着案件まとめ配信
@@ -16,6 +17,16 @@ export async function POST(request: NextRequest) {
 
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // C-1: 週次まとめ配信の有効/無効チェック
+    const isWeeklyDigestEnabled = await isNotificationEnabled('c_weekly_digest');
+    if (!isWeeklyDigestEnabled) {
+      console.log('Weekly digest is disabled, skipping');
+      return NextResponse.json({
+        success: true,
+        message: 'Weekly digest is disabled',
+      });
     }
 
     // 過去7日間で承認された案件を取得

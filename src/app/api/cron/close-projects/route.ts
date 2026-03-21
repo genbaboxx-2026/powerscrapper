@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { isNotificationEnabled } from '@/lib/notification-helper';
 
 /**
  * POST /api/cron/close-projects - 期限切れ案件を自動クローズ
@@ -16,6 +17,16 @@ export async function POST(request: NextRequest) {
     // CRON_SECRETが設定されている場合は認証必須
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // C-2: 自動クローズ処理の有効/無効チェック
+    const isAutoCloseEnabled = await isNotificationEnabled('c_auto_close');
+    if (!isAutoCloseEnabled) {
+      console.log('Auto close is disabled, skipping');
+      return NextResponse.json({
+        success: true,
+        message: 'Auto close is disabled',
+      });
     }
 
     const now = new Date();

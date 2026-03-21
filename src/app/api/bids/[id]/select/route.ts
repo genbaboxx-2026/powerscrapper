@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { pushMessage, createSelectionNotification, createTextMessage } from '@/lib/line';
+import { isNotificationEnabled } from '@/lib/notification-helper';
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -119,39 +120,48 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     // LINE通知を送信
     try {
-      // 入札者（選定された人）に通知
-      const bidderNotification = createSelectionNotification(
-        bid.project.title,
-        true,
-        bid.projectId
-      );
-      await pushMessage(bid.user.lineUserId, [bidderNotification]);
-
-      // 発注者（自分）に確認メッセージ
-      await pushMessage(user.lineUserId, [
-        createTextMessage(
-          `「${bid.project.title}」で${bid.user.companyName || '企業'}を選定しました。\n\n相手の連絡先がマイページで確認できます。`
-        ),
-      ]);
-
-      // 落選者に通知（オプション）
-      const rejectedBids = await prisma.bid.findMany({
-        where: {
-          projectId: bid.projectId,
-          status: 'rejected',
-        },
-        include: {
-          user: true,
-        },
-      });
-
-      for (const rejectedBid of rejectedBids) {
-        const rejectedNotification = createSelectionNotification(
+      // B-2: 入札者（選定された人）に通知
+      const isBidSelectedEnabled = await isNotificationEnabled('b_bid_selected');
+      if (isBidSelectedEnabled) {
+        const bidderNotification = createSelectionNotification(
           bid.project.title,
-          false,
+          true,
           bid.projectId
         );
-        await pushMessage(rejectedBid.user.lineUserId, [rejectedNotification]);
+        await pushMessage(bid.user.lineUserId, [bidderNotification]);
+      }
+
+      // B-3: 発注者（自分）に確認メッセージ
+      const isBidSelectedOwnerEnabled = await isNotificationEnabled('b_bid_selected_owner');
+      if (isBidSelectedOwnerEnabled) {
+        await pushMessage(user.lineUserId, [
+          createTextMessage(
+            `「${bid.project.title}」で${bid.user.companyName || '企業'}を選定しました。\n\n相手の連絡先がマイページで確認できます。`
+          ),
+        ]);
+      }
+
+      // B-4: 落選者に通知
+      const isBidRejectedEnabled = await isNotificationEnabled('b_bid_rejected');
+      if (isBidRejectedEnabled) {
+        const rejectedBids = await prisma.bid.findMany({
+          where: {
+            projectId: bid.projectId,
+            status: 'rejected',
+          },
+          include: {
+            user: true,
+          },
+        });
+
+        for (const rejectedBid of rejectedBids) {
+          const rejectedNotification = createSelectionNotification(
+            bid.project.title,
+            false,
+            bid.projectId
+          );
+          await pushMessage(rejectedBid.user.lineUserId, [rejectedNotification]);
+        }
       }
     } catch (notifyError) {
       // 通知失敗はログのみ
