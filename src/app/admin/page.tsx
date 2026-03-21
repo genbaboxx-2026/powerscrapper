@@ -122,6 +122,27 @@ type Broadcast = {
   createdAt: string;
 };
 
+type NotificationSetting = {
+  id: string;
+  key: string;
+  label: string;
+  category: string;
+  description: string | null;
+  enabled: boolean;
+};
+
+type GroupedSettings = {
+  A: NotificationSetting[];
+  B: NotificationSetting[];
+  C: NotificationSetting[];
+};
+
+type CategoryLabels = {
+  A: string;
+  B: string;
+  C: string;
+};
+
 // Constants
 const MAIN_TABS = [
   { value: 'overview', label: '概要' },
@@ -200,6 +221,12 @@ export default function AdminPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingFile, setUploadingFile] = useState<'image' | 'pdf' | null>(null);
+
+  // Notification settings state
+  const [notificationSettings, setNotificationSettings] = useState<GroupedSettings>({ A: [], B: [], C: [] });
+  const [categoryLabels, setCategoryLabels] = useState<CategoryLabels>({ A: '', B: '', C: '' });
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [broadcastSubTab, setBroadcastSubTab] = useState<'broadcasts' | 'settings'>('broadcasts');
 
   const [error, setError] = useState<string | null>(null);
 
@@ -288,6 +315,49 @@ export default function AdminPage() {
     if (mainTab !== 'broadcast') return;
     fetchBroadcasts();
   }, [mainTab, broadcastFilter, fetchBroadcasts]);
+
+  // Fetch notification settings
+  const fetchNotificationSettings = useCallback(async () => {
+    setIsLoadingSettings(true);
+    try {
+      const res = await fetch('/api/admin/notification-settings');
+      if (!res.ok) throw new Error('データの取得に失敗しました');
+      const data = await res.json();
+      setNotificationSettings(data.grouped);
+      setCategoryLabels(data.categoryLabels);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsLoadingSettings(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mainTab !== 'broadcast' || broadcastSubTab !== 'settings') return;
+    fetchNotificationSettings();
+  }, [mainTab, broadcastSubTab, fetchNotificationSettings]);
+
+  const handleToggleNotification = async (key: string, enabled: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/notification-settings/${key}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '更新に失敗しました');
+      }
+      // Update local state
+      setNotificationSettings((prev) => ({
+        A: prev.A.map((s) => (s.key === key ? { ...s, enabled } : s)),
+        B: prev.B.map((s) => (s.key === key ? { ...s, enabled } : s)),
+        C: prev.C.map((s) => (s.key === key ? { ...s, enabled } : s)),
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    }
+  };
 
   const handleBroadcastSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -941,45 +1011,72 @@ export default function AdminPage() {
           {/* 配信管理タブ */}
           {mainTab === 'broadcast' && (
             <>
-              {/* 新規作成ボタン */}
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex gap-2">
-                  {['all', 'draft', 'scheduled', 'sent'].map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => setBroadcastFilter(status)}
-                      className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
-                        broadcastFilter === status
-                          ? 'bg-[#1E293B] text-white'
-                          : 'bg-[#E2E8F0] text-[#64748B]'
-                      }`}
-                    >
-                      {status === 'all' ? 'すべて' : status === 'draft' ? '下書き' : status === 'scheduled' ? '予約済み' : '送信済み'}
-                    </button>
-                  ))}
-                </div>
+              {/* サブタブ */}
+              <div className="flex gap-2 mb-4">
                 <button
-                  onClick={() => {
-                    setEditingBroadcast(null);
-                    setBroadcastForm({
-                      type: 'news',
-                      title: '',
-                      body: '',
-                      eventDate: '',
-                      eventVenue: '',
-                      formUrl: '',
-                      imageUrl: '',
-                      pdfUrl: '',
-                      youtubeUrl: '',
-                      scheduledAt: '',
-                    });
-                    setShowBroadcastForm(true);
-                  }}
-                  className="px-4 py-2 bg-[#2563EB] text-white text-sm rounded-lg font-medium"
+                  onClick={() => setBroadcastSubTab('broadcasts')}
+                  className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+                    broadcastSubTab === 'broadcasts'
+                      ? 'bg-[#2563EB] text-white'
+                      : 'bg-[#E2E8F0] text-[#64748B]'
+                  }`}
                 >
-                  新規作成
+                  配信一覧
+                </button>
+                <button
+                  onClick={() => setBroadcastSubTab('settings')}
+                  className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+                    broadcastSubTab === 'settings'
+                      ? 'bg-[#2563EB] text-white'
+                      : 'bg-[#E2E8F0] text-[#64748B]'
+                  }`}
+                >
+                  通知設定
                 </button>
               </div>
+
+              {/* 配信一覧サブタブ */}
+              {broadcastSubTab === 'broadcasts' && (
+                <>
+                  {/* フィルタ・新規作成ボタン */}
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex gap-2">
+                      {['all', 'draft', 'scheduled', 'sent'].map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => setBroadcastFilter(status)}
+                          className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                            broadcastFilter === status
+                              ? 'bg-[#1E293B] text-white'
+                              : 'bg-[#E2E8F0] text-[#64748B]'
+                          }`}
+                        >
+                          {status === 'all' ? 'すべて' : status === 'draft' ? '下書き' : status === 'scheduled' ? '予約済み' : '送信済み'}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setEditingBroadcast(null);
+                        setBroadcastForm({
+                          type: 'news',
+                          title: '',
+                          body: '',
+                          eventDate: '',
+                          eventVenue: '',
+                          formUrl: '',
+                          imageUrl: '',
+                          pdfUrl: '',
+                          youtubeUrl: '',
+                          scheduledAt: '',
+                        });
+                        setShowBroadcastForm(true);
+                      }}
+                      className="px-4 py-2 bg-[#2563EB] text-white text-sm rounded-lg font-medium"
+                    >
+                      新規作成
+                    </button>
+                  </div>
 
               {/* 配信フォーム */}
               {showBroadcastForm && (
@@ -1256,6 +1353,55 @@ export default function AdminPage() {
                     </div>
                   ))}
                 </div>
+              )}
+                </>
+              )}
+
+              {/* 通知設定サブタブ */}
+              {broadcastSubTab === 'settings' && (
+                <>
+                  {isLoadingSettings ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {(['A', 'B', 'C'] as const).map((category) => (
+                        <div key={category} className="bg-white rounded-lg border border-[#E2E8F0]">
+                          <div className="p-4 border-b border-[#E2E8F0]">
+                            <h3 className="font-bold text-[#1E293B]">
+                              カテゴリ {category}: {categoryLabels[category]}
+                            </h3>
+                          </div>
+                          <div className="divide-y divide-[#E2E8F0]">
+                            {notificationSettings[category].map((setting) => (
+                              <div key={setting.key} className="p-4 flex items-center justify-between">
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-[#1E293B]">{setting.label}</p>
+                                  {setting.description && (
+                                    <p className="text-xs text-[#64748B] mt-1">{setting.description}</p>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => handleToggleNotification(setting.key, !setting.enabled)}
+                                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                    setting.enabled ? 'bg-[#2563EB]' : 'bg-[#E2E8F0]'
+                                  }`}
+                                >
+                                  <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                      setting.enabled ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                  />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
