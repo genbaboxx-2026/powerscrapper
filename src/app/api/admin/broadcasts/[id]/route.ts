@@ -85,6 +85,16 @@ export async function PUT(req: NextRequest, { params }: Params) {
       );
     }
 
+    // クリエイティブフォーマットは画像必須
+    const effectiveFormat = format !== undefined ? format : broadcast.format;
+    const effectiveImageUrl = imageUrl !== undefined ? imageUrl : broadcast.imageUrl;
+    if (effectiveFormat === 'creative' && !effectiveImageUrl) {
+      return NextResponse.json(
+        { error: 'クリエイティブフォーマットでは画像が必須です' },
+        { status: 400 }
+      );
+    }
+
     const updateData: Record<string, unknown> = {};
     if (type !== undefined) updateData.type = type;
     if (format !== undefined) updateData.format = format;

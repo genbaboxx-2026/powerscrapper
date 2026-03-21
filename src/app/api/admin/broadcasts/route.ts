@@ -65,7 +65,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!title) {
+    // クリエイティブフォーマットは画像必須
+    if (format === 'creative' && !imageUrl) {
+      return NextResponse.json(
+        { error: 'クリエイティブフォーマットでは画像が必須です' },
+        { status: 400 }
+      );
+    }
+
+    // クリエイティブ以外はタイトル必須
+    if (format !== 'creative' && !title) {
       return NextResponse.json({ error: 'タイトルは必須です' }, { status: 400 });
     }
 

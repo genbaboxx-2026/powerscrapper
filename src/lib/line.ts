@@ -2445,7 +2445,7 @@ export function createSimpleBroadcastMessage(broadcast: {
 /**
  * クリエイティブ形式の配信メッセージを作成
  * 画像メインで、hero全体がタップ可能でURLに遷移
- * 画像がない場合はカード形式にフォールバック
+ * 画像は必須（バリデーション済み）
  */
 export function createCreativeBroadcastMessage(broadcast: {
   type: string;
@@ -2454,13 +2454,13 @@ export function createCreativeBroadcastMessage(broadcast: {
   eventDate?: string | null;
   eventVenue?: string | null;
   formUrl?: string | null;
-  imageUrl?: string | null;
+  imageUrl: string; // 必須
   pdfUrl?: string | null;
   youtubeUrl?: string | null;
 }) {
-  // 画像がない場合はカード形式にフォールバック
+  // 画像がない場合はエラー（バリデーションで弾かれるはずだが念のため）
   if (!broadcast.imageUrl) {
-    return createBroadcastFlexMessage(broadcast);
+    throw new Error('クリエイティブフォーマットには画像が必須です');
   }
 
   const messages: unknown[] = [];
@@ -2487,7 +2487,7 @@ export function createCreativeBroadcastMessage(broadcast: {
 
   messages.push({
     type: 'flex',
-    altText: broadcast.title,
+    altText: broadcast.title || '配信',
     contents: bubble,
   });
 
@@ -2517,7 +2517,11 @@ export function createBroadcastMessage(broadcast: {
       return createSimpleBroadcastMessage(broadcast);
     case 'creative':
       console.log('[createBroadcastMessage] Using CREATIVE format (hero image)');
-      return createCreativeBroadcastMessage(broadcast);
+      // クリエイティブはimageUrl必須（バリデーション済み）
+      return createCreativeBroadcastMessage({
+        ...broadcast,
+        imageUrl: broadcast.imageUrl as string,
+      });
     case 'card':
     default:
       console.log('[createBroadcastMessage] Using CARD format (flex message)');

@@ -717,6 +717,13 @@ function AdminPageContent() {
 
   const handleBroadcastSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // クリエイティブフォーマットの場合、画像必須
+    if (broadcastForm.format === 'creative' && !broadcastForm.imageUrl) {
+      setError('クリエイティブフォーマットでは画像が必須です');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const url = editingBroadcast
@@ -1506,32 +1513,37 @@ function AdminPageContent() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-[#1E293B] mb-1">
-                        タイトル *
-                      </label>
-                      <input
-                        type="text"
-                        value={broadcastForm.title}
-                        onChange={(e) => setBroadcastForm({ ...broadcastForm, title: e.target.value })}
-                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                        required
-                      />
-                    </div>
+                    {/* クリエイティブ以外ではタイトルと本文を表示 */}
+                    {broadcastForm.format !== 'creative' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                            タイトル *
+                          </label>
+                          <input
+                            type="text"
+                            value={broadcastForm.title}
+                            onChange={(e) => setBroadcastForm({ ...broadcastForm, title: e.target.value })}
+                            className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                            required
+                          />
+                        </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-[#1E293B] mb-1">
-                        本文
-                      </label>
-                      <textarea
-                        value={broadcastForm.body}
-                        onChange={(e) => setBroadcastForm({ ...broadcastForm, body: e.target.value })}
-                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                        rows={4}
-                      />
-                    </div>
+                        <div>
+                          <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                            本文
+                          </label>
+                          <textarea
+                            value={broadcastForm.body}
+                            onChange={(e) => setBroadcastForm({ ...broadcastForm, body: e.target.value })}
+                            className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                            rows={4}
+                          />
+                        </div>
+                      </>
+                    )}
 
-                    {broadcastForm.type === 'event' && (
+                    {broadcastForm.type === 'event' && broadcastForm.format !== 'creative' && (
                       <>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
@@ -1574,10 +1586,11 @@ function AdminPageContent() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* クリエイティブの場合は画像のみ（必須）、それ以外は画像+PDF */}
+                    {broadcastForm.format === 'creative' ? (
                       <div>
                         <label className="block text-sm font-medium text-[#1E293B] mb-1">
-                          画像
+                          画像 *（必須）
                         </label>
                         {broadcastForm.imageUrl ? (
                           <div className="flex items-center gap-2">
@@ -1602,49 +1615,85 @@ function AdminPageContent() {
                         {uploadingFile === 'image' && (
                           <p className="text-xs text-[#64748B] mt-1">アップロード中...</p>
                         )}
+                        <p className="text-xs text-[#64748B] mt-1">
+                          クリエイティブフォーマットでは画像が必須です。画像タップでURLに遷移します。
+                        </p>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-[#1E293B] mb-1">
-                          PDF
-                        </label>
-                        {broadcastForm.pdfUrl ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-[#1D9E75]">アップロード済み</span>
-                            <button
-                              type="button"
-                              onClick={() => setBroadcastForm({ ...broadcastForm, pdfUrl: '' })}
-                              className="text-xs text-[#E24B4A]"
-                            >
-                              削除
-                            </button>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                              画像
+                            </label>
+                            {broadcastForm.imageUrl ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-[#1D9E75]">アップロード済み</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setBroadcastForm({ ...broadcastForm, imageUrl: '' })}
+                                  className="text-xs text-[#E24B4A]"
+                                >
+                                  削除
+                                </button>
+                              </div>
+                            ) : (
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleFileUpload(e, 'image')}
+                                disabled={uploadingFile !== null}
+                                className="w-full text-sm"
+                              />
+                            )}
+                            {uploadingFile === 'image' && (
+                              <p className="text-xs text-[#64748B] mt-1">アップロード中...</p>
+                            )}
                           </div>
-                        ) : (
-                          <input
-                            type="file"
-                            accept="application/pdf"
-                            onChange={(e) => handleFileUpload(e, 'pdf')}
-                            disabled={uploadingFile !== null}
-                            className="w-full text-sm"
-                          />
-                        )}
-                        {uploadingFile === 'pdf' && (
-                          <p className="text-xs text-[#64748B] mt-1">アップロード中...</p>
-                        )}
-                      </div>
-                    </div>
+                          <div>
+                            <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                              PDF
+                            </label>
+                            {broadcastForm.pdfUrl ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-[#1D9E75]">アップロード済み</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setBroadcastForm({ ...broadcastForm, pdfUrl: '' })}
+                                  className="text-xs text-[#E24B4A]"
+                                >
+                                  削除
+                                </button>
+                              </div>
+                            ) : (
+                              <input
+                                type="file"
+                                accept="application/pdf"
+                                onChange={(e) => handleFileUpload(e, 'pdf')}
+                                disabled={uploadingFile !== null}
+                                className="w-full text-sm"
+                              />
+                            )}
+                            {uploadingFile === 'pdf' && (
+                              <p className="text-xs text-[#64748B] mt-1">アップロード中...</p>
+                            )}
+                          </div>
+                        </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-[#1E293B] mb-1">
-                        YouTube URL
-                      </label>
-                      <input
-                        type="url"
-                        value={broadcastForm.youtubeUrl}
-                        onChange={(e) => setBroadcastForm({ ...broadcastForm, youtubeUrl: e.target.value })}
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                      />
-                    </div>
+                        <div>
+                          <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                            YouTube URL
+                          </label>
+                          <input
+                            type="url"
+                            value={broadcastForm.youtubeUrl}
+                            onChange={(e) => setBroadcastForm({ ...broadcastForm, youtubeUrl: e.target.value })}
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                          />
+                        </div>
+                      </>
+                    )}
 
                     <div>
                       <label className="block text-sm font-medium text-[#1E293B] mb-1">
