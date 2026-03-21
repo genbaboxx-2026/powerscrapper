@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       type,
+      format,
       title,
       body: bodyText,
       eventDate,
@@ -71,6 +72,7 @@ export async function POST(req: NextRequest) {
     const broadcast = await prisma.broadcast.create({
       data: {
         type,
+        format: format || 'card',
         title,
         body: bodyText || null,
         eventDate: eventDate || null,

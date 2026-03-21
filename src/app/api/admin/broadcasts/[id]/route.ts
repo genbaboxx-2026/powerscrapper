@@ -64,6 +64,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     const body = await req.json();
     const {
       type,
+      format,
       title,
       body: bodyText,
       eventDate,
@@ -86,6 +87,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
     const updateData: Record<string, unknown> = {};
     if (type !== undefined) updateData.type = type;
+    if (format !== undefined) updateData.format = format;
     if (title !== undefined) updateData.title = title;
     if (bodyText !== undefined) updateData.body = bodyText;
     if (eventDate !== undefined) updateData.eventDate = eventDate;

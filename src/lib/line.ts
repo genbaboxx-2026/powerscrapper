@@ -2465,45 +2465,30 @@ export function createCreativeBroadcastMessage(broadcast: {
 
   const messages: unknown[] = [];
 
-  // Hero全体がタップ可能なFlex Message
-  // aspectRatio: 1.51:1 で画面幅いっぱいに表示
-  const heroAction = broadcast.formUrl
-    ? {
-        type: 'uri',
-        uri: broadcast.formUrl,
-      }
-    : undefined;
+  // Hero全体がタップ可能なFlex Message（画像のみ、本文なし）
+  const bubble: Record<string, unknown> = {
+    type: 'bubble',
+    hero: {
+      type: 'image',
+      url: broadcast.imageUrl,
+      size: 'full',
+      aspectRatio: '1.51:1',
+      aspectMode: 'cover',
+    },
+  };
+
+  // URLがある場合はheroにactionを追加
+  if (broadcast.formUrl) {
+    (bubble.hero as Record<string, unknown>).action = {
+      type: 'uri',
+      uri: broadcast.formUrl,
+    };
+  }
 
   messages.push({
     type: 'flex',
     altText: broadcast.title,
-    contents: {
-      type: 'bubble',
-      hero: {
-        type: 'image',
-        url: broadcast.imageUrl,
-        size: 'full',
-        aspectRatio: '1.51:1',
-        aspectMode: 'cover',
-        ...(heroAction ? { action: heroAction } : {}),
-      },
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        paddingAll: '12px',
-        contents: [
-          {
-            type: 'text',
-            text: broadcast.title,
-            weight: 'bold',
-            size: 'sm',
-            color: TEXT_PRIMARY_COLOR,
-            wrap: true,
-            maxLines: 2,
-          },
-        ],
-      },
-    },
+    contents: bubble,
   });
 
   return messages;
@@ -2524,13 +2509,18 @@ export function createBroadcastMessage(broadcast: {
   pdfUrl?: string | null;
   youtubeUrl?: string | null;
 }) {
+  console.log('[createBroadcastMessage] format:', broadcast.format);
+
   switch (broadcast.format) {
     case 'simple':
+      console.log('[createBroadcastMessage] Using SIMPLE format (text message)');
       return createSimpleBroadcastMessage(broadcast);
     case 'creative':
+      console.log('[createBroadcastMessage] Using CREATIVE format (hero image)');
       return createCreativeBroadcastMessage(broadcast);
     case 'card':
     default:
+      console.log('[createBroadcastMessage] Using CARD format (flex message)');
       return createBroadcastFlexMessage(broadcast);
   }
 }
