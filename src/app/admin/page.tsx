@@ -143,6 +143,109 @@ type CategoryLabels = {
   C: string;
 };
 
+type NotificationDetail = {
+  recipient: string;
+  timing: string;
+  preview: string;
+};
+
+// 各通知の詳細情報
+const NOTIFICATION_DETAILS: Record<string, NotificationDetail> = {
+  // カテゴリA: 自動応答
+  a_welcome: {
+    recipient: '友だち追加したユーザー',
+    timing: 'LINE公式アカウントを友だち追加した時',
+    preview: '「パワースクラッパーネットワークへようこそ！」というウェルカムメッセージと、案件一覧・案件登録・マイページへのリンクボタン付きFlex Message',
+  },
+  a_event_info: {
+    recipient: 'メッセージ送信者',
+    timing: '「イベント案内」とメッセージを送った時',
+    preview: '最新のイベント情報（タイトル・日時・会場・申込URL）を表示するFlex Message。イベントがない場合はデフォルトメッセージ',
+  },
+  a_contact_info: {
+    recipient: 'メッセージ送信者',
+    timing: '「お問い合わせ」とメッセージを送った時',
+    preview: '運営事務局の連絡先情報（メール・電話）を表示するFlex Message',
+  },
+  a_postback_projects: {
+    recipient: 'リッチメニュータップ者',
+    timing: 'リッチメニューで「案件一覧」をタップした時',
+    preview: '「案件一覧を確認する」というテキストと、LIFFアプリの案件一覧ページへのリンクボタン付きFlex Message',
+  },
+  a_postback_register: {
+    recipient: 'リッチメニュータップ者',
+    timing: 'リッチメニューで「案件登録」をタップした時',
+    preview: '「案件を登録する」というテキストと、LIFFアプリの案件登録ページへのリンクボタン付きFlex Message',
+  },
+  a_postback_mypage: {
+    recipient: 'リッチメニュータップ者',
+    timing: 'リッチメニューで「マイページ」をタップした時',
+    preview: '「マイページ」というテキストと、LIFFアプリのマイページへのリンクボタン付きFlex Message',
+  },
+  a_postback_profile: {
+    recipient: 'リッチメニュータップ者',
+    timing: 'リッチメニューで「プロフィール」をタップした時',
+    preview: '「会社プロフィール」というテキストと、LIFFアプリのプロフィール編集ページへのリンクボタン付きFlex Message',
+  },
+  // カテゴリB: アクション通知
+  b_bid_received: {
+    recipient: '案件登録者',
+    timing: '他社が自分の案件に「興味あり」を送信した時',
+    preview: '「興味ありが届きました」というタイトルで、案件名・興味あり送信者の会社名を表示。案件詳細ページへのリンクボタン付きFlex Message',
+  },
+  b_bid_selected: {
+    recipient: '興味あり送信者',
+    timing: '自分が送った「興味あり」が案件登録者に選択された時',
+    preview: '「興味ありが選択されました」というタイトルで、案件名・登録者の連絡先情報を表示するFlex Message',
+  },
+  b_bid_selected_owner: {
+    recipient: '案件登録者',
+    timing: '自分が「興味あり」を選択した時（確認通知）',
+    preview: '「連絡先を共有しました」というタイトルで、選択した業者名と案件名を表示するFlex Message',
+  },
+  b_bid_rejected: {
+    recipient: '興味あり送信者',
+    timing: '案件の募集が終了し、自分の興味ありが選択されなかった時',
+    preview: '「案件の募集が終了しました」というタイトルで、案件名を表示。他の案件を探すリンクボタン付きFlex Message',
+  },
+  b_match_contact: {
+    recipient: '案件登録者 & 興味あり送信者（双方）',
+    timing: '「連絡する」ボタンでマッチングが成立した時',
+    preview: '相手の連絡先情報（会社名・代表者・電話・メール）を表示するFlex Message',
+  },
+  b_project_approved: {
+    recipient: '案件登録者',
+    timing: '管理者が案件を承認した時',
+    preview: '「案件が公開されました」というタイトルで、案件名と案件詳細ページへのリンクボタン付きFlex Message',
+  },
+  b_project_rejected: {
+    recipient: '案件登録者',
+    timing: '管理者が案件を却下した時',
+    preview: '「案件が却下されました」というタイトルで、案件名と却下理由を表示するFlex Message',
+  },
+  b_new_project_admin: {
+    recipient: '管理者（role=admin）',
+    timing: '新規案件が登録された時',
+    preview: '「新規案件が登録されました」というタイトルで、案件名・登録者会社名を表示。管理画面へのリンク付きFlex Message',
+  },
+  b_new_project_broadcast: {
+    recipient: '全会員（ブロードキャスト）',
+    timing: '案件が承認された時',
+    preview: '「新着案件のお知らせ」というタイトルで、案件名・現場所在地・工期を表示。案件詳細ページへのリンクボタン付きFlex Message',
+  },
+  // カテゴリC: 定期配信
+  c_weekly_digest: {
+    recipient: '全会員（ブロードキャスト）',
+    timing: '毎週月曜9時（Vercel Cron）',
+    preview: '「今週の新着案件まとめ」というタイトルで、直近1週間の新着案件リスト（最大5件）を表示するFlex Message',
+  },
+  c_auto_close: {
+    recipient: '案件登録者',
+    timing: '毎日0時（Vercel Cron）に募集期限が過ぎた案件をチェック',
+    preview: '「案件の募集が終了しました」というタイトルで、案件名を表示。マイページへのリンクボタン付きFlex Message',
+  },
+};
+
 // Constants
 const MAIN_TABS = [
   { value: 'overview', label: '概要' },
@@ -227,6 +330,7 @@ export default function AdminPage() {
   const [categoryLabels, setCategoryLabels] = useState<CategoryLabels>({ A: '', B: '', C: '' });
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [broadcastSubTab, setBroadcastSubTab] = useState<'broadcasts' | 'settings'>('broadcasts');
+  const [expandedNotification, setExpandedNotification] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -1374,28 +1478,131 @@ export default function AdminPage() {
                             </h3>
                           </div>
                           <div className="divide-y divide-[#E2E8F0]">
-                            {notificationSettings[category].map((setting) => (
-                              <div key={setting.key} className="p-4 flex items-center justify-between">
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-[#1E293B]">{setting.label}</p>
-                                  {setting.description && (
-                                    <p className="text-xs text-[#64748B] mt-1">{setting.description}</p>
+                            {notificationSettings[category].map((setting) => {
+                              const isExpanded = expandedNotification === setting.key;
+                              const details = NOTIFICATION_DETAILS[setting.key];
+                              return (
+                                <div key={setting.key} className="overflow-hidden">
+                                  {/* ヘッダー部分（常に表示） */}
+                                  <div
+                                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-[#F8FAFC] transition-colors"
+                                    onClick={() => setExpandedNotification(isExpanded ? null : setting.key)}
+                                  >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      <svg
+                                        className={`w-4 h-4 text-[#64748B] transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                      </svg>
+                                      <p className="text-sm font-medium text-[#1E293B] truncate">{setting.label}</p>
+                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleNotification(setting.key, !setting.enabled);
+                                      }}
+                                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${
+                                        setting.enabled ? 'bg-[#2563EB]' : 'bg-[#E2E8F0]'
+                                      }`}
+                                    >
+                                      <span
+                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                          setting.enabled ? 'translate-x-6' : 'translate-x-1'
+                                        }`}
+                                      />
+                                    </button>
+                                  </div>
+
+                                  {/* 展開時の詳細パネル */}
+                                  {isExpanded && details && (
+                                    <div className="px-4 pb-4 bg-[#F8FAFC] border-t border-[#E2E8F0]">
+                                      <div className="pt-4 space-y-4">
+                                        {/* 通知名（大きく） */}
+                                        <div>
+                                          <h4 className="text-lg font-bold text-[#1E293B]">{setting.label}</h4>
+                                          <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded ${
+                                            category === 'A' ? 'bg-[#E6F1FB] text-[#185FA5]' :
+                                            category === 'B' ? 'bg-[#FAEEDA] text-[#854F0B]' :
+                                            'bg-[#D1FAE5] text-[#1D9E75]'
+                                          }`}>
+                                            カテゴリ {category}
+                                          </span>
+                                        </div>
+
+                                        {/* 説明文 */}
+                                        {setting.description && (
+                                          <div>
+                                            <p className="text-xs font-medium text-[#64748B] mb-1">説明</p>
+                                            <p className="text-sm text-[#1E293B]">{setting.description}</p>
+                                          </div>
+                                        )}
+
+                                        {/* 送信先 */}
+                                        <div>
+                                          <p className="text-xs font-medium text-[#64748B] mb-1">送信先</p>
+                                          <p className="text-sm text-[#1E293B] flex items-center gap-2">
+                                            <svg className="w-4 h-4 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            {details.recipient}
+                                          </p>
+                                        </div>
+
+                                        {/* 送信タイミング */}
+                                        <div>
+                                          <p className="text-xs font-medium text-[#64748B] mb-1">送信タイミング</p>
+                                          <p className="text-sm text-[#1E293B] flex items-center gap-2">
+                                            <svg className="w-4 h-4 text-[#1D9E75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {details.timing}
+                                          </p>
+                                        </div>
+
+                                        {/* 送信内容のプレビュー */}
+                                        <div>
+                                          <p className="text-xs font-medium text-[#64748B] mb-1">送信内容</p>
+                                          <div className="bg-white rounded-lg border border-[#E2E8F0] p-3">
+                                            <div className="flex items-start gap-2">
+                                              <div className="w-8 h-8 bg-[#06C755] rounded-lg flex items-center justify-center shrink-0">
+                                                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                  <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+                                                </svg>
+                                              </div>
+                                              <p className="text-sm text-[#1E293B] leading-relaxed">{details.preview}</p>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* ON/OFFトグル（大きいバージョン） */}
+                                        <div className="pt-2 border-t border-[#E2E8F0]">
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium text-[#1E293B]">
+                                              この通知を{setting.enabled ? '有効' : '無効'}にする
+                                            </span>
+                                            <button
+                                              onClick={() => handleToggleNotification(setting.key, !setting.enabled)}
+                                              className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${
+                                                setting.enabled ? 'bg-[#2563EB]' : 'bg-[#E2E8F0]'
+                                              }`}
+                                            >
+                                              <span
+                                                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow ${
+                                                  setting.enabled ? 'translate-x-8' : 'translate-x-1'
+                                                }`}
+                                              />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
                                   )}
                                 </div>
-                                <button
-                                  onClick={() => handleToggleNotification(setting.key, !setting.enabled)}
-                                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                    setting.enabled ? 'bg-[#2563EB]' : 'bg-[#E2E8F0]'
-                                  }`}
-                                >
-                                  <span
-                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                      setting.enabled ? 'translate-x-6' : 'translate-x-1'
-                                    }`}
-                                  />
-                                </button>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       ))}
