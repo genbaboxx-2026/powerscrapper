@@ -1696,30 +1696,9 @@ export default function AdminPage() {
                                           </div>
                                         </div>
 
-                                        {/* ON/OFFトグル（大きいバージョン） */}
-                                        <div className="pt-2 border-t border-[#E2E8F0]">
-                                          <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-[#1E293B]">
-                                              この通知を{setting.enabled ? '有効' : '無効'}にする
-                                            </span>
-                                            <button
-                                              onClick={() => handleToggleNotification(setting.key, !setting.enabled)}
-                                              className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${
-                                                setting.enabled ? 'bg-[#2563EB]' : 'bg-[#E2E8F0]'
-                                              }`}
-                                            >
-                                              <span
-                                                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow ${
-                                                  setting.enabled ? 'translate-x-8' : 'translate-x-1'
-                                                }`}
-                                              />
-                                            </button>
-                                          </div>
-                                        </div>
-
                                         {/* 編集可能な通知には編集ボタンを表示 */}
                                         {EDITABLE_NOTIFICATIONS[setting.key] && (
-                                          <div className="pt-4">
+                                          <div className="pt-2 border-t border-[#E2E8F0]">
                                             <button
                                               onClick={() => openSiteSettingEdit(setting.key)}
                                               className="w-full px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8] transition-colors"
