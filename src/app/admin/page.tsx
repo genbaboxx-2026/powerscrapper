@@ -718,10 +718,23 @@ function AdminPageContent() {
   const handleBroadcastSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // クリエイティブフォーマットの場合、画像必須
-    if (broadcastForm.format === 'creative' && !broadcastForm.imageUrl) {
-      setError('クリエイティブフォーマットでは画像が必須です');
-      return;
+    // フォーマットに応じたバリデーション
+    if (broadcastForm.format === 'simple' || broadcastForm.format === 'card') {
+      if (!broadcastForm.title) {
+        setError('タイトルは必須です');
+        return;
+      }
+    }
+
+    if (broadcastForm.format === 'creative') {
+      if (!broadcastForm.imageUrl) {
+        setError('クリエイティブフォーマットでは画像が必須です');
+        return;
+      }
+      if (!broadcastForm.formUrl) {
+        setError('クリエイティブフォーマットでは詳細URLが必須です');
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -1513,9 +1526,10 @@ function AdminPageContent() {
                       </div>
                     </div>
 
-                    {/* クリエイティブ以外ではタイトルと本文を表示 */}
-                    {broadcastForm.format !== 'creative' && (
+                    {/* ====== シンプル形式 ====== */}
+                    {broadcastForm.format === 'simple' && (
                       <>
+                        {/* タイトル（必須） */}
                         <div>
                           <label className="block text-sm font-medium text-[#1E293B] mb-1">
                             タイトル *
@@ -1529,6 +1543,7 @@ function AdminPageContent() {
                           />
                         </div>
 
+                        {/* 本文 */}
                         <div>
                           <label className="block text-sm font-medium text-[#1E293B] mb-1">
                             本文
@@ -1540,83 +1555,38 @@ function AdminPageContent() {
                             rows={4}
                           />
                         </div>
-                      </>
-                    )}
 
-                    {broadcastForm.type === 'event' && broadcastForm.format !== 'creative' && (
-                      <>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-[#1E293B] mb-1">
-                              開催日時
-                            </label>
-                            <input
-                              type="text"
-                              value={broadcastForm.eventDate}
-                              onChange={(e) => setBroadcastForm({ ...broadcastForm, eventDate: e.target.value })}
-                              placeholder="例: 2024年4月15日 14:00〜"
-                              className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-[#1E293B] mb-1">
-                              会場
-                            </label>
-                            <input
-                              type="text"
-                              value={broadcastForm.eventVenue}
-                              onChange={(e) => setBroadcastForm({ ...broadcastForm, eventVenue: e.target.value })}
-                              className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                            />
-                          </div>
-                        </div>
-                      </>
-                    )}
-
-                    {/* クリエイティブの場合は画像→詳細URLの順、それ以外は詳細URL→画像+PDFの順 */}
-                    {broadcastForm.format === 'creative' ? (
-                      <>
-                        {/* 画像（必須） */}
+                        {/* 画像（任意） */}
                         <div>
                           <label className="block text-sm font-medium text-[#1E293B] mb-2">
-                            画像 *（必須）
+                            画像（任意）
                           </label>
                           {broadcastForm.imageUrl ? (
                             <div className="relative border-2 border-[#E2E8F0] rounded-lg overflow-hidden">
                               <img
                                 src={broadcastForm.imageUrl}
                                 alt="アップロード画像"
-                                className="w-full h-48 object-cover"
+                                className="w-full h-32 object-cover"
                               />
                               <button
                                 type="button"
                                 onClick={() => setBroadcastForm({ ...broadcastForm, imageUrl: '' })}
-                                className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors"
+                                className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                               </button>
                             </div>
                           ) : (
                             <label className="block cursor-pointer">
-                              <div className="border-2 border-dashed border-[#CBD5E1] rounded-lg p-8 text-center hover:border-[#2563EB] hover:bg-[#F8FAFC] transition-colors">
-                                <div className="flex justify-center mb-3">
-                                  <div className="w-16 h-16 bg-[#E2E8F0] rounded-full flex items-center justify-center">
-                                    <svg className="w-8 h-8 text-[#64748B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                  </div>
+                              <div className="border-2 border-dashed border-[#CBD5E1] rounded-lg p-4 text-center hover:border-[#2563EB] hover:bg-[#F8FAFC] transition-colors">
+                                <div className="flex justify-center mb-2">
+                                  <svg className="w-8 h-8 text-[#94A3B8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
                                 </div>
-                                <p className="text-sm font-medium text-[#1E293B] mb-1">
-                                  画像をアップロード
-                                </p>
-                                <p className="text-xs text-[#64748B] mb-3">
-                                  クリックまたはドラッグ&ドロップ
-                                </p>
-                                <span className="inline-block px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8]">
-                                  ファイルを選択
-                                </span>
+                                <p className="text-xs text-[#64748B]">画像を選択（任意）</p>
                                 <input
                                   type="file"
                                   accept="image/*"
@@ -1628,36 +1598,75 @@ function AdminPageContent() {
                             </label>
                           )}
                           {uploadingFile === 'image' && (
-                            <div className="mt-2 flex items-center gap-2">
-                              <div className="animate-spin w-4 h-4 border-2 border-[#2563EB] border-t-transparent rounded-full"></div>
-                              <span className="text-sm text-[#64748B]">アップロード中...</span>
+                            <div className="mt-1 flex items-center gap-1">
+                              <div className="animate-spin w-3 h-3 border-2 border-[#2563EB] border-t-transparent rounded-full"></div>
+                              <span className="text-xs text-[#64748B]">アップロード中...</span>
                             </div>
                           )}
-                          <p className="text-xs text-[#64748B] mt-2">
-                            画像タップでURLに遷移します。推奨サイズ: 1200x628px以上
-                          </p>
-                        </div>
-
-                        {/* 詳細URL */}
-                        <div>
-                          <label className="block text-sm font-medium text-[#1E293B] mb-1">
-                            詳細URL（任意）
-                          </label>
-                          <input
-                            type="url"
-                            value={broadcastForm.formUrl}
-                            onChange={(e) => setBroadcastForm({ ...broadcastForm, formUrl: e.target.value })}
-                            placeholder="https://"
-                            className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                          />
-                          <p className="text-xs text-[#64748B] mt-1">
-                            画像タップ時の遷移先URL
-                          </p>
                         </div>
                       </>
-                    ) : (
+                    )}
+
+                    {/* ====== カード形式（全項目表示） ====== */}
+                    {broadcastForm.format === 'card' && (
                       <>
-                        {/* 詳細URL（非クリエイティブ） */}
+                        {/* タイトル（必須） */}
+                        <div>
+                          <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                            タイトル *
+                          </label>
+                          <input
+                            type="text"
+                            value={broadcastForm.title}
+                            onChange={(e) => setBroadcastForm({ ...broadcastForm, title: e.target.value })}
+                            className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                            required
+                          />
+                        </div>
+
+                        {/* 本文 */}
+                        <div>
+                          <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                            本文
+                          </label>
+                          <textarea
+                            value={broadcastForm.body}
+                            onChange={(e) => setBroadcastForm({ ...broadcastForm, body: e.target.value })}
+                            className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                            rows={4}
+                          />
+                        </div>
+
+                        {/* イベント用フィールド */}
+                        {broadcastForm.type === 'event' && (
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                                開催日時
+                              </label>
+                              <input
+                                type="text"
+                                value={broadcastForm.eventDate}
+                                onChange={(e) => setBroadcastForm({ ...broadcastForm, eventDate: e.target.value })}
+                                placeholder="例: 2024年4月15日 14:00〜"
+                                className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                                会場
+                              </label>
+                              <input
+                                type="text"
+                                value={broadcastForm.eventVenue}
+                                onChange={(e) => setBroadcastForm({ ...broadcastForm, eventVenue: e.target.value })}
+                                className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 詳細URL */}
                         <div>
                           <label className="block text-sm font-medium text-[#1E293B] mb-1">
                             {broadcastForm.type === 'event' ? '申込フォームURL' : '詳細URL'}
@@ -1768,6 +1777,7 @@ function AdminPageContent() {
                           </div>
                         </div>
 
+                        {/* YouTube URL */}
                         <div>
                           <label className="block text-sm font-medium text-[#1E293B] mb-1">
                             YouTube URL
@@ -1779,6 +1789,105 @@ function AdminPageContent() {
                             placeholder="https://www.youtube.com/watch?v=..."
                             className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
                           />
+                        </div>
+                      </>
+                    )}
+
+                    {/* ====== クリエイティブ形式 ====== */}
+                    {broadcastForm.format === 'creative' && (
+                      <>
+                        {/* 画像（必須） */}
+                        <div>
+                          <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                            画像 *（必須）
+                          </label>
+                          {broadcastForm.imageUrl ? (
+                            <div className="relative border-2 border-[#E2E8F0] rounded-lg overflow-hidden">
+                              <img
+                                src={broadcastForm.imageUrl}
+                                alt="アップロード画像"
+                                className="w-full h-48 object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setBroadcastForm({ ...broadcastForm, imageUrl: '' })}
+                                className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="block cursor-pointer">
+                              <div className="border-2 border-dashed border-[#CBD5E1] rounded-lg p-8 text-center hover:border-[#2563EB] hover:bg-[#F8FAFC] transition-colors">
+                                <div className="flex justify-center mb-3">
+                                  <div className="w-16 h-16 bg-[#E2E8F0] rounded-full flex items-center justify-center">
+                                    <svg className="w-8 h-8 text-[#64748B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                  </div>
+                                </div>
+                                <p className="text-sm font-medium text-[#1E293B] mb-1">
+                                  画像をアップロード
+                                </p>
+                                <p className="text-xs text-[#64748B] mb-3">
+                                  クリックまたはドラッグ&ドロップ
+                                </p>
+                                <span className="inline-block px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8]">
+                                  ファイルを選択
+                                </span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => handleFileUpload(e, 'image')}
+                                  disabled={uploadingFile !== null}
+                                  className="hidden"
+                                />
+                              </div>
+                            </label>
+                          )}
+                          {uploadingFile === 'image' && (
+                            <div className="mt-2 flex items-center gap-2">
+                              <div className="animate-spin w-4 h-4 border-2 border-[#2563EB] border-t-transparent rounded-full"></div>
+                              <span className="text-sm text-[#64748B]">アップロード中...</span>
+                            </div>
+                          )}
+                          <p className="text-xs text-[#64748B] mt-2">
+                            推奨サイズ: 1200x628px以上
+                          </p>
+                        </div>
+
+                        {/* タイトル（任意） */}
+                        <div>
+                          <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                            タイトル（任意）
+                          </label>
+                          <input
+                            type="text"
+                            value={broadcastForm.title}
+                            onChange={(e) => setBroadcastForm({ ...broadcastForm, title: e.target.value })}
+                            placeholder="画像の下に小さく表示されます"
+                            className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                          />
+                        </div>
+
+                        {/* 詳細URL（必須） */}
+                        <div>
+                          <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                            詳細URL *（必須）
+                          </label>
+                          <input
+                            type="url"
+                            value={broadcastForm.formUrl}
+                            onChange={(e) => setBroadcastForm({ ...broadcastForm, formUrl: e.target.value })}
+                            placeholder="https://"
+                            className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                            required
+                          />
+                          <p className="text-xs text-[#64748B] mt-1">
+                            画像タップ時の遷移先URL
+                          </p>
                         </div>
                       </>
                     )}

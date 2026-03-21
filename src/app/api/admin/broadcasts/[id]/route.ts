@@ -85,14 +85,23 @@ export async function PUT(req: NextRequest, { params }: Params) {
       );
     }
 
-    // クリエイティブフォーマットは画像必須
+    // クリエイティブフォーマットは画像と詳細URL必須
     const effectiveFormat = format !== undefined ? format : broadcast.format;
     const effectiveImageUrl = imageUrl !== undefined ? imageUrl : broadcast.imageUrl;
-    if (effectiveFormat === 'creative' && !effectiveImageUrl) {
-      return NextResponse.json(
-        { error: 'クリエイティブフォーマットでは画像が必須です' },
-        { status: 400 }
-      );
+    const effectiveFormUrl = formUrl !== undefined ? formUrl : broadcast.formUrl;
+    if (effectiveFormat === 'creative') {
+      if (!effectiveImageUrl) {
+        return NextResponse.json(
+          { error: 'クリエイティブフォーマットでは画像が必須です' },
+          { status: 400 }
+        );
+      }
+      if (!effectiveFormUrl) {
+        return NextResponse.json(
+          { error: 'クリエイティブフォーマットでは詳細URLが必須です' },
+          { status: 400 }
+        );
+      }
     }
 
     const updateData: Record<string, unknown> = {};

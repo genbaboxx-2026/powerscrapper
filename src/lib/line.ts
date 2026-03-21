@@ -2445,15 +2445,16 @@ export function createSimpleBroadcastMessage(broadcast: {
 /**
  * クリエイティブ形式の配信メッセージを作成
  * 画像メインで、hero全体がタップ可能でURLに遷移
- * 画像は必須（バリデーション済み）
+ * 画像と詳細URLは必須（バリデーション済み）
+ * タイトルは任意（指定されている場合は画像の下に小さく表示）
  */
 export function createCreativeBroadcastMessage(broadcast: {
   type: string;
-  title: string;
+  title?: string | null;
   body?: string | null;
   eventDate?: string | null;
   eventVenue?: string | null;
-  formUrl?: string | null;
+  formUrl: string; // 必須
   imageUrl: string; // 必須
   pdfUrl?: string | null;
   youtubeUrl?: string | null;
@@ -2465,7 +2466,7 @@ export function createCreativeBroadcastMessage(broadcast: {
 
   const messages: unknown[] = [];
 
-  // Hero全体がタップ可能なFlex Message（画像のみ、本文なし）
+  // Hero全体がタップ可能なFlex Message
   const bubble: Record<string, unknown> = {
     type: 'bubble',
     hero: {
@@ -2474,14 +2475,29 @@ export function createCreativeBroadcastMessage(broadcast: {
       size: 'full',
       aspectRatio: '1.51:1',
       aspectMode: 'cover',
+      action: {
+        type: 'uri',
+        uri: broadcast.formUrl,
+      },
     },
   };
 
-  // URLがある場合はheroにactionを追加
-  if (broadcast.formUrl) {
-    (bubble.hero as Record<string, unknown>).action = {
-      type: 'uri',
-      uri: broadcast.formUrl,
+  // タイトルがある場合はbodyに小さく表示
+  if (broadcast.title) {
+    bubble.body = {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '12px',
+      contents: [
+        {
+          type: 'text',
+          text: broadcast.title,
+          size: 'sm',
+          color: TEXT_PRIMARY_COLOR,
+          wrap: true,
+          maxLines: 2,
+        },
+      ],
     };
   }
 
@@ -2517,10 +2533,11 @@ export function createBroadcastMessage(broadcast: {
       return createSimpleBroadcastMessage(broadcast);
     case 'creative':
       console.log('[createBroadcastMessage] Using CREATIVE format (hero image)');
-      // クリエイティブはimageUrl必須（バリデーション済み）
+      // クリエイティブはimageUrlとformUrl必須（バリデーション済み）
       return createCreativeBroadcastMessage({
         ...broadcast,
         imageUrl: broadcast.imageUrl as string,
+        formUrl: broadcast.formUrl as string,
       });
     case 'card':
     default:

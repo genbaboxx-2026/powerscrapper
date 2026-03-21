@@ -65,16 +65,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // クリエイティブフォーマットは画像必須
-    if (format === 'creative' && !imageUrl) {
-      return NextResponse.json(
-        { error: 'クリエイティブフォーマットでは画像が必須です' },
-        { status: 400 }
-      );
+    // クリエイティブフォーマットは画像と詳細URL必須
+    if (format === 'creative') {
+      if (!imageUrl) {
+        return NextResponse.json(
+          { error: 'クリエイティブフォーマットでは画像が必須です' },
+          { status: 400 }
+        );
+      }
+      if (!formUrl) {
+        return NextResponse.json(
+          { error: 'クリエイティブフォーマットでは詳細URLが必須です' },
+          { status: 400 }
+        );
+      }
     }
 
-    // クリエイティブ以外はタイトル必須
-    if (format !== 'creative' && !title) {
+    // シンプル・カードはタイトル必須
+    if ((format === 'simple' || format === 'card' || !format) && !title) {
       return NextResponse.json({ error: 'タイトルは必須です' }, { status: 400 });
     }
 
