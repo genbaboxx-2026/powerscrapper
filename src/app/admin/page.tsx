@@ -1589,93 +1589,159 @@ function AdminPageContent() {
                     {/* クリエイティブの場合は画像のみ（必須）、それ以外は画像+PDF */}
                     {broadcastForm.format === 'creative' ? (
                       <div>
-                        <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                        <label className="block text-sm font-medium text-[#1E293B] mb-2">
                           画像 *（必須）
                         </label>
                         {broadcastForm.imageUrl ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-[#1D9E75]">アップロード済み</span>
+                          <div className="relative border-2 border-[#E2E8F0] rounded-lg overflow-hidden">
+                            <img
+                              src={broadcastForm.imageUrl}
+                              alt="アップロード画像"
+                              className="w-full h-48 object-cover"
+                            />
                             <button
                               type="button"
                               onClick={() => setBroadcastForm({ ...broadcastForm, imageUrl: '' })}
-                              className="text-xs text-[#E24B4A]"
+                              className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors"
                             >
-                              削除
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
                             </button>
                           </div>
                         ) : (
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileUpload(e, 'image')}
-                            disabled={uploadingFile !== null}
-                            className="w-full text-sm"
-                          />
+                          <label className="block cursor-pointer">
+                            <div className="border-2 border-dashed border-[#CBD5E1] rounded-lg p-8 text-center hover:border-[#2563EB] hover:bg-[#F8FAFC] transition-colors">
+                              <div className="flex justify-center mb-3">
+                                <div className="w-16 h-16 bg-[#E2E8F0] rounded-full flex items-center justify-center">
+                                  <svg className="w-8 h-8 text-[#64748B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                </div>
+                              </div>
+                              <p className="text-sm font-medium text-[#1E293B] mb-1">
+                                画像をアップロード
+                              </p>
+                              <p className="text-xs text-[#64748B] mb-3">
+                                クリックまたはドラッグ&ドロップ
+                              </p>
+                              <span className="inline-block px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8]">
+                                ファイルを選択
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleFileUpload(e, 'image')}
+                                disabled={uploadingFile !== null}
+                                className="hidden"
+                              />
+                            </div>
+                          </label>
                         )}
                         {uploadingFile === 'image' && (
-                          <p className="text-xs text-[#64748B] mt-1">アップロード中...</p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="animate-spin w-4 h-4 border-2 border-[#2563EB] border-t-transparent rounded-full"></div>
+                            <span className="text-sm text-[#64748B]">アップロード中...</span>
+                          </div>
                         )}
-                        <p className="text-xs text-[#64748B] mt-1">
-                          クリエイティブフォーマットでは画像が必須です。画像タップでURLに遷移します。
+                        <p className="text-xs text-[#64748B] mt-2">
+                          画像タップでURLに遷移します。推奨サイズ: 1200x628px以上
                         </p>
                       </div>
                     ) : (
                       <>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                            <label className="block text-sm font-medium text-[#1E293B] mb-2">
                               画像
                             </label>
                             {broadcastForm.imageUrl ? (
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-[#1D9E75]">アップロード済み</span>
+                              <div className="relative border-2 border-[#E2E8F0] rounded-lg overflow-hidden">
+                                <img
+                                  src={broadcastForm.imageUrl}
+                                  alt="アップロード画像"
+                                  className="w-full h-32 object-cover"
+                                />
                                 <button
                                   type="button"
                                   onClick={() => setBroadcastForm({ ...broadcastForm, imageUrl: '' })}
-                                  className="text-xs text-[#E24B4A]"
+                                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
                                 >
-                                  削除
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
                                 </button>
                               </div>
                             ) : (
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => handleFileUpload(e, 'image')}
-                                disabled={uploadingFile !== null}
-                                className="w-full text-sm"
-                              />
+                              <label className="block cursor-pointer">
+                                <div className="border-2 border-dashed border-[#CBD5E1] rounded-lg p-4 text-center hover:border-[#2563EB] hover:bg-[#F8FAFC] transition-colors">
+                                  <div className="flex justify-center mb-2">
+                                    <svg className="w-8 h-8 text-[#94A3B8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                  </div>
+                                  <p className="text-xs text-[#64748B]">画像を選択</p>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleFileUpload(e, 'image')}
+                                    disabled={uploadingFile !== null}
+                                    className="hidden"
+                                  />
+                                </div>
+                              </label>
                             )}
                             {uploadingFile === 'image' && (
-                              <p className="text-xs text-[#64748B] mt-1">アップロード中...</p>
+                              <div className="mt-1 flex items-center gap-1">
+                                <div className="animate-spin w-3 h-3 border-2 border-[#2563EB] border-t-transparent rounded-full"></div>
+                                <span className="text-xs text-[#64748B]">アップロード中...</span>
+                              </div>
                             )}
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                            <label className="block text-sm font-medium text-[#1E293B] mb-2">
                               PDF
                             </label>
                             {broadcastForm.pdfUrl ? (
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-[#1D9E75]">アップロード済み</span>
+                              <div className="border-2 border-[#E2E8F0] rounded-lg p-4 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <svg className="w-8 h-8 text-[#E24B4A]" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zm-2.5 9.5a.5.5 0 01.5.5v3a.5.5 0 01-1 0v-3a.5.5 0 01.5-.5zm3 0a.5.5 0 01.5.5v3a.5.5 0 01-1 0v-3a.5.5 0 01.5-.5z"/>
+                                  </svg>
+                                  <span className="text-sm text-[#1D9E75]">PDF添付済み</span>
+                                </div>
                                 <button
                                   type="button"
                                   onClick={() => setBroadcastForm({ ...broadcastForm, pdfUrl: '' })}
-                                  className="text-xs text-[#E24B4A]"
+                                  className="text-xs text-[#E24B4A] hover:underline"
                                 >
                                   削除
                                 </button>
                               </div>
                             ) : (
-                              <input
-                                type="file"
-                                accept="application/pdf"
-                                onChange={(e) => handleFileUpload(e, 'pdf')}
-                                disabled={uploadingFile !== null}
-                                className="w-full text-sm"
-                              />
+                              <label className="block cursor-pointer">
+                                <div className="border-2 border-dashed border-[#CBD5E1] rounded-lg p-4 text-center hover:border-[#2563EB] hover:bg-[#F8FAFC] transition-colors">
+                                  <div className="flex justify-center mb-2">
+                                    <svg className="w-8 h-8 text-[#94A3B8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                  </div>
+                                  <p className="text-xs text-[#64748B]">PDFを選択</p>
+                                  <input
+                                    type="file"
+                                    accept="application/pdf"
+                                    onChange={(e) => handleFileUpload(e, 'pdf')}
+                                    disabled={uploadingFile !== null}
+                                    className="hidden"
+                                  />
+                                </div>
+                              </label>
                             )}
                             {uploadingFile === 'pdf' && (
-                              <p className="text-xs text-[#64748B] mt-1">アップロード中...</p>
+                              <div className="mt-1 flex items-center gap-1">
+                                <div className="animate-spin w-3 h-3 border-2 border-[#2563EB] border-t-transparent rounded-full"></div>
+                                <span className="text-xs text-[#64748B]">アップロード中...</span>
+                              </div>
                             )}
                           </div>
                         </div>
