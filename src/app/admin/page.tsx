@@ -1573,83 +1573,105 @@ function AdminPageContent() {
                       </>
                     )}
 
-                    <div>
-                      <label className="block text-sm font-medium text-[#1E293B] mb-1">
-                        {broadcastForm.type === 'event' ? '申込フォームURL' : '詳細URL'}
-                      </label>
-                      <input
-                        type="url"
-                        value={broadcastForm.formUrl}
-                        onChange={(e) => setBroadcastForm({ ...broadcastForm, formUrl: e.target.value })}
-                        placeholder="https://"
-                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                      />
-                    </div>
-
-                    {/* クリエイティブの場合は画像のみ（必須）、それ以外は画像+PDF */}
+                    {/* クリエイティブの場合は画像→詳細URLの順、それ以外は詳細URL→画像+PDFの順 */}
                     {broadcastForm.format === 'creative' ? (
-                      <div>
-                        <label className="block text-sm font-medium text-[#1E293B] mb-2">
-                          画像 *（必須）
-                        </label>
-                        {broadcastForm.imageUrl ? (
-                          <div className="relative border-2 border-[#E2E8F0] rounded-lg overflow-hidden">
-                            <img
-                              src={broadcastForm.imageUrl}
-                              alt="アップロード画像"
-                              className="w-full h-48 object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setBroadcastForm({ ...broadcastForm, imageUrl: '' })}
-                              className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          </div>
-                        ) : (
-                          <label className="block cursor-pointer">
-                            <div className="border-2 border-dashed border-[#CBD5E1] rounded-lg p-8 text-center hover:border-[#2563EB] hover:bg-[#F8FAFC] transition-colors">
-                              <div className="flex justify-center mb-3">
-                                <div className="w-16 h-16 bg-[#E2E8F0] rounded-full flex items-center justify-center">
-                                  <svg className="w-8 h-8 text-[#64748B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                  </svg>
-                                </div>
-                              </div>
-                              <p className="text-sm font-medium text-[#1E293B] mb-1">
-                                画像をアップロード
-                              </p>
-                              <p className="text-xs text-[#64748B] mb-3">
-                                クリックまたはドラッグ&ドロップ
-                              </p>
-                              <span className="inline-block px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8]">
-                                ファイルを選択
-                              </span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => handleFileUpload(e, 'image')}
-                                disabled={uploadingFile !== null}
-                                className="hidden"
-                              />
-                            </div>
+                      <>
+                        {/* 画像（必須） */}
+                        <div>
+                          <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                            画像 *（必須）
                           </label>
-                        )}
-                        {uploadingFile === 'image' && (
-                          <div className="mt-2 flex items-center gap-2">
-                            <div className="animate-spin w-4 h-4 border-2 border-[#2563EB] border-t-transparent rounded-full"></div>
-                            <span className="text-sm text-[#64748B]">アップロード中...</span>
-                          </div>
-                        )}
-                        <p className="text-xs text-[#64748B] mt-2">
-                          画像タップでURLに遷移します。推奨サイズ: 1200x628px以上
-                        </p>
-                      </div>
+                          {broadcastForm.imageUrl ? (
+                            <div className="relative border-2 border-[#E2E8F0] rounded-lg overflow-hidden">
+                              <img
+                                src={broadcastForm.imageUrl}
+                                alt="アップロード画像"
+                                className="w-full h-48 object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setBroadcastForm({ ...broadcastForm, imageUrl: '' })}
+                                className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="block cursor-pointer">
+                              <div className="border-2 border-dashed border-[#CBD5E1] rounded-lg p-8 text-center hover:border-[#2563EB] hover:bg-[#F8FAFC] transition-colors">
+                                <div className="flex justify-center mb-3">
+                                  <div className="w-16 h-16 bg-[#E2E8F0] rounded-full flex items-center justify-center">
+                                    <svg className="w-8 h-8 text-[#64748B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                  </div>
+                                </div>
+                                <p className="text-sm font-medium text-[#1E293B] mb-1">
+                                  画像をアップロード
+                                </p>
+                                <p className="text-xs text-[#64748B] mb-3">
+                                  クリックまたはドラッグ&ドロップ
+                                </p>
+                                <span className="inline-block px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8]">
+                                  ファイルを選択
+                                </span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => handleFileUpload(e, 'image')}
+                                  disabled={uploadingFile !== null}
+                                  className="hidden"
+                                />
+                              </div>
+                            </label>
+                          )}
+                          {uploadingFile === 'image' && (
+                            <div className="mt-2 flex items-center gap-2">
+                              <div className="animate-spin w-4 h-4 border-2 border-[#2563EB] border-t-transparent rounded-full"></div>
+                              <span className="text-sm text-[#64748B]">アップロード中...</span>
+                            </div>
+                          )}
+                          <p className="text-xs text-[#64748B] mt-2">
+                            画像タップでURLに遷移します。推奨サイズ: 1200x628px以上
+                          </p>
+                        </div>
+
+                        {/* 詳細URL */}
+                        <div>
+                          <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                            詳細URL（任意）
+                          </label>
+                          <input
+                            type="url"
+                            value={broadcastForm.formUrl}
+                            onChange={(e) => setBroadcastForm({ ...broadcastForm, formUrl: e.target.value })}
+                            placeholder="https://"
+                            className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                          />
+                          <p className="text-xs text-[#64748B] mt-1">
+                            画像タップ時の遷移先URL
+                          </p>
+                        </div>
+                      </>
                     ) : (
                       <>
+                        {/* 詳細URL（非クリエイティブ） */}
+                        <div>
+                          <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                            {broadcastForm.type === 'event' ? '申込フォームURL' : '詳細URL'}
+                          </label>
+                          <input
+                            type="url"
+                            value={broadcastForm.formUrl}
+                            onChange={(e) => setBroadcastForm({ ...broadcastForm, formUrl: e.target.value })}
+                            placeholder="https://"
+                            className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                          />
+                        </div>
+
+                        {/* 画像+PDF */}
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-[#1E293B] mb-2">
