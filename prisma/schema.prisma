@@ -248,3 +248,12 @@ model Broadcast {
 
   @@map("broadcasts")
 }
+
+model SiteSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   // JSON文字列で保存
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}

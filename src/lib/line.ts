@@ -1660,15 +1660,180 @@ export function createMatchNotification(
 }
 
 /**
- * お問い合わせメッセージを作成
+ * お問い合わせメッセージを作成（デフォルト）
  */
 export function createContactInfoMessage() {
-  return {
-    type: 'flex',
-    altText: 'お問い合わせ',
-    contents: {
-      type: 'bubble',
-      hero: {
+  return createDynamicContactInfoMessage({
+    companyName: '株式会社GENBABOXX',
+    personName: '担当者',
+    phone: '',
+    email: 'support@genbaboxx.co.jp',
+    lineId: '@517yajzb',
+    note: 'お気軽にご連絡ください',
+    imageUrl: null,
+  });
+}
+
+/**
+ * お問い合わせメッセージを動的に作成
+ */
+export function createDynamicContactInfoMessage(info: {
+  companyName: string;
+  personName: string;
+  phone: string;
+  email: string;
+  lineId: string;
+  note: string;
+  imageUrl: string | null;
+}) {
+  const contactContents: unknown[] = [];
+
+  // 会社名
+  if (info.companyName) {
+    contactContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      contents: [
+        {
+          type: 'text',
+          text: '運営',
+          size: 'xs',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 2,
+        },
+        {
+          type: 'text',
+          text: info.companyName,
+          size: 'sm',
+          color: TEXT_PRIMARY_COLOR,
+          flex: 5,
+          wrap: true,
+        },
+      ],
+    });
+  }
+
+  // 担当者
+  if (info.personName) {
+    contactContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'sm',
+      contents: [
+        {
+          type: 'text',
+          text: '担当者',
+          size: 'xs',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 2,
+        },
+        {
+          type: 'text',
+          text: info.personName,
+          size: 'sm',
+          color: TEXT_PRIMARY_COLOR,
+          flex: 5,
+        },
+      ],
+    });
+  }
+
+  // 電話番号（タップで発信）
+  if (info.phone) {
+    contactContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'sm',
+      action: {
+        type: 'uri',
+        uri: `tel:${info.phone}`,
+      },
+      contents: [
+        {
+          type: 'text',
+          text: '電話番号',
+          size: 'xs',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 2,
+        },
+        {
+          type: 'text',
+          text: info.phone,
+          size: 'sm',
+          color: TEXT_ACCENT_COLOR,
+          flex: 5,
+          decoration: 'underline',
+        },
+      ],
+    });
+  }
+
+  // メールアドレス（タップでメール起動）
+  if (info.email) {
+    contactContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'sm',
+      action: {
+        type: 'uri',
+        uri: `mailto:${info.email}`,
+      },
+      contents: [
+        {
+          type: 'text',
+          text: 'メール',
+          size: 'xs',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 2,
+        },
+        {
+          type: 'text',
+          text: info.email,
+          size: 'sm',
+          color: TEXT_ACCENT_COLOR,
+          flex: 5,
+          decoration: 'underline',
+          wrap: true,
+        },
+      ],
+    });
+  }
+
+  // LINE ID
+  if (info.lineId) {
+    contactContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'sm',
+      contents: [
+        {
+          type: 'text',
+          text: 'LINE ID',
+          size: 'xs',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 2,
+        },
+        {
+          type: 'text',
+          text: info.lineId,
+          size: 'sm',
+          color: TEXT_PRIMARY_COLOR,
+          flex: 5,
+        },
+      ],
+    });
+  }
+
+  // hero部分（画像 or 背景色）
+  const hero: Record<string, unknown> = info.imageUrl
+    ? {
+        type: 'image',
+        url: info.imageUrl,
+        size: 'full',
+        aspectRatio: '20:9',
+        aspectMode: 'cover',
+      }
+    : {
         type: 'box',
         layout: 'vertical',
         backgroundColor: HERO_COLOR,
@@ -1683,19 +1848,33 @@ export function createContactInfoMessage() {
             align: 'center',
           },
         ],
-      },
+      };
+
+  return {
+    type: 'flex',
+    altText: 'お問い合わせ',
+    contents: {
+      type: 'bubble',
+      hero,
       body: {
         type: 'box',
         layout: 'vertical',
         paddingAll: '20px',
         contents: [
+          ...(info.imageUrl ? [{
+            type: 'text',
+            text: 'お問い合わせ',
+            weight: 'bold',
+            size: 'lg',
+            color: TEXT_PRIMARY_COLOR,
+          }] : []),
           {
             type: 'text',
-            text: 'PowerScrapperへのお問い合わせありがとうございます',
-            weight: 'bold',
-            size: 'md',
+            text: info.note || 'お気軽にご連絡ください',
+            size: 'sm',
             color: TEXT_PRIMARY_COLOR,
             wrap: true,
+            margin: info.imageUrl ? 'md' : undefined,
           },
           {
             type: 'separator',
@@ -1705,57 +1884,185 @@ export function createContactInfoMessage() {
             type: 'box',
             layout: 'vertical',
             margin: 'lg',
-            spacing: 'md',
-            contents: [
-              {
-                type: 'box',
-                layout: 'horizontal',
-                contents: [
-                  {
-                    type: 'text',
-                    text: 'メール',
-                    size: 'xs',
-                    color: TEXT_SECONDARY_COLOR,
-                    flex: 2,
-                  },
-                  {
-                    type: 'text',
-                    text: 'support@powerscrapper.jp',
-                    size: 'sm',
-                    color: TEXT_PRIMARY_COLOR,
-                    flex: 5,
-                  },
-                ],
-              },
-              {
-                type: 'box',
-                layout: 'horizontal',
-                contents: [
-                  {
-                    type: 'text',
-                    text: '営業時間',
-                    size: 'xs',
-                    color: TEXT_SECONDARY_COLOR,
-                    flex: 2,
-                  },
-                  {
-                    type: 'text',
-                    text: '平日 9:00〜18:00',
-                    size: 'sm',
-                    color: TEXT_PRIMARY_COLOR,
-                    flex: 5,
-                  },
-                ],
-              },
-            ],
+            spacing: 'sm',
+            contents: contactContents,
+          },
+        ],
+      },
+    },
+  };
+}
+
+/**
+ * ウェルカムメッセージを動的に作成
+ */
+export function createDynamicWelcomeMessage(msg: {
+  title: string;
+  body: string;
+  imageUrl: string | null;
+  buttonLabel: string;
+  buttonUrl: string;
+}) {
+  const liffId = getLiffId();
+
+  // hero部分（画像 or 背景色）
+  const hero: Record<string, unknown> = msg.imageUrl
+    ? {
+        type: 'image',
+        url: msg.imageUrl,
+        size: 'full',
+        aspectRatio: '20:9',
+        aspectMode: 'cover',
+      }
+    : {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: 'ようこそ！',
+            color: '#FFFFFF',
+            size: 'lg',
+            align: 'center',
           },
           {
             type: 'text',
-            text: 'お問い合わせ内容を上記メールアドレスまでお送りください。担当者より折り返しご連絡いたします。',
-            size: 'xs',
-            color: TEXT_SECONDARY_COLOR,
+            text: 'PowerScrapperの集い',
+            color: '#FFFFFF',
+            size: 'xxl',
+            weight: 'bold',
+            align: 'center',
+            margin: 'sm',
+          },
+        ],
+      };
+
+  return {
+    type: 'flex',
+    altText: msg.title || 'PowerScrapperへようこそ',
+    contents: {
+      type: 'bubble',
+      hero,
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: msg.title,
+            weight: 'bold',
+            size: 'lg',
+            color: TEXT_PRIMARY_COLOR,
+            wrap: true,
+          },
+          {
+            type: 'text',
+            text: msg.body,
+            size: 'sm',
+            color: TEXT_PRIMARY_COLOR,
             wrap: true,
             margin: 'lg',
+          },
+          {
+            type: 'separator',
+            margin: 'xl',
+          },
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: msg.buttonLabel || 'プロフィールを登録',
+              uri: msg.buttonUrl || `https://liff.line.me/${liffId}/profile/edit`,
+            },
+            style: 'primary',
+            color: BUTTON_PRIMARY_COLOR,
+            height: 'sm',
+            margin: 'xl',
+          },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '12px',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '案件マッチングを見る',
+              uri: `https://liff.line.me/${liffId}/projects`,
+            },
+            style: 'secondary',
+            height: 'sm',
+          },
+        ],
+      },
+    },
+  };
+}
+
+/**
+ * イベントフォールバックメッセージを動的に作成
+ */
+export function createDynamicEventFallbackMessage(fallback: {
+  message: string;
+  imageUrl: string | null;
+}) {
+  // hero部分（画像 or 背景色）
+  const hero: Record<string, unknown> = fallback.imageUrl
+    ? {
+        type: 'image',
+        url: fallback.imageUrl,
+        size: 'full',
+        aspectRatio: '20:9',
+        aspectMode: 'cover',
+      }
+    : {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: 'イベント案内',
+            color: '#FFFFFF',
+            size: 'lg',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      };
+
+  return {
+    type: 'flex',
+    altText: 'イベント案内',
+    contents: {
+      type: 'bubble',
+      hero,
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        contents: [
+          ...(fallback.imageUrl ? [{
+            type: 'text',
+            text: 'イベント案内',
+            weight: 'bold',
+            size: 'lg',
+            color: TEXT_PRIMARY_COLOR,
+          }] : []),
+          {
+            type: 'text',
+            text: fallback.message,
+            size: 'sm',
+            color: TEXT_PRIMARY_COLOR,
+            wrap: true,
+            margin: fallback.imageUrl ? 'lg' : undefined,
           },
         ],
       },

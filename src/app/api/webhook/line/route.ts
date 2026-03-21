@@ -4,14 +4,16 @@ import {
   replyMessage,
   createTextMessage,
   createWelcomeMessage,
-  createEventInfoMessage,
-  createContactInfoMessage,
+  createDynamicWelcomeMessage,
+  createDynamicContactInfoMessage,
+  createDynamicEventFallbackMessage,
   createBroadcastFlexMessage,
   type WebhookEvent,
   type MessageEvent,
 } from '@/lib/line';
 import { prisma } from '@/lib/prisma';
 import { isNotificationEnabled } from '@/lib/notification-helper';
+import { getContactInfo, getWelcomeMessage, getEventFallback } from '@/lib/site-settings';
 
 /**
  * LINE Webhook エンドポイント
@@ -94,7 +96,9 @@ async function handleFollow(userId: string, replyToken: string): Promise<void> {
     // A-1: ウェルカムメッセージを送信
     const isWelcomeEnabled = await isNotificationEnabled('a_welcome');
     if (isWelcomeEnabled) {
-      await replyMessage(replyToken, [createWelcomeMessage()]);
+      // SiteSettingsからウェルカムメッセージを取得
+      const welcomeMsg = await getWelcomeMessage();
+      await replyMessage(replyToken, [createDynamicWelcomeMessage(welcomeMsg)]);
     }
   } catch (error) {
     console.error('Failed to handle follow:', error);
@@ -393,18 +397,20 @@ async function handleMessage(event: MessageEvent): Promise<void> {
           });
           await replyMessage(replyToken, messages);
         } else {
-          // イベントがない場合はデフォルトメッセージ
-          await replyMessage(replyToken, [createEventInfoMessage()]);
+          // イベントがない場合はSiteSettingsからフォールバックメッセージを取得
+          const fallback = await getEventFallback();
+          await replyMessage(replyToken, [createDynamicEventFallbackMessage(fallback)]);
         }
       }
       break;
     }
 
     case 'お問い合わせ': {
-      // A-3: お問い合わせ応答
+      // A-3: お問い合わせ応答（SiteSettingsから動的取得）
       const isContactInfoEnabled = await isNotificationEnabled('a_contact_info');
       if (isContactInfoEnabled) {
-        await replyMessage(replyToken, [createContactInfoMessage()]);
+        const contactInfo = await getContactInfo();
+        await replyMessage(replyToken, [createDynamicContactInfoMessage(contactInfo)]);
       }
       break;
     }

@@ -246,6 +246,39 @@ const NOTIFICATION_DETAILS: Record<string, NotificationDetail> = {
   },
 };
 
+// 編集可能な通知のキーとSiteSettingキーのマッピング
+const EDITABLE_NOTIFICATIONS: Record<string, string> = {
+  a_contact_info: 'contact_info',
+  a_welcome: 'welcome_message',
+  a_event_info: 'event_fallback',
+};
+
+// サイト設定の型定義
+type ContactInfoSetting = {
+  companyName: string;
+  personName: string;
+  phone: string;
+  email: string;
+  lineId: string;
+  note: string;
+  imageUrl: string | null;
+};
+
+type WelcomeMessageSetting = {
+  title: string;
+  body: string;
+  imageUrl: string | null;
+  buttonLabel: string;
+  buttonUrl: string;
+};
+
+type EventFallbackSetting = {
+  message: string;
+  imageUrl: string | null;
+};
+
+type SiteSettingValue = ContactInfoSetting | WelcomeMessageSetting | EventFallbackSetting;
+
 // Constants
 const MAIN_TABS = [
   { value: 'overview', label: '概要' },
@@ -331,6 +364,13 @@ export default function AdminPage() {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [broadcastSubTab, setBroadcastSubTab] = useState<'broadcasts' | 'settings'>('broadcasts');
   const [expandedNotification, setExpandedNotification] = useState<string | null>(null);
+
+  // Site settings edit state
+  const [editingSiteSetting, setEditingSiteSetting] = useState<string | null>(null);
+  const [siteSettingForm, setSiteSettingForm] = useState<SiteSettingValue | null>(null);
+  const [isLoadingSiteSetting, setIsLoadingSiteSetting] = useState(false);
+  const [isSavingSiteSetting, setIsSavingSiteSetting] = useState(false);
+  const [uploadingSiteSettingImage, setUploadingSiteSettingImage] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -460,6 +500,85 @@ export default function AdminPage() {
       }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    }
+  };
+
+  // Site settings handlers
+  const openSiteSettingEdit = async (notificationKey: string) => {
+    const settingKey = EDITABLE_NOTIFICATIONS[notificationKey];
+    if (!settingKey) return;
+
+    setIsLoadingSiteSetting(true);
+    setEditingSiteSetting(notificationKey);
+
+    try {
+      const res = await fetch(`/api/admin/site-settings/${settingKey}`);
+      if (!res.ok) throw new Error('設定の取得に失敗しました');
+      const data = await res.json();
+      setSiteSettingForm(data.value);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+      setEditingSiteSetting(null);
+    } finally {
+      setIsLoadingSiteSetting(false);
+    }
+  };
+
+  const closeSiteSettingEdit = () => {
+    setEditingSiteSetting(null);
+    setSiteSettingForm(null);
+  };
+
+  const handleSiteSettingSave = async () => {
+    if (!editingSiteSetting || !siteSettingForm) return;
+
+    const settingKey = EDITABLE_NOTIFICATIONS[editingSiteSetting];
+    if (!settingKey) return;
+
+    setIsSavingSiteSetting(true);
+    try {
+      const res = await fetch(`/api/admin/site-settings/${settingKey}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: siteSettingForm }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '保存に失敗しました');
+      }
+      setEditingSiteSetting(null);
+      setSiteSettingForm(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsSavingSiteSetting(false);
+    }
+  };
+
+  const handleSiteSettingImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !siteSettingForm) return;
+
+    setUploadingSiteSettingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', 'image');
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'アップロードに失敗しました');
+      }
+      const data = await res.json();
+      setSiteSettingForm((prev) => prev ? { ...prev, imageUrl: data.url } : prev);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setUploadingSiteSettingImage(false);
     }
   };
 
@@ -1597,6 +1716,18 @@ export default function AdminPage() {
                                             </button>
                                           </div>
                                         </div>
+
+                                        {/* 編集可能な通知には編集ボタンを表示 */}
+                                        {EDITABLE_NOTIFICATIONS[setting.key] && (
+                                          <div className="pt-4">
+                                            <button
+                                              onClick={() => openSiteSettingEdit(setting.key)}
+                                              className="w-full px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8] transition-colors"
+                                            >
+                                              送信内容を編集
+                                            </button>
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   )}
@@ -1606,6 +1737,202 @@ export default function AdminPage() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* サイト設定編集モーダル */}
+                  {editingSiteSetting && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                      <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between">
+                          <h3 className="font-bold text-[#1E293B]">送信内容を編集</h3>
+                          <button
+                            onClick={closeSiteSettingEdit}
+                            className="text-[#64748B] hover:text-[#1E293B]"
+                          >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        {isLoadingSiteSetting ? (
+                          <div className="p-8 text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
+                          </div>
+                        ) : siteSettingForm && (
+                          <div className="p-4 space-y-4">
+                            {/* お問い合わせ応答の編集フォーム */}
+                            {editingSiteSetting === 'a_contact_info' && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">会社名</label>
+                                  <input
+                                    type="text"
+                                    value={(siteSettingForm as ContactInfoSetting).companyName || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, companyName: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">担当者名</label>
+                                  <input
+                                    type="text"
+                                    value={(siteSettingForm as ContactInfoSetting).personName || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, personName: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">電話番号</label>
+                                  <input
+                                    type="text"
+                                    value={(siteSettingForm as ContactInfoSetting).phone || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, phone: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    placeholder="03-xxxx-xxxx"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">メールアドレス</label>
+                                  <input
+                                    type="email"
+                                    value={(siteSettingForm as ContactInfoSetting).email || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, email: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">LINE ID</label>
+                                  <input
+                                    type="text"
+                                    value={(siteSettingForm as ContactInfoSetting).lineId || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, lineId: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    placeholder="@xxxxxxxx"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">補足メッセージ</label>
+                                  <textarea
+                                    value={(siteSettingForm as ContactInfoSetting).note || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, note: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    rows={3}
+                                  />
+                                </div>
+                              </>
+                            )}
+
+                            {/* ウェルカムメッセージの編集フォーム */}
+                            {editingSiteSetting === 'a_welcome' && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">タイトル</label>
+                                  <input
+                                    type="text"
+                                    value={(siteSettingForm as WelcomeMessageSetting).title || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WelcomeMessageSetting, title: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">本文</label>
+                                  <textarea
+                                    value={(siteSettingForm as WelcomeMessageSetting).body || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WelcomeMessageSetting, body: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    rows={4}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">ボタンラベル</label>
+                                  <input
+                                    type="text"
+                                    value={(siteSettingForm as WelcomeMessageSetting).buttonLabel || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WelcomeMessageSetting, buttonLabel: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">ボタンURL</label>
+                                  <input
+                                    type="url"
+                                    value={(siteSettingForm as WelcomeMessageSetting).buttonUrl || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WelcomeMessageSetting, buttonUrl: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    placeholder="https://"
+                                  />
+                                </div>
+                              </>
+                            )}
+
+                            {/* イベント案内応答の編集フォーム */}
+                            {editingSiteSetting === 'a_event_info' && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">イベントがない時のメッセージ</label>
+                                  <textarea
+                                    value={(siteSettingForm as EventFallbackSetting).message || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as EventFallbackSetting, message: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    rows={4}
+                                  />
+                                </div>
+                              </>
+                            )}
+
+                            {/* 画像アップロード（共通） */}
+                            <div>
+                              <label className="block text-sm font-medium text-[#1E293B] mb-1">画像</label>
+                              {(siteSettingForm as { imageUrl?: string | null }).imageUrl ? (
+                                <div className="space-y-2">
+                                  <img
+                                    src={(siteSettingForm as { imageUrl?: string | null }).imageUrl || ''}
+                                    alt="Preview"
+                                    className="w-full h-32 object-cover rounded border border-[#E2E8F0]"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setSiteSettingForm({ ...siteSettingForm, imageUrl: null })}
+                                    className="text-xs text-[#E24B4A] hover:underline"
+                                  >
+                                    画像を削除
+                                  </button>
+                                </div>
+                              ) : (
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleSiteSettingImageUpload}
+                                  disabled={uploadingSiteSettingImage}
+                                  className="w-full text-sm"
+                                />
+                              )}
+                              {uploadingSiteSettingImage && (
+                                <p className="text-xs text-[#64748B] mt-1">アップロード中...</p>
+                              )}
+                            </div>
+
+                            {/* 保存ボタン */}
+                            <div className="flex gap-2 pt-4 border-t border-[#E2E8F0]">
+                              <button
+                                onClick={handleSiteSettingSave}
+                                disabled={isSavingSiteSetting}
+                                className="flex-1 px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8] disabled:opacity-50"
+                              >
+                                {isSavingSiteSetting ? '保存中...' : '保存'}
+                              </button>
+                              <button
+                                onClick={closeSiteSettingEdit}
+                                className="px-4 py-2 bg-[#E2E8F0] text-[#64748B] text-sm font-medium rounded-lg hover:bg-[#D1D5DB]"
+                              >
+                                キャンセル
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </>
