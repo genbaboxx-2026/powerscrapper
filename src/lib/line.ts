@@ -2444,141 +2444,67 @@ export function createSimpleBroadcastMessage(broadcast: {
 
 /**
  * クリエイティブ形式の配信メッセージを作成
- * 画像メインで、タップでURLに遷移
+ * 画像メインで、hero全体がタップ可能でURLに遷移
+ * 画像がない場合はカード形式にフォールバック
  */
 export function createCreativeBroadcastMessage(broadcast: {
+  type: string;
   title: string;
   body?: string | null;
+  eventDate?: string | null;
+  eventVenue?: string | null;
   formUrl?: string | null;
   imageUrl?: string | null;
+  pdfUrl?: string | null;
+  youtubeUrl?: string | null;
 }) {
+  // 画像がない場合はカード形式にフォールバック
+  if (!broadcast.imageUrl) {
+    return createBroadcastFlexMessage(broadcast);
+  }
+
   const messages: unknown[] = [];
 
-  // 画像がある場合はイメージマップまたはFlex Messageで表示
-  if (broadcast.imageUrl) {
-    if (broadcast.formUrl) {
-      // 画像タップでURLに遷移するFlex Message
-      messages.push({
-        type: 'flex',
-        altText: broadcast.title,
-        contents: {
-          type: 'bubble',
-          hero: {
-            type: 'image',
-            url: broadcast.imageUrl,
-            size: 'full',
-            aspectRatio: '1:1',
-            aspectMode: 'cover',
-            action: {
-              type: 'uri',
-              uri: broadcast.formUrl,
-            },
-          },
-          body: {
-            type: 'box',
-            layout: 'vertical',
-            paddingAll: '16px',
-            contents: [
-              {
-                type: 'text',
-                text: broadcast.title,
-                weight: 'bold',
-                size: 'md',
-                color: TEXT_PRIMARY_COLOR,
-                wrap: true,
-              },
-              ...(broadcast.body ? [{
-                type: 'text',
-                text: broadcast.body,
-                size: 'sm',
-                color: TEXT_SECONDARY_COLOR,
-                wrap: true,
-                margin: 'md',
-                maxLines: 3,
-              }] : []),
-            ],
-          },
-          footer: {
-            type: 'box',
-            layout: 'vertical',
-            paddingAll: '12px',
-            contents: [
-              {
-                type: 'button',
-                action: {
-                  type: 'uri',
-                  label: '詳しく見る',
-                  uri: broadcast.formUrl,
-                },
-                style: 'primary',
-                color: BUTTON_PRIMARY_COLOR,
-                height: 'sm',
-              },
-            ],
-          },
-        },
-      });
-    } else {
-      // URLがない場合は画像のみ
-      messages.push({
+  // Hero全体がタップ可能なFlex Message
+  // aspectRatio: 1.51:1 で画面幅いっぱいに表示
+  const heroAction = broadcast.formUrl
+    ? {
+        type: 'uri',
+        uri: broadcast.formUrl,
+      }
+    : undefined;
+
+  messages.push({
+    type: 'flex',
+    altText: broadcast.title,
+    contents: {
+      type: 'bubble',
+      hero: {
         type: 'image',
-        originalContentUrl: broadcast.imageUrl,
-        previewImageUrl: broadcast.imageUrl,
-      });
-    }
-  } else {
-    // 画像がない場合はシンプルなカード
-    messages.push({
-      type: 'flex',
-      altText: broadcast.title,
-      contents: {
-        type: 'bubble',
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          paddingAll: '20px',
-          contents: [
-            {
-              type: 'text',
-              text: broadcast.title,
-              weight: 'bold',
-              size: 'lg',
-              color: TEXT_PRIMARY_COLOR,
-              wrap: true,
-            },
-            ...(broadcast.body ? [{
-              type: 'text',
-              text: broadcast.body,
-              size: 'sm',
-              color: TEXT_SECONDARY_COLOR,
-              wrap: true,
-              margin: 'lg',
-            }] : []),
-          ],
-        },
-        ...(broadcast.formUrl ? {
-          footer: {
-            type: 'box',
-            layout: 'vertical',
-            paddingAll: '12px',
-            contents: [
-              {
-                type: 'button',
-                action: {
-                  type: 'uri',
-                  label: '詳しく見る',
-                  uri: broadcast.formUrl,
-                },
-                style: 'primary',
-                color: BUTTON_PRIMARY_COLOR,
-                height: 'sm',
-              },
-            ],
-          },
-        } : {}),
+        url: broadcast.imageUrl,
+        size: 'full',
+        aspectRatio: '1.51:1',
+        aspectMode: 'cover',
+        ...(heroAction ? { action: heroAction } : {}),
       },
-    });
-  }
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '12px',
+        contents: [
+          {
+            type: 'text',
+            text: broadcast.title,
+            weight: 'bold',
+            size: 'sm',
+            color: TEXT_PRIMARY_COLOR,
+            wrap: true,
+            maxLines: 2,
+          },
+        ],
+      },
+    },
+  });
 
   return messages;
 }
