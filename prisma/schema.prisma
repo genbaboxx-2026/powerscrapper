@@ -224,6 +224,7 @@ model NotificationSetting {
 model Broadcast {
   id            String    @id @default(uuid())
   type          String    // event | news | article
+  format        String    @default("card") // simple | card | creative
   status        String    @default("draft") // draft | published | sent | scheduled
   title         String
   body          String?

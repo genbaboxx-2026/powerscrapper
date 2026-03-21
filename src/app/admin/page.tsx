@@ -107,6 +107,7 @@ type StatusCounts = {
 type Broadcast = {
   id: string;
   type: string;
+  format: string;
   status: string;
   title: string;
   body: string | null;
@@ -248,9 +249,41 @@ const NOTIFICATION_DETAILS: Record<string, NotificationDetail> = {
 
 // 編集可能な通知のキーとSiteSettingキーのマッピング
 const EDITABLE_NOTIFICATIONS: Record<string, string> = {
+  // カテゴリA: Postback系
+  a_postback_projects: 'notification_a_postback_projects',
+  a_postback_register: 'notification_a_postback_register',
+  a_postback_mypage: 'notification_a_postback_mypage',
+  a_postback_profile: 'notification_a_postback_profile',
+  // カテゴリA: その他
   a_contact_info: 'contact_info',
   a_welcome: 'welcome_message',
   a_event_info: 'event_fallback',
+  // カテゴリB: システム自動通知
+  b_bid_received: 'notification_b_bid_received',
+  b_bid_selected: 'notification_b_bid_selected',
+  b_bid_selected_owner: 'notification_b_bid_selected_owner',
+  b_bid_rejected: 'notification_b_bid_rejected',
+  b_match_contact: 'notification_b_match_contact',
+  b_project_approved: 'notification_b_project_approved',
+  b_project_rejected: 'notification_b_project_rejected',
+  b_new_project_admin: 'notification_b_new_project_admin',
+  b_new_project_broadcast: 'notification_b_new_project_broadcast',
+  // カテゴリC: 定期配信
+  c_weekly_digest: 'notification_c_weekly_digest',
+  // c_auto_close は通知なしのため編集不要
+};
+
+// 編集不要な通知（通知なしのもの）
+const NON_EDITABLE_NOTIFICATIONS = ['c_auto_close'];
+
+// 通知の編集タイプを判定
+type NotificationEditType = 'postback' | 'category_a_other' | 'category_b' | 'category_c' | 'none';
+const getNotificationEditType = (key: string): NotificationEditType => {
+  if (key.startsWith('a_postback_')) return 'postback';
+  if (key === 'a_contact_info' || key === 'a_welcome' || key === 'a_event_info') return 'category_a_other';
+  if (key.startsWith('b_')) return 'category_b';
+  if (key === 'c_weekly_digest') return 'category_c';
+  return 'none';
 };
 
 // サイト設定の型定義
@@ -277,7 +310,37 @@ type EventFallbackSetting = {
   imageUrl: string | null;
 };
 
-type SiteSettingValue = ContactInfoSetting | WelcomeMessageSetting | EventFallbackSetting;
+// Postback系通知の型定義
+type PostbackNotificationSetting = {
+  textMessage: string;      // ボタン押下前に表示されるテキスト
+  buttonLabel: string;      // ボタンラベル
+  buttonUrl: string;        // ボタンURL（遷移先）
+  imageUrl: string | null;  // 画像（任意）
+};
+
+// カテゴリB（システム自動通知）の型定義
+type SystemNotificationSetting = {
+  headingText: string;      // 見出しテキスト
+  supplementMessage: string; // 補足メッセージ（末尾に追加）
+  imageUrl: string | null;  // 画像（任意、heroに表示）
+};
+
+// カテゴリC（週次まとめ配信）の型定義
+type WeeklyDigestSetting = {
+  headingText: string;      // 見出しテキスト
+  supplementMessage: string; // 補足メッセージ
+  imageUrl: string | null;  // 画像
+};
+
+type SiteSettingValue = ContactInfoSetting | WelcomeMessageSetting | EventFallbackSetting | PostbackNotificationSetting | SystemNotificationSetting | WeeklyDigestSetting;
+
+// 各通知のデフォルトURL（LIFF）
+const POSTBACK_DEFAULT_URLS: Record<string, string> = {
+  a_postback_projects: '/projects',
+  a_postback_register: '/projects/new',
+  a_postback_mypage: '/mypage',
+  a_postback_profile: '/profile/edit',
+};
 
 // Constants
 const MAIN_TABS = [
@@ -352,6 +415,7 @@ function AdminPageContent() {
   const [editingBroadcast, setEditingBroadcast] = useState<Broadcast | null>(null);
   const [broadcastForm, setBroadcastForm] = useState({
     type: 'news',
+    format: 'card',
     title: '',
     body: '',
     eventDate: '',
@@ -511,6 +575,63 @@ function AdminPageContent() {
   };
 
   // Site settings handlers
+  // 通知タイプに応じた空のフォームを初期化
+  const getEmptyFormForNotification = (notificationKey: string): SiteSettingValue => {
+    const editType = getNotificationEditType(notificationKey);
+    const liffId = process.env.NEXT_PUBLIC_LIFF_ID || '';
+
+    switch (editType) {
+      case 'postback': {
+        const defaultPath = POSTBACK_DEFAULT_URLS[notificationKey] || '/';
+        return {
+          textMessage: '',
+          buttonLabel: '',
+          buttonUrl: `https://liff.line.me/${liffId}${defaultPath}`,
+          imageUrl: null,
+        } as PostbackNotificationSetting;
+      }
+      case 'category_b':
+        return {
+          headingText: '',
+          supplementMessage: '',
+          imageUrl: null,
+        } as SystemNotificationSetting;
+      case 'category_c':
+        return {
+          headingText: '',
+          supplementMessage: '',
+          imageUrl: null,
+        } as WeeklyDigestSetting;
+      case 'category_a_other':
+        if (notificationKey === 'a_contact_info') {
+          return {
+            companyName: '',
+            personName: '',
+            phone: '',
+            email: '',
+            lineId: '',
+            note: '',
+            imageUrl: null,
+          } as ContactInfoSetting;
+        } else if (notificationKey === 'a_welcome') {
+          return {
+            title: '',
+            body: '',
+            imageUrl: null,
+            buttonLabel: '',
+            buttonUrl: `https://liff.line.me/${liffId}/profile/edit`,
+          } as WelcomeMessageSetting;
+        } else {
+          return {
+            message: '',
+            imageUrl: null,
+          } as EventFallbackSetting;
+        }
+      default:
+        return { message: '', imageUrl: null } as EventFallbackSetting;
+    }
+  };
+
   const openSiteSettingEdit = async (notificationKey: string) => {
     const settingKey = EDITABLE_NOTIFICATIONS[notificationKey];
     if (!settingKey) return;
@@ -522,10 +643,15 @@ function AdminPageContent() {
       const res = await fetch(`/api/admin/site-settings/${settingKey}`);
       if (!res.ok) throw new Error('設定の取得に失敗しました');
       const data = await res.json();
-      setSiteSettingForm(data.value);
+      // データがない場合は空のフォームを初期化
+      if (data.value) {
+        setSiteSettingForm(data.value);
+      } else {
+        setSiteSettingForm(getEmptyFormForNotification(notificationKey));
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'エラーが発生しました');
-      setEditingSiteSetting(null);
+      // エラー時も空のフォームを表示
+      setSiteSettingForm(getEmptyFormForNotification(notificationKey));
     } finally {
       setIsLoadingSiteSetting(false);
     }
@@ -611,6 +737,7 @@ function AdminPageContent() {
       setEditingBroadcast(null);
       setBroadcastForm({
         type: 'news',
+        format: 'card',
         title: '',
         body: '',
         eventDate: '',
@@ -693,6 +820,7 @@ function AdminPageContent() {
     setEditingBroadcast(broadcast);
     setBroadcastForm({
       type: broadcast.type,
+      format: broadcast.format || 'card',
       title: broadcast.title,
       body: broadcast.body || '',
       eventDate: broadcast.eventDate || '',
@@ -1290,6 +1418,7 @@ function AdminPageContent() {
                         setEditingBroadcast(null);
                         setBroadcastForm({
                           type: 'news',
+                          format: 'card',
                           title: '',
                           body: '',
                           eventDate: '',
@@ -1328,6 +1457,53 @@ function AdminPageContent() {
                         <option value="news">お知らせ</option>
                         <option value="article">記事</option>
                       </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                        フォーマット
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setBroadcastForm({ ...broadcastForm, format: 'simple' })}
+                          className={`p-3 rounded-lg border-2 text-center transition-colors ${
+                            broadcastForm.format === 'simple'
+                              ? 'border-[#2563EB] bg-[#EEF2FF]'
+                              : 'border-[#E2E8F0] hover:border-[#94A3B8]'
+                          }`}
+                        >
+                          <div className="text-lg mb-1">💬</div>
+                          <div className="text-xs font-medium text-[#1E293B]">シンプル</div>
+                          <div className="text-xs text-[#64748B]">テキスト+URL</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBroadcastForm({ ...broadcastForm, format: 'card' })}
+                          className={`p-3 rounded-lg border-2 text-center transition-colors ${
+                            broadcastForm.format === 'card'
+                              ? 'border-[#2563EB] bg-[#EEF2FF]'
+                              : 'border-[#E2E8F0] hover:border-[#94A3B8]'
+                          }`}
+                        >
+                          <div className="text-lg mb-1">📋</div>
+                          <div className="text-xs font-medium text-[#1E293B]">カード</div>
+                          <div className="text-xs text-[#64748B]">お知らせ形式</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBroadcastForm({ ...broadcastForm, format: 'creative' })}
+                          className={`p-3 rounded-lg border-2 text-center transition-colors ${
+                            broadcastForm.format === 'creative'
+                              ? 'border-[#2563EB] bg-[#EEF2FF]'
+                              : 'border-[#E2E8F0] hover:border-[#94A3B8]'
+                          }`}
+                        >
+                          <div className="text-lg mb-1">🎨</div>
+                          <div className="text-xs font-medium text-[#1E293B]">クリエイティブ</div>
+                          <div className="text-xs text-[#64748B]">画像メイン</div>
+                        </button>
+                      </div>
                     </div>
 
                     <div>
@@ -1704,16 +1880,22 @@ function AdminPageContent() {
                                         </div>
 
                                         {/* 編集可能な通知には編集ボタンを表示 */}
-                                        {EDITABLE_NOTIFICATIONS[setting.key] && (
-                                          <div className="pt-2 border-t border-[#E2E8F0]">
+                                        <div className="pt-2 border-t border-[#E2E8F0]">
+                                          {NON_EDITABLE_NOTIFICATIONS.includes(setting.key) ? (
+                                            <div className="bg-[#F1F5F9] rounded-lg p-3">
+                                              <p className="text-sm text-[#64748B]">
+                                                この通知は処理のみで通知送信は行われないため、編集項目はありません。
+                                              </p>
+                                            </div>
+                                          ) : (
                                             <button
                                               onClick={() => openSiteSettingEdit(setting.key)}
                                               className="w-full px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8] transition-colors"
                                             >
                                               送信内容を編集
                                             </button>
-                                          </div>
-                                        )}
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
                                   )}
@@ -1863,6 +2045,105 @@ function AdminPageContent() {
                                     onChange={(e) => setSiteSettingForm({ ...siteSettingForm as EventFallbackSetting, message: e.target.value })}
                                     className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
                                     rows={4}
+                                  />
+                                </div>
+                              </>
+                            )}
+
+                            {/* Postback系通知の編集フォーム */}
+                            {getNotificationEditType(editingSiteSetting) === 'postback' && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">テキストメッセージ</label>
+                                  <p className="text-xs text-[#64748B] mb-1">ボタン押下前に表示されるテキスト</p>
+                                  <textarea
+                                    value={(siteSettingForm as PostbackNotificationSetting).textMessage || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as PostbackNotificationSetting, textMessage: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    rows={3}
+                                    placeholder="例: 案件一覧を確認する"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">ボタンラベル</label>
+                                  <input
+                                    type="text"
+                                    value={(siteSettingForm as PostbackNotificationSetting).buttonLabel || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as PostbackNotificationSetting, buttonLabel: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    placeholder="例: 案件一覧を見る"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">ボタンURL</label>
+                                  <p className="text-xs text-[#64748B] mb-1">遷移先URL（デフォルトはLIFFのURL）</p>
+                                  <input
+                                    type="url"
+                                    value={(siteSettingForm as PostbackNotificationSetting).buttonUrl || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as PostbackNotificationSetting, buttonUrl: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    placeholder="https://liff.line.me/..."
+                                  />
+                                </div>
+                              </>
+                            )}
+
+                            {/* カテゴリB（システム自動通知）の編集フォーム */}
+                            {getNotificationEditType(editingSiteSetting) === 'category_b' && (
+                              <>
+                                <div className="bg-[#F1F5F9] rounded-lg p-3 mb-2">
+                                  <p className="text-xs text-[#64748B]">
+                                    案件名や会員名などの動的データ部分はそのまま維持されます。固定テキスト部分のみ編集できます。
+                                  </p>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">見出しテキスト</label>
+                                  <p className="text-xs text-[#64748B] mb-1">通知の見出し部分のテキスト</p>
+                                  <input
+                                    type="text"
+                                    value={(siteSettingForm as SystemNotificationSetting).headingText || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as SystemNotificationSetting, headingText: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    placeholder="例: 興味ありが届きました"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">補足メッセージ</label>
+                                  <p className="text-xs text-[#64748B] mb-1">Flex Messageの末尾に追加表示されるテキスト（任意）</p>
+                                  <textarea
+                                    value={(siteSettingForm as SystemNotificationSetting).supplementMessage || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as SystemNotificationSetting, supplementMessage: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    rows={3}
+                                    placeholder="例: ご確認よろしくお願いいたします"
+                                  />
+                                </div>
+                              </>
+                            )}
+
+                            {/* カテゴリC（週次まとめ配信）の編集フォーム */}
+                            {getNotificationEditType(editingSiteSetting) === 'category_c' && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">見出しテキスト</label>
+                                  <p className="text-xs text-[#64748B] mb-1">週次まとめ配信の見出し</p>
+                                  <input
+                                    type="text"
+                                    value={(siteSettingForm as WeeklyDigestSetting).headingText || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WeeklyDigestSetting, headingText: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    placeholder="例: 今週の新着案件まとめ"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">補足メッセージ</label>
+                                  <p className="text-xs text-[#64748B] mb-1">Flex Messageの末尾に追加表示されるテキスト（任意）</p>
+                                  <textarea
+                                    value={(siteSettingForm as WeeklyDigestSetting).supplementMessage || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WeeklyDigestSetting, supplementMessage: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                    rows={3}
+                                    placeholder="例: 気になる案件があればチェックしてみてください"
                                   />
                                 </div>
                               </>

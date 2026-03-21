@@ -15,30 +15,6 @@ async function verifyAdminSession(): Promise<boolean> {
   return !!session?.value;
 }
 
-// デフォルト値（SiteSettingにデータがない場合のフォールバック）
-const DEFAULT_VALUES: Record<string, object> = {
-  contact_info: {
-    companyName: '株式会社GENBABOXX',
-    personName: '担当者',
-    phone: '',
-    email: 'support@genbaboxx.co.jp',
-    lineId: '@517yajzb',
-    note: 'お気軽にご連絡ください',
-    imageUrl: null,
-  },
-  welcome_message: {
-    title: 'パワースクラッパーネットワークへようこそ！',
-    body: '解体業界のコミュニティ＋マッチングプラットフォームです。まずは会社プロフィールを登録しましょう！',
-    imageUrl: null,
-    buttonLabel: 'プロフィールを登録',
-    buttonUrl: `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID || ''}/profile/edit`,
-  },
-  event_fallback: {
-    message: '現在予定されているイベントはありません。決まり次第お知らせします！',
-    imageUrl: null,
-  },
-};
-
 /**
  * GET /api/admin/site-settings/[key] - 特定の設定を取得
  */
@@ -63,16 +39,12 @@ export async function GET(request: NextRequest, { params }: Params) {
       });
     }
 
-    // 設定がない場合はデフォルト値を返す
-    if (DEFAULT_VALUES[key]) {
-      return NextResponse.json({
-        key,
-        value: DEFAULT_VALUES[key],
-        updatedAt: null,
-      });
-    }
-
-    return NextResponse.json({ error: '設定が見つかりません' }, { status: 404 });
+    // 設定がない場合はnullを返す（フォールバックは使用しない）
+    return NextResponse.json({
+      key,
+      value: null,
+      updatedAt: null,
+    });
   } catch (error) {
     console.error('Failed to fetch site setting:', error);
     return NextResponse.json(

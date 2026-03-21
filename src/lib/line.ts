@@ -2198,15 +2198,6 @@ export function createBroadcastFlexMessage(broadcast: {
 }) {
   const messages: unknown[] = [];
 
-  // 画像がある場合は先に画像メッセージを追加
-  if (broadcast.imageUrl) {
-    messages.push({
-      type: 'image',
-      originalContentUrl: broadcast.imageUrl,
-      previewImageUrl: broadcast.imageUrl,
-    });
-  }
-
   // ヘッダーテキストを種別に応じて設定
   let headerText = 'お知らせ';
   if (broadcast.type === 'event') {
@@ -2297,9 +2288,9 @@ export function createBroadcastFlexMessage(broadcast: {
   // フッターボタン
   const footerButtons: unknown[] = [];
 
-  // 申し込み/続きを読むボタン
+  // 申し込み/URLを開くボタン
   if (broadcast.formUrl) {
-    const buttonLabel = broadcast.type === 'event' ? '申し込む' : '続きを読む';
+    const buttonLabel = broadcast.type === 'event' ? '申し込む' : 'URLを開く';
     footerButtons.push({
       type: 'button',
       action: {
@@ -2401,5 +2392,523 @@ export function createBroadcastFlexMessage(broadcast: {
 
   messages.push(flexMessage);
 
+  // 画像がある場合はFlex Messageの後に画像メッセージを追加
+  if (broadcast.imageUrl) {
+    messages.push({
+      type: 'image',
+      originalContentUrl: broadcast.imageUrl,
+      previewImageUrl: broadcast.imageUrl,
+    });
+  }
+
   return messages;
+}
+
+/**
+ * シンプルテキスト形式の配信メッセージを作成
+ * テキスト + URL + 画像のシンプルな形式
+ */
+export function createSimpleBroadcastMessage(broadcast: {
+  title: string;
+  body?: string | null;
+  formUrl?: string | null;
+  imageUrl?: string | null;
+}) {
+  const messages: unknown[] = [];
+
+  // テキストメッセージを構築
+  let textContent = broadcast.title;
+  if (broadcast.body) {
+    textContent += '\n\n' + broadcast.body;
+  }
+  if (broadcast.formUrl) {
+    textContent += '\n\n' + broadcast.formUrl;
+  }
+
+  messages.push({
+    type: 'text',
+    text: textContent,
+  });
+
+  // 画像がある場合は後に追加
+  if (broadcast.imageUrl) {
+    messages.push({
+      type: 'image',
+      originalContentUrl: broadcast.imageUrl,
+      previewImageUrl: broadcast.imageUrl,
+    });
+  }
+
+  return messages;
+}
+
+/**
+ * クリエイティブ形式の配信メッセージを作成
+ * 画像メインで、タップでURLに遷移
+ */
+export function createCreativeBroadcastMessage(broadcast: {
+  title: string;
+  body?: string | null;
+  formUrl?: string | null;
+  imageUrl?: string | null;
+}) {
+  const messages: unknown[] = [];
+
+  // 画像がある場合はイメージマップまたはFlex Messageで表示
+  if (broadcast.imageUrl) {
+    if (broadcast.formUrl) {
+      // 画像タップでURLに遷移するFlex Message
+      messages.push({
+        type: 'flex',
+        altText: broadcast.title,
+        contents: {
+          type: 'bubble',
+          hero: {
+            type: 'image',
+            url: broadcast.imageUrl,
+            size: 'full',
+            aspectRatio: '1:1',
+            aspectMode: 'cover',
+            action: {
+              type: 'uri',
+              uri: broadcast.formUrl,
+            },
+          },
+          body: {
+            type: 'box',
+            layout: 'vertical',
+            paddingAll: '16px',
+            contents: [
+              {
+                type: 'text',
+                text: broadcast.title,
+                weight: 'bold',
+                size: 'md',
+                color: TEXT_PRIMARY_COLOR,
+                wrap: true,
+              },
+              ...(broadcast.body ? [{
+                type: 'text',
+                text: broadcast.body,
+                size: 'sm',
+                color: TEXT_SECONDARY_COLOR,
+                wrap: true,
+                margin: 'md',
+                maxLines: 3,
+              }] : []),
+            ],
+          },
+          footer: {
+            type: 'box',
+            layout: 'vertical',
+            paddingAll: '12px',
+            contents: [
+              {
+                type: 'button',
+                action: {
+                  type: 'uri',
+                  label: '詳しく見る',
+                  uri: broadcast.formUrl,
+                },
+                style: 'primary',
+                color: BUTTON_PRIMARY_COLOR,
+                height: 'sm',
+              },
+            ],
+          },
+        },
+      });
+    } else {
+      // URLがない場合は画像のみ
+      messages.push({
+        type: 'image',
+        originalContentUrl: broadcast.imageUrl,
+        previewImageUrl: broadcast.imageUrl,
+      });
+    }
+  } else {
+    // 画像がない場合はシンプルなカード
+    messages.push({
+      type: 'flex',
+      altText: broadcast.title,
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          paddingAll: '20px',
+          contents: [
+            {
+              type: 'text',
+              text: broadcast.title,
+              weight: 'bold',
+              size: 'lg',
+              color: TEXT_PRIMARY_COLOR,
+              wrap: true,
+            },
+            ...(broadcast.body ? [{
+              type: 'text',
+              text: broadcast.body,
+              size: 'sm',
+              color: TEXT_SECONDARY_COLOR,
+              wrap: true,
+              margin: 'lg',
+            }] : []),
+          ],
+        },
+        ...(broadcast.formUrl ? {
+          footer: {
+            type: 'box',
+            layout: 'vertical',
+            paddingAll: '12px',
+            contents: [
+              {
+                type: 'button',
+                action: {
+                  type: 'uri',
+                  label: '詳しく見る',
+                  uri: broadcast.formUrl,
+                },
+                style: 'primary',
+                color: BUTTON_PRIMARY_COLOR,
+                height: 'sm',
+              },
+            ],
+          },
+        } : {}),
+      },
+    });
+  }
+
+  return messages;
+}
+
+/**
+ * フォーマットに応じた配信メッセージを作成
+ */
+export function createBroadcastMessage(broadcast: {
+  format: string;
+  type: string;
+  title: string;
+  body?: string | null;
+  eventDate?: string | null;
+  eventVenue?: string | null;
+  formUrl?: string | null;
+  imageUrl?: string | null;
+  pdfUrl?: string | null;
+  youtubeUrl?: string | null;
+}) {
+  switch (broadcast.format) {
+    case 'simple':
+      return createSimpleBroadcastMessage(broadcast);
+    case 'creative':
+      return createCreativeBroadcastMessage(broadcast);
+    case 'card':
+    default:
+      return createBroadcastFlexMessage(broadcast);
+  }
+}
+
+/**
+ * Postback通知メッセージを作成（SiteSettings対応）
+ */
+export function createPostbackMessage(content: {
+  textMessage: string;
+  buttonLabel: string;
+  buttonUrl: string;
+  imageUrl: string | null;
+}) {
+  // hero部分（画像 or なし）
+  const hero: Record<string, unknown> | null = content.imageUrl
+    ? {
+        type: 'image',
+        url: content.imageUrl,
+        size: 'full',
+        aspectRatio: '20:9',
+        aspectMode: 'cover',
+      }
+    : null;
+
+  const bubble: Record<string, unknown> = {
+    type: 'bubble',
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      contents: [
+        {
+          type: 'text',
+          text: content.textMessage,
+          weight: 'bold',
+          size: 'md',
+          color: TEXT_PRIMARY_COLOR,
+          wrap: true,
+        },
+      ],
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      contents: [
+        {
+          type: 'button',
+          action: {
+            type: 'uri',
+            label: content.buttonLabel,
+            uri: content.buttonUrl,
+          },
+          style: 'primary',
+          color: BUTTON_PRIMARY_COLOR,
+        },
+      ],
+    },
+  };
+
+  // heroがある場合のみ追加
+  if (hero) {
+    bubble.hero = hero;
+  }
+
+  return {
+    type: 'flex',
+    altText: content.textMessage,
+    contents: bubble,
+  };
+}
+
+/**
+ * カテゴリB（システム自動通知）用のカスタム見出しとサプリメントメッセージ対応
+ */
+export type SystemNotificationOptions = {
+  headingText: string | null;
+  supplementMessage: string | null;
+  imageUrl: string | null;
+};
+
+/**
+ * 週次まとめ配信メッセージを作成（カスタマイズ対応）
+ */
+export function createCustomWeeklyDigestMessage(
+  projects: WeeklyDigestProject[],
+  options: {
+    headingText: string | null;
+    supplementMessage: string | null;
+    imageUrl: string | null;
+  }
+) {
+  const liffId = getLiffId();
+
+  // 最大5件まで表示
+  const displayProjects = projects.slice(0, 5);
+  const hasMore = projects.length > 5;
+
+  const projectCards: unknown[] = displayProjects.map((project) => ({
+    type: 'box',
+    layout: 'horizontal',
+    paddingAll: '12px',
+    backgroundColor: '#F9F9F7',
+    cornerRadius: '8px',
+    contents: [
+      {
+        type: 'box',
+        layout: 'vertical',
+        flex: 1,
+        contents: [
+          {
+            type: 'text',
+            text: project.title,
+            size: 'sm',
+            weight: 'bold',
+            color: TEXT_PRIMARY_COLOR,
+            wrap: true,
+            maxLines: 2,
+          },
+          {
+            type: 'box',
+            layout: 'horizontal',
+            margin: 'sm',
+            contents: [
+              {
+                type: 'text',
+                text: project.sitePrefecture || '未設定',
+                size: 'xs',
+                color: TEXT_SECONDARY_COLOR,
+              },
+              {
+                type: 'text',
+                text: '|',
+                size: 'xs',
+                color: '#D5D5D0',
+                margin: 'sm',
+              },
+              {
+                type: 'text',
+                text: project.recruitmentType === 'subcontract' ? '元請け募集' : '協力会社募集',
+                size: 'xs',
+                color: TEXT_SECONDARY_COLOR,
+                margin: 'sm',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        type: 'box',
+        layout: 'vertical',
+        width: '60px',
+        alignItems: 'center',
+        justifyContent: 'center',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '詳細',
+              uri: `https://liff.line.me/${liffId}/projects/${project.id}`,
+            },
+            style: 'primary',
+            color: BUTTON_PRIMARY_COLOR,
+            height: 'sm',
+          },
+        ],
+      },
+    ],
+  }));
+
+  // 各カード間にスペーサーを追加
+  const bodyContents: unknown[] = [];
+  projectCards.forEach((card, index) => {
+    bodyContents.push(card);
+    if (index < projectCards.length - 1) {
+      bodyContents.push({
+        type: 'box',
+        layout: 'vertical',
+        height: '8px',
+        contents: [],
+      });
+    }
+  });
+
+  if (hasMore) {
+    bodyContents.push({
+      type: 'text',
+      text: `他${projects.length - 5}件の案件があります`,
+      size: 'xs',
+      color: TEXT_SECONDARY_COLOR,
+      align: 'center',
+      margin: 'lg',
+    });
+  }
+
+  // 補足メッセージがある場合
+  if (options.supplementMessage) {
+    bodyContents.push({
+      type: 'separator',
+      margin: 'lg',
+    });
+    bodyContents.push({
+      type: 'text',
+      text: options.supplementMessage,
+      size: 'sm',
+      color: TEXT_SECONDARY_COLOR,
+      wrap: true,
+      margin: 'lg',
+    });
+  }
+
+  // ヘッダーテキスト
+  const headingText = options.headingText || '今週の新着案件';
+
+  // hero部分
+  const hero: Record<string, unknown> = options.imageUrl
+    ? {
+        type: 'image',
+        url: options.imageUrl,
+        size: 'full',
+        aspectRatio: '20:9',
+        aspectMode: 'cover',
+      }
+    : {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: headingText,
+            color: '#FFFFFF',
+            size: 'xl',
+            weight: 'bold',
+            align: 'center',
+          },
+          {
+            type: 'text',
+            text: `${projects.length}件の案件が追加されました`,
+            color: '#FFFFFF',
+            size: 'sm',
+            align: 'center',
+            margin: 'sm',
+          },
+        ],
+      };
+
+  return {
+    type: 'flex',
+    altText: `${headingText}（${projects.length}件）`,
+    contents: {
+      type: 'bubble',
+      hero,
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '16px',
+        contents: options.imageUrl
+          ? [
+              {
+                type: 'text',
+                text: headingText,
+                weight: 'bold',
+                size: 'lg',
+                color: TEXT_PRIMARY_COLOR,
+              },
+              {
+                type: 'text',
+                text: `${projects.length}件の案件が追加されました`,
+                size: 'sm',
+                color: TEXT_SECONDARY_COLOR,
+                margin: 'sm',
+              },
+              {
+                type: 'separator',
+                margin: 'lg',
+              },
+              {
+                type: 'box',
+                layout: 'vertical',
+                margin: 'lg',
+                contents: bodyContents,
+              },
+            ]
+          : bodyContents,
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '12px',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '全ての案件を見る',
+              uri: `https://liff.line.me/${liffId}/projects?tab=project`,
+            },
+            style: 'primary',
+            color: BUTTON_PRIMARY_COLOR,
+            height: 'sm',
+          },
+        ],
+      },
+    },
+  };
 }

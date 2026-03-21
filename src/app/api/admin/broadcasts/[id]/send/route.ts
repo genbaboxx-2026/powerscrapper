@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAdminFromRequest } from '@/lib/auth';
-import { broadcastMessage, createBroadcastFlexMessage } from '@/lib/line';
+import { broadcastMessage, createBroadcastMessage } from '@/lib/line';
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -40,8 +40,9 @@ export async function POST(req: NextRequest, { params }: Params) {
       where: { isActive: true },
     });
 
-    // Flex Messageを作成
-    const messages = createBroadcastFlexMessage({
+    // フォーマットに応じたメッセージを作成
+    const messages = createBroadcastMessage({
+      format: broadcast.format || 'card',
       type: broadcast.type,
       title: broadcast.title,
       body: broadcast.body,

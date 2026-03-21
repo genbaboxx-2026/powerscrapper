@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { broadcastMessage, createBroadcastFlexMessage } from '@/lib/line';
+import { broadcastMessage, createBroadcastMessage } from '@/lib/line';
 
 /**
  * POST /api/cron/send-scheduled - スケジュールされた配信を送信
@@ -51,8 +51,9 @@ export async function POST(request: NextRequest) {
     // 各配信を送信
     for (const broadcast of scheduledBroadcasts) {
       try {
-        // Flex Messageを作成
-        const messages = createBroadcastFlexMessage({
+        // フォーマットに応じたメッセージを作成
+        const messages = createBroadcastMessage({
+          format: broadcast.format || 'card',
           type: broadcast.type,
           title: broadcast.title,
           body: broadcast.body,

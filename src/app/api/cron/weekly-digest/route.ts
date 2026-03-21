@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { multicastMessage, createWeeklyDigestMessage } from '@/lib/line';
+import { multicastMessage, createWeeklyDigestMessage, createCustomWeeklyDigestMessage } from '@/lib/line';
 import { isNotificationEnabled } from '@/lib/notification-helper';
+import { getWeeklyDigestContent } from '@/lib/site-settings';
 
 /**
  * POST /api/cron/weekly-digest - 週次新着案件まとめ配信
@@ -85,8 +86,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 週次まとめメッセージを作成
-    const digestMessage = createWeeklyDigestMessage(projects);
+    // SiteSettingsからカスタム設定を取得
+    const customContent = await getWeeklyDigestContent();
+
+    // 週次まとめメッセージを作成（カスタム設定がある場合はカスタムメッセージ、ない場合はデフォルト）
+    let digestMessage;
+    if (customContent && (customContent.headingText || customContent.supplementMessage || customContent.imageUrl)) {
+      digestMessage = createCustomWeeklyDigestMessage(projects, {
+        headingText: customContent.headingText || null,
+        supplementMessage: customContent.supplementMessage || null,
+        imageUrl: customContent.imageUrl || null,
+      });
+    } else {
+      // カスタム設定がない場合はデフォルトのメッセージ
+      digestMessage = createWeeklyDigestMessage(projects);
+    }
 
     // 100人ずつに分けて送信（LINE APIの制限）
     const chunkSize = 100;

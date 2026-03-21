@@ -3,17 +3,17 @@ import {
   verifySignature,
   replyMessage,
   createTextMessage,
-  createWelcomeMessage,
   createDynamicWelcomeMessage,
   createDynamicContactInfoMessage,
   createDynamicEventFallbackMessage,
   createBroadcastFlexMessage,
+  createPostbackMessage,
   type WebhookEvent,
   type MessageEvent,
 } from '@/lib/line';
 import { prisma } from '@/lib/prisma';
 import { isNotificationEnabled } from '@/lib/notification-helper';
-import { getContactInfo, getWelcomeMessage, getEventFallback } from '@/lib/site-settings';
+import { getContactInfo, getWelcomeMessage, getEventFallback, getPostbackNotificationContent } from '@/lib/site-settings';
 
 /**
  * LINE Webhook エンドポイント
@@ -98,7 +98,12 @@ async function handleFollow(userId: string, replyToken: string): Promise<void> {
     if (isWelcomeEnabled) {
       // SiteSettingsからウェルカムメッセージを取得
       const welcomeMsg = await getWelcomeMessage();
-      await replyMessage(replyToken, [createDynamicWelcomeMessage(welcomeMsg)]);
+      // 設定がない場合は何も送信しない
+      if (welcomeMsg && welcomeMsg.title) {
+        await replyMessage(replyToken, [createDynamicWelcomeMessage(welcomeMsg)]);
+      } else {
+        console.log('Welcome message not configured, skipping');
+      }
     }
   } catch (error) {
     console.error('Failed to handle follow:', error);
@@ -133,227 +138,44 @@ async function handlePostback(
 ): Promise<void> {
   console.log('Postback event:', userId, data);
 
-  const liffId = process.env.NEXT_PUBLIC_LIFF_ID || '';
-
   // データをパース（例: action=projects, action=register, action=mypage）
   const params = new URLSearchParams(data);
   const action = params.get('action');
 
-  switch (action) {
-    case 'projects': {
-      // A-4: 案件一覧への誘導
-      const isProjectsEnabled = await isNotificationEnabled('a_postback_projects');
-      if (!isProjectsEnabled) break;
-      await replyMessage(replyToken, [
-        {
-          type: 'flex',
-          altText: '案件一覧',
-          contents: {
-            type: 'bubble',
-            body: {
-              type: 'box',
-              layout: 'vertical',
-              contents: [
-                {
-                  type: 'text',
-                  text: '案件一覧を確認する',
-                  weight: 'bold',
-                  size: 'md',
-                },
-                {
-                  type: 'text',
-                  text: '最新の案件をチェックしましょう。',
-                  wrap: true,
-                  size: 'sm',
-                  color: '#73726C',
-                  margin: 'md',
-                },
-              ],
-            },
-            footer: {
-              type: 'box',
-              layout: 'vertical',
-              contents: [
-                {
-                  type: 'button',
-                  action: {
-                    type: 'uri',
-                    label: '案件一覧を見る',
-                    uri: `https://liff.line.me/${liffId}/projects`,
-                  },
-                  style: 'primary',
-                  color: '#2563EB',
-                },
-              ],
-            },
-          },
-        },
-      ]);
-      break;
-    }
+  // アクションと通知キーのマッピング
+  const actionToNotificationKey: Record<string, string> = {
+    projects: 'a_postback_projects',
+    register: 'a_postback_register',
+    mypage: 'a_postback_mypage',
+    profile: 'a_postback_profile',
+  };
 
-    case 'register': {
-      // A-5: 案件登録への誘導
-      const isRegisterEnabled = await isNotificationEnabled('a_postback_register');
-      if (!isRegisterEnabled) break;
-      await replyMessage(replyToken, [
-        {
-          type: 'flex',
-          altText: '案件登録',
-          contents: {
-            type: 'bubble',
-            body: {
-              type: 'box',
-              layout: 'vertical',
-              contents: [
-                {
-                  type: 'text',
-                  text: '案件を登録する',
-                  weight: 'bold',
-                  size: 'md',
-                },
-                {
-                  type: 'text',
-                  text: '新しい案件を登録して業者を募集しましょう。',
-                  wrap: true,
-                  size: 'sm',
-                  color: '#73726C',
-                  margin: 'md',
-                },
-              ],
-            },
-            footer: {
-              type: 'box',
-              layout: 'vertical',
-              contents: [
-                {
-                  type: 'button',
-                  action: {
-                    type: 'uri',
-                    label: '案件を登録',
-                    uri: `https://liff.line.me/${liffId}/projects/new`,
-                  },
-                  style: 'primary',
-                  color: '#2563EB',
-                },
-              ],
-            },
-          },
-        },
-      ]);
-      break;
-    }
+  const notificationKey = action ? actionToNotificationKey[action] : null;
 
-    case 'mypage': {
-      // A-6: マイページへの誘導
-      const isMypageEnabled = await isNotificationEnabled('a_postback_mypage');
-      if (!isMypageEnabled) break;
-      await replyMessage(replyToken, [
-        {
-          type: 'flex',
-          altText: 'マイページ',
-          contents: {
-            type: 'bubble',
-            body: {
-              type: 'box',
-              layout: 'vertical',
-              contents: [
-                {
-                  type: 'text',
-                  text: 'マイページ',
-                  weight: 'bold',
-                  size: 'md',
-                },
-                {
-                  type: 'text',
-                  text: '登録案件、興味あり状況、成約済み案件を確認できます。',
-                  wrap: true,
-                  size: 'sm',
-                  color: '#73726C',
-                  margin: 'md',
-                },
-              ],
-            },
-            footer: {
-              type: 'box',
-              layout: 'vertical',
-              contents: [
-                {
-                  type: 'button',
-                  action: {
-                    type: 'uri',
-                    label: 'マイページを開く',
-                    uri: `https://liff.line.me/${liffId}/mypage`,
-                  },
-                  style: 'primary',
-                  color: '#2563EB',
-                },
-              ],
-            },
-          },
-        },
-      ]);
-      break;
-    }
-
-    case 'profile': {
-      // A-7: プロフィール編集への誘導
-      const isProfileEnabled = await isNotificationEnabled('a_postback_profile');
-      if (!isProfileEnabled) break;
-      await replyMessage(replyToken, [
-        {
-          type: 'flex',
-          altText: 'プロフィール編集',
-          contents: {
-            type: 'bubble',
-            body: {
-              type: 'box',
-              layout: 'vertical',
-              contents: [
-                {
-                  type: 'text',
-                  text: '会社プロフィール',
-                  weight: 'bold',
-                  size: 'md',
-                },
-                {
-                  type: 'text',
-                  text: '会社情報を登録・編集できます。',
-                  wrap: true,
-                  size: 'sm',
-                  color: '#73726C',
-                  margin: 'md',
-                },
-              ],
-            },
-            footer: {
-              type: 'box',
-              layout: 'vertical',
-              contents: [
-                {
-                  type: 'button',
-                  action: {
-                    type: 'uri',
-                    label: 'プロフィールを編集',
-                    uri: `https://liff.line.me/${liffId}/profile/edit`,
-                  },
-                  style: 'primary',
-                  color: '#2563EB',
-                },
-              ],
-            },
-          },
-        },
-      ]);
-      break;
-    }
-
-    default:
-      // 不明なアクション
-      await replyMessage(replyToken, [
-        createTextMessage('メニューから操作を選択してください。'),
-      ]);
+  if (!notificationKey) {
+    // 不明なアクション
+    await replyMessage(replyToken, [
+      createTextMessage('メニューから操作を選択してください。'),
+    ]);
+    return;
   }
+
+  // 通知が有効かチェック
+  const isEnabled = await isNotificationEnabled(notificationKey);
+  if (!isEnabled) return;
+
+  // SiteSettingsから通知内容を取得
+  const content = await getPostbackNotificationContent(notificationKey);
+
+  // 内容が設定されていない場合は何も送信しない
+  if (!content || (!content.textMessage && !content.buttonLabel)) {
+    console.log(`Postback notification content not configured for ${notificationKey}`);
+    return;
+  }
+
+  // メッセージを作成して送信
+  const message = createPostbackMessage(content);
+  await replyMessage(replyToken, [message]);
 }
 
 /**
@@ -399,7 +221,12 @@ async function handleMessage(event: MessageEvent): Promise<void> {
         } else {
           // イベントがない場合はSiteSettingsからフォールバックメッセージを取得
           const fallback = await getEventFallback();
-          await replyMessage(replyToken, [createDynamicEventFallbackMessage(fallback)]);
+          // 設定がない場合は何も送信しない
+          if (fallback && fallback.message) {
+            await replyMessage(replyToken, [createDynamicEventFallbackMessage(fallback)]);
+          } else {
+            console.log('Event fallback message not configured, skipping');
+          }
         }
       }
       break;
@@ -410,7 +237,12 @@ async function handleMessage(event: MessageEvent): Promise<void> {
       const isContactInfoEnabled = await isNotificationEnabled('a_contact_info');
       if (isContactInfoEnabled) {
         const contactInfo = await getContactInfo();
-        await replyMessage(replyToken, [createDynamicContactInfoMessage(contactInfo)]);
+        // 設定がない場合は何も送信しない
+        if (contactInfo && (contactInfo.companyName || contactInfo.email || contactInfo.phone)) {
+          await replyMessage(replyToken, [createDynamicContactInfoMessage(contactInfo)]);
+        } else {
+          console.log('Contact info not configured, skipping');
+        }
       }
       break;
     }
