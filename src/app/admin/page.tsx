@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 import {
@@ -307,9 +307,16 @@ const MATCH_STATUS_STYLES: Record<string, string> = {
   closed_lost: 'bg-[#E2E8F0] text-[#64748B]',
 };
 
-export default function AdminPage() {
+function AdminPageContent() {
   const router = useRouter();
-  const [mainTab, setMainTab] = useState('overview');
+  const searchParams = useSearchParams();
+
+  // URLクエリパラメータからタブを取得
+  const mainTab = searchParams.get('tab') || 'overview';
+  const setMainTab = (tab: string) => {
+    router.push(`/admin?tab=${tab}`);
+  };
+
   const [reviewTab, setReviewTab] = useState('pending');
   const [matchFilter, setMatchFilter] = useState('all');
 
@@ -1922,5 +1929,17 @@ export default function AdminPage() {
 
       </div>
     </AdminAuthGuard>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB]"></div>
+      </div>
+    }>
+      <AdminPageContent />
+    </Suspense>
   );
 }
