@@ -3145,8 +3145,56 @@ function AdminPageContent() {
                                       {/* その他の通知プレビュー */}
                                       {editingSiteSetting !== 'a_event_info' && (
                                         <>
-                                          {/* シンプル形式 */}
-                                          {(siteSettingForm as { format?: string }).format === 'simple' && (
+                                          {/* 連絡先交換通知専用プレビュー（常にカード形式） */}
+                                          {editingSiteSetting === 'b_match_contact' && (
+                                            <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+                                              {/* ヘッダー */}
+                                              <div className="bg-[#2563EB] px-3 py-2.5">
+                                                <span className="text-white text-xs font-bold">
+                                                  {(siteSettingForm as { headingText?: string }).headingText || '案件の返答がありました'}
+                                                </span>
+                                              </div>
+                                              {/* ボディ */}
+                                              <div className="p-3 space-y-2">
+                                                <div>
+                                                  <p className="text-[10px] font-bold text-[#1E293B]">案件名</p>
+                                                  <p className="text-xs text-[#1E293B]">サンプル案件タイトル</p>
+                                                </div>
+                                                <div className="border-t border-[#E2E8F0] pt-2">
+                                                  <p className="text-[10px] text-[#64748B] font-bold mb-1">相手企業の連絡先</p>
+                                                  <p className="text-sm font-bold text-[#1E293B]">株式会社サンプル</p>
+                                                  <div className="mt-1.5 space-y-0.5 text-[10px]">
+                                                    <div className="flex">
+                                                      <span className="text-[#64748B] w-12">担当者</span>
+                                                      <span className="text-[#1E293B] font-bold">山田太郎</span>
+                                                    </div>
+                                                    <div className="flex">
+                                                      <span className="text-[#64748B] w-12">電話番号</span>
+                                                      <span className="text-[#2563EB] underline">03-1234-5678</span>
+                                                    </div>
+                                                    <div className="flex">
+                                                      <span className="text-[#64748B] w-12">メール</span>
+                                                      <span className="text-[#2563EB] underline">sample@example.com</span>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                                {/* 補足メッセージ */}
+                                                {(siteSettingForm as { supplementMessage?: string }).supplementMessage && (
+                                                  <div className="bg-[#FEF3C7] rounded px-2 py-1.5 mt-2">
+                                                    <p className="text-[10px] text-[#92400E] font-bold">
+                                                      💡 {(siteSettingForm as { supplementMessage?: string }).supplementMessage}
+                                                    </p>
+                                                  </div>
+                                                )}
+                                                <div className="border-t border-[#E2E8F0] pt-1.5 mt-2">
+                                                  <p className="text-[8px] text-[#64748B] text-center">※ PowerScrapper公式からの自動送信です</p>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* シンプル形式（b_match_contact以外） */}
+                                          {editingSiteSetting !== 'b_match_contact' && (siteSettingForm as { format?: string }).format === 'simple' && (
                                             <div className="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm">
                                               <p className="text-sm text-[#1E293B] whitespace-pre-wrap">
                                                 {(() => {
@@ -3171,8 +3219,8 @@ function AdminPageContent() {
                                             </div>
                                           )}
 
-                                          {/* カード形式 */}
-                                          {(siteSettingForm as { format?: string }).format !== 'simple' && (
+                                          {/* カード形式（b_match_contact以外） */}
+                                          {editingSiteSetting !== 'b_match_contact' && (siteSettingForm as { format?: string }).format !== 'simple' && (
                                             <div className="bg-white rounded-xl overflow-hidden shadow-sm">
                                               {(siteSettingForm as { imageUrl?: string | null }).imageUrl && (
                                                 <img
