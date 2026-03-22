@@ -106,6 +106,31 @@ async function handleFollow(userId: string, replyToken: string): Promise<void> {
       if (welcomeMsg && welcomeMsg.message) {
         // 新構造: format, message, buttonLabel, buttonUrl, imageUrl
         const messages = createWelcomeMessageV2(welcomeMsg);
+
+        // イベント案内も同時送信する場合
+        if (welcomeMsg.sendEventInfo) {
+          const eventInfoSetting = await getEventInfoSetting();
+          if (eventInfoSetting) {
+            const hasEvent = eventInfoSetting.hasEvent ?? false;
+            if (hasEvent && eventInfoSetting.withEvent) {
+              const eventMessages = createEventWithEventMessage(
+                {
+                  title: eventInfoSetting.withEvent.headerText || 'イベントのお知らせ',
+                  eventDate: null,
+                  eventVenue: null,
+                  formUrl: eventInfoSetting.withEvent.buttonUrl || null,
+                  imageUrl: eventInfoSetting.withEvent.imageUrl,
+                },
+                eventInfoSetting.withEvent
+              );
+              messages.push(...eventMessages);
+            } else if (eventInfoSetting.withoutEvent) {
+              const eventMessages = createEventWithoutEventMessage(eventInfoSetting.withoutEvent);
+              messages.push(...eventMessages);
+            }
+          }
+        }
+
         await replyMessage(replyToken, messages);
       } else if (welcomeMsg && (welcomeMsg as unknown as { title?: string }).title) {
         // 旧構造: title, body, buttonLabel, buttonUrl, imageUrl

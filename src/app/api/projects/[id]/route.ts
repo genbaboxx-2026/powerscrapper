@@ -76,6 +76,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       periodEnd: project.periodEnd,
       workTypes: project.workTypes,
       description: project.description,
+      images: project.images || [],
       isUrgent: project.isUrgent,
       deadline: project.deadline,
       status: project.status,
@@ -131,6 +132,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
       periodEnd,
       workTypes,
       description,
+      images,
       isUrgent,
       deadline,
     } = body;
@@ -171,6 +173,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
         periodEnd,
         workTypes,
         description,
+        images: images || [],
         isUrgent: isUrgent || false,
         deadline: new Date(deadline),
         // 編集後は再審査が必要（pending に戻す）
@@ -275,10 +278,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const body = await req.json();
     const { status } = body;
 
-    // 許可されたステータス変更のみ
-    if (status !== 'closed') {
+    // 許可されたステータス変更のみ（停止 or 再開）
+    if (status !== 'closed' && status !== 'approved') {
       return NextResponse.json(
         { error: '無効なステータスです' },
+        { status: 400 }
+      );
+    }
+
+    // 再開の場合は、closed状態からのみ可能
+    if (status === 'approved' && project.status !== 'closed') {
+      return NextResponse.json(
+        { error: 'この案件は再開できません' },
         { status: 400 }
       );
     }

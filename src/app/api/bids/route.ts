@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { pushMessage, createBidNotification } from '@/lib/line';
+import { pushMessage, createBidNotificationV2 } from '@/lib/line';
 import { isNotificationEnabled } from '@/lib/notification-helper';
+import { getSystemNotificationContent } from '@/lib/site-settings';
 
 /**
  * POST /api/bids - 入札を作成
@@ -110,7 +111,9 @@ export async function POST(request: NextRequest) {
     try {
       const isBidNotifyEnabled = await isNotificationEnabled('b_bid_received');
       if (isBidNotifyEnabled) {
-        const notification = createBidNotification(
+        // 設定を取得
+        const settings = await getSystemNotificationContent('b_bid_received');
+        const notification = createBidNotificationV2(
           project.title,
           user.companyName || '未設定',
           availableFrom || '',
@@ -119,7 +122,13 @@ export async function POST(request: NextRequest) {
           user.coverageAreas || undefined,
           user.licenses || undefined,
           message,
-          availableFrom || undefined
+          availableFrom || undefined,
+          settings ? {
+            headingText: settings.headingText,
+            supplementMessage: settings.supplementMessage,
+            buttonLabel: settings.buttonLabel,
+            buttonUrl: settings.buttonUrl,
+          } : undefined
         );
         await pushMessage(project.user.lineUserId, [notification]);
       }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLiff } from '@/components/LiffProvider';
 import { AuthGuard } from '@/components/AuthGuard';
@@ -12,6 +12,59 @@ import {
   type BusinessType,
 } from '@/types';
 import { AREA_DATA, PREFECTURES } from '@/lib/areas';
+
+// 画像アップロード設定
+const MAX_IMAGES = 5;
+const MAX_IMAGE_WIDTH = 1200;
+const MAX_IMAGE_SIZE_KB = 800;
+
+// 画像をリサイズしてBase64に変換
+const resizeImage = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // 最大幅でリサイズ
+        if (width > MAX_IMAGE_WIDTH) {
+          height = (height * MAX_IMAGE_WIDTH) / width;
+          width = MAX_IMAGE_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // 品質を調整して目標サイズ以下にする
+        let quality = 0.8;
+        let base64 = canvas.toDataURL('image/jpeg', quality);
+
+        // サイズが大きすぎる場合は品質を下げる
+        while (base64.length > MAX_IMAGE_SIZE_KB * 1024 * 1.37 && quality > 0.1) {
+          quality -= 0.1;
+          base64 = canvas.toDataURL('image/jpeg', quality);
+        }
+
+        resolve(base64);
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
 
 // 年の選択肢（現在年から3年分）
 const currentYear = new Date().getFullYear();
@@ -40,6 +93,7 @@ type ProjectFormData = {
   periodEndPeriod: string;
   // その他
   description: string;
+  images: string[];
   isUrgent: boolean;
   notifyMembers: boolean;
   deadline: string;
@@ -71,6 +125,7 @@ const initialFormData: ProjectFormData = {
   periodEndMonth: '',
   periodEndPeriod: '',
   description: '',
+  images: [],
   isUrgent: false,
   notifyMembers: true,
   deadline: '',
@@ -81,6 +136,7 @@ const STEPS = ['LINE認証', 'プロフィール確認', '案件情報', '確認
 export default function ProjectNewPage() {
   const router = useRouter();
   const { userId, displayName, pictureUrl, isLoading: liffLoading } = useLiff();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<ProjectFormData>(initialFormData);
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -88,6 +144,51 @@ export default function ProjectNewPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+
+  // 画像選択ハンドラー
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsProcessingImage(true);
+    setError(null);
+
+    try {
+      const remainingSlots = MAX_IMAGES - formData.images.length;
+      const filesToProcess = Array.from(files).slice(0, remainingSlots);
+
+      const newImages: string[] = [];
+      for (const file of filesToProcess) {
+        if (!file.type.startsWith('image/')) {
+          continue;
+        }
+        const base64 = await resizeImage(file);
+        newImages.push(base64);
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...newImages],
+      }));
+    } catch (err) {
+      console.error('Image processing error:', err);
+      setError('画像の処理に失敗しました');
+    } finally {
+      setIsProcessingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // 画像削除ハンドラー
+  const removeImage = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+  };
 
   // プロフィール取得
   useEffect(() => {
@@ -193,6 +294,7 @@ export default function ProjectNewPage() {
         ),
         workTypes: [], // 空配列
         description: formData.description,
+        images: formData.images,
         isUrgent: formData.isUrgent,
         notifyMembers: formData.notifyMembers,
         deadline: formData.deadline,
@@ -247,7 +349,29 @@ export default function ProjectNewPage() {
       <div className="min-h-screen bg-[#F8FAFC] overflow-x-hidden">
         {/* ヘッダー */}
         <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
-          <h1 className="text-lg font-bold text-[#1E293B]">案件登録</h1>
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => router.push('/projects')}
+              className="flex items-center gap-1 text-[#2563EB]"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              案件一覧
+            </button>
+            <h1 className="text-lg font-bold text-[#1E293B]">案件登録</h1>
+            <div className="w-16"></div>
+          </div>
         </header>
 
         {/* ステッパー */}
@@ -605,6 +729,78 @@ export default function ProjectNewPage() {
                 />
               </div>
 
+              {/* 画像アップロード */}
+              <div className="card p-4">
+                <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                  現場写真（任意・最大{MAX_IMAGES}枚）
+                </label>
+
+                {/* 画像プレビュー */}
+                {formData.images.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {formData.images.map((image, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={image}
+                          alt={`現場写真 ${index + 1}`}
+                          className="w-20 h-20 object-cover rounded-lg border border-[#E2E8F0]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-[#E24B4A] text-white rounded-full flex items-center justify-center text-sm"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 画像追加ボタン */}
+                {formData.images.length < MAX_IMAGES && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isProcessingImage}
+                    className="w-full py-3 border-2 border-dashed border-[#E2E8F0] rounded-lg text-[#64748B] text-sm flex items-center justify-center gap-2 hover:border-[#2563EB] hover:text-[#2563EB] transition-colors disabled:opacity-50"
+                  >
+                    {isProcessingImage ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                        処理中...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        現場写真を追加
+                      </>
+                    )}
+                  </button>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+              </div>
+
               {/* オプション */}
               <div className="card p-4 space-y-3">
                 <label className="flex items-center gap-3">
@@ -710,6 +906,25 @@ export default function ProjectNewPage() {
                   {formData.description}
                 </p>
               </div>
+
+              {/* 現場写真プレビュー */}
+              {formData.images.length > 0 && (
+                <div className="card p-4">
+                  <h3 className="text-sm font-medium text-[#64748B] mb-2">
+                    現場写真（{formData.images.length}枚）
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.images.map((image, index) => (
+                      <img
+                        key={index}
+                        src={image}
+                        alt={`現場写真 ${index + 1}`}
+                        className="w-20 h-20 object-cover rounded-lg border border-[#E2E8F0]"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="card p-4 bg-[#FAEEDA] border-[#BA7517]">
                 <p className="text-sm text-[#BA7517]">

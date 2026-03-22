@@ -193,7 +193,11 @@ export async function DELETE(request: NextRequest, { params }: Props) {
       return NextResponse.json({ error: '削除権限がありません' }, { status: 403 });
     }
 
-    // コメントも一緒に削除
+    // 関連データを削除（リアクション、コメント）
+    await prisma.consultationReaction.deleteMany({
+      where: { consultationId: id },
+    });
+
     await prisma.consultationComment.deleteMany({
       where: { consultationId: id },
     });

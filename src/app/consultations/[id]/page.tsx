@@ -129,7 +129,7 @@ export default function ConsultationDetailPage({ params }: Props) {
         throw new Error(data.error || '削除に失敗しました');
       }
 
-      router.push('/projects?tab=consultation&deleted=true');
+      router.push('/consultations?deleted=true');
     } catch (err) {
       setError(err instanceof Error ? err.message : '削除に失敗しました');
       setShowDeleteConfirm(false);

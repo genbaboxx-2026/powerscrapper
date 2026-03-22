@@ -137,9 +137,10 @@ export async function POST(request: NextRequest, { params }: Params) {
           ]);
         }
 
-        // B-10: 全会員に新着案件通知（デフォルトOFF）
+        // B-10: 全会員に新着案件通知
+        // 管理者設定がON かつ 案件登録者が「公開時にLINEで会員に通知する」をチェックしている場合のみ送信
         const isBroadcastEnabled = await isNotificationEnabled('b_new_project_broadcast');
-        if (isBroadcastEnabled) {
+        if (isBroadcastEnabled && project.notifyMembers) {
           await broadcastMessage([
             createProjectNotification(
               project.title,

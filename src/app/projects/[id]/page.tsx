@@ -28,6 +28,7 @@ type Project = {
   periodEnd: string;
   workTypes: string[];
   description: string;
+  images: string[];
   isUrgent: boolean;
   deadline: string;
   status: string;
@@ -62,6 +63,7 @@ export default function ProjectDetailPage({ params }: Props) {
   const [isCancellingBid, setIsCancellingBid] = useState(false);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
+  const [isRepublishing, setIsRepublishing] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -156,6 +158,33 @@ export default function ProjectDetailPage({ params }: Props) {
       setShowStopConfirm(false);
     } finally {
       setIsStopping(false);
+    }
+  };
+
+  const handleRepublish = async () => {
+    if (!userId) return;
+
+    setIsRepublishing(true);
+
+    try {
+      const res = await authFetch(`/api/projects/${id}`, userId, {
+        method: 'PATCH',
+        body: { status: 'approved' },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '掲載再開に失敗しました');
+      }
+
+      // 成功したらprojectのstatusを更新
+      if (project) {
+        setProject({ ...project, status: 'approved' });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '掲載再開に失敗しました');
+    } finally {
+      setIsRepublishing(false);
     }
   };
 
@@ -284,14 +313,11 @@ export default function ProjectDetailPage({ params }: Props) {
           {/* メインカード */}
           <div className="card p-4 mb-4">
             {/* バッジ */}
-            <div className="flex items-center gap-2 mb-3">
-              {project.isUrgent && (
+            {project.isUrgent && (
+              <div className="mb-3">
                 <span className="badge badge-urgent">急募</span>
-              )}
-              <span className="badge badge-type">
-                {RECRUITMENT_TYPE_LABELS[project.recruitmentType as RecruitmentType]}
-              </span>
-            </div>
+              </div>
+            )}
 
             {/* タイトル */}
             <h1 className="text-xl font-bold text-[#1E293B] mb-4">
@@ -369,6 +395,27 @@ export default function ProjectDetailPage({ params }: Props) {
               {project.description}
             </p>
           </div>
+
+          {/* 現場写真 */}
+          {project.images && project.images.length > 0 && (
+            <div className="card p-4 mb-4">
+              <h2 className="text-sm font-medium text-[#64748B] mb-3">
+                現場写真（{project.images.length}枚）
+              </h2>
+              <div className="grid grid-cols-2 gap-2">
+                {project.images.map((image, index) => (
+                  <img
+                    key={index}
+                    src={image}
+                    alt={`現場写真 ${index + 1}`}
+                    className="w-full h-32 object-cover rounded-lg border border-[#E2E8F0]"
+                    onClick={() => window.open(image, '_blank')}
+                    style={{ cursor: 'pointer' }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 返答あり時の登録者情報 */}
           {!project.isOwner && project.bidStatus === 'connected' && project.ownerInfo && (
@@ -448,9 +495,18 @@ export default function ProjectDetailPage({ params }: Props) {
                 </button>
               )}
               {project.status === 'closed' && (
-                <p className="text-sm text-[#64748B] text-center py-2">
-                  この案件は停止中です
-                </p>
+                <div className="space-y-2">
+                  <button
+                    onClick={handleRepublish}
+                    disabled={isRepublishing}
+                    className="w-full py-2 px-4 bg-[#2563EB] text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                  >
+                    {isRepublishing ? '処理中...' : '掲載を再開する'}
+                  </button>
+                  <p className="text-xs text-[#64748B] text-center">
+                    この案件は現在停止中です
+                  </p>
+                </div>
               )}
             </div>
           )}

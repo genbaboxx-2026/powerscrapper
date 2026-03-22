@@ -61,6 +61,7 @@ model Project {
   periodEnd       String   @map("period_end")
   workTypes       String[] @map("work_types")
   description     String
+  images          String[] @default([])
   isUrgent        Boolean  @default(false) @map("is_urgent")
   deadline        DateTime
   status          String   @default("pending")

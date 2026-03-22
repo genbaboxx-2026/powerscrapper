@@ -145,7 +145,7 @@ export default function NewConsultationPage() {
         throw new Error(data.error || '投稿に失敗しました');
       }
 
-      router.push('/projects?tab=consultation&posted=true');
+      router.push('/consultations?posted=true');
     } catch (err) {
       setError(err instanceof Error ? err.message : '投稿に失敗しました');
     } finally {

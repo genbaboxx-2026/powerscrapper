@@ -15,7 +15,7 @@ export type RecruitmentType =
 
 // 構造タイプ
 export type StructureType =
-  | 'wood'   // 木造 W
+  | 'wood'   // 木造
   | 'rc'     // RC造
   | 'steel'  // S造
   | 'src'    // SRC造
@@ -75,7 +75,7 @@ export const RECRUITMENT_TYPE_LABELS: Record<RecruitmentType, string> = {
 
 // 構造タイプのラベル
 export const STRUCTURE_TYPE_LABELS: Record<StructureType, string> = {
-  wood: '木造 W',
+  wood: '木造',
   rc: 'RC造',
   steel: 'S造',
   src: 'SRC造',

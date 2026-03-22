@@ -15,6 +15,7 @@ export type WelcomeMessage = {
   buttonLabel: string;
   buttonUrl: string;
   imageUrl: string | null;
+  sendEventInfo?: boolean; // イベント案内も同時送信するか
 };
 
 export type EventFallback = {
@@ -53,6 +54,8 @@ export type SystemNotificationContent = {
   headingText: string;      // 見出しテキスト
   supplementMessage: string | null; // 補足メッセージ（末尾に追加）
   imageUrl: string | null;  // 画像（任意、heroに表示）
+  buttonLabel: string | null;  // ボタンラベル（任意）
+  buttonUrl: string | null;    // ボタンURL（任意）
 };
 
 // カテゴリC（週次まとめ配信）の型定義
