@@ -97,9 +97,6 @@ export const NOTIFICATION_CONTENT_KEYS: Record<string, string> = {
   a_event_info: 'event_fallback',
   // カテゴリB: システム自動通知
   b_bid_received: 'notification_b_bid_received',
-  b_bid_selected: 'notification_b_bid_selected',
-  b_bid_selected_owner: 'notification_b_bid_selected_owner',
-  b_bid_rejected: 'notification_b_bid_rejected',
   b_match_contact: 'notification_b_match_contact',
   b_project_approved: 'notification_b_project_approved',
   b_project_rejected: 'notification_b_project_rejected',

@@ -194,21 +194,6 @@ const NOTIFICATION_DETAILS: Record<string, NotificationDetail> = {
     timing: '他社が自分の案件に「興味あり」を送信した時',
     preview: '「興味ありが届きました」というタイトルで、案件名・興味あり送信者の会社名を表示。案件詳細ページへのリンクボタン付きFlex Message',
   },
-  b_bid_selected: {
-    recipient: '興味あり送信者',
-    timing: '自分が送った「興味あり」が案件登録者に選択された時',
-    preview: '「興味ありが選択されました」というタイトルで、案件名・登録者の連絡先情報を表示するFlex Message',
-  },
-  b_bid_selected_owner: {
-    recipient: '案件登録者',
-    timing: '自分が「興味あり」を選択した時（確認通知）',
-    preview: '「連絡先を共有しました」というタイトルで、選択した業者名と案件名を表示するFlex Message',
-  },
-  b_bid_rejected: {
-    recipient: '興味あり送信者',
-    timing: '案件の募集が終了し、自分の興味ありが選択されなかった時',
-    preview: '「案件の募集が終了しました」というタイトルで、案件名を表示。他の案件を探すリンクボタン付きFlex Message',
-  },
   b_match_contact: {
     recipient: '興味あり送信者',
     timing: '案件登録者が「この企業に連絡する」を押した時',
@@ -260,9 +245,6 @@ const EDITABLE_NOTIFICATIONS: Record<string, string> = {
   a_event_info: 'event_fallback',
   // カテゴリB: システム自動通知
   b_bid_received: 'notification_b_bid_received',
-  b_bid_selected: 'notification_b_bid_selected',
-  b_bid_selected_owner: 'notification_b_bid_selected_owner',
-  b_bid_rejected: 'notification_b_bid_rejected',
   b_match_contact: 'notification_b_match_contact',
   b_project_approved: 'notification_b_project_approved',
   b_project_rejected: 'notification_b_project_rejected',
@@ -342,15 +324,6 @@ const NOTIFICATION_SECTIONS: NotificationSection[] = [
   },
   {
     number: '5',
-    title: '入札を採用/不採用した時',
-    items: [
-      { key: 'b_bid_selected', label: '採用通知', badge: '入札者へ', badgeType: 'bidder' },
-      { key: 'b_bid_selected_owner', label: '採用確認', badge: '案件登録者へ', badgeType: 'owner' },
-      { key: 'b_bid_rejected', label: '不採用通知', badge: '落選した入札者へ', badgeType: 'rejected' },
-    ],
-  },
-  {
-    number: '6',
     title: '「この企業に連絡する」を押した時',
     items: [
       { key: 'b_match_contact', label: '連絡先交換通知', badge: '興味あり企業へ', badgeType: 'bidder' },

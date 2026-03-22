@@ -14,10 +14,7 @@ const NOTIFICATION_SETTINGS = [
 
   // カテゴリB（システム自動通知）
   { key: 'b_bid_received', label: '興味あり受信通知', category: 'B', description: '案件に興味ありが届いた時、案件登録者に通知', enabled: true },
-  { key: 'b_bid_selected', label: '入札採用通知', category: 'B', description: '入札が採用された時、入札者に通知', enabled: true },
-  { key: 'b_bid_selected_owner', label: '入札採用（登録者向け）', category: 'B', description: '入札を採用した時、登録者本人に確認通知', enabled: true },
-  { key: 'b_bid_rejected', label: '入札不採用通知', category: 'B', description: '入札が不採用になった時、入札者に通知', enabled: true },
-  { key: 'b_match_contact', label: '連絡先交換通知（双方）', category: 'B', description: '「連絡する」ボタン押下時、双方に連絡先を通知', enabled: true },
+  { key: 'b_match_contact', label: '連絡先交換通知', category: 'B', description: '「連絡する」ボタン押下時、相手企業に連絡先を通知', enabled: true },
   { key: 'b_project_approved', label: '案件承認通知', category: 'B', description: '案件が承認された時、登録者に通知', enabled: true },
   { key: 'b_project_rejected', label: '案件却下通知', category: 'B', description: '案件が却下された時、登録者に通知', enabled: true },
   { key: 'b_new_project_admin', label: '新規案件（管理者向け）', category: 'B', description: '新規案件登録時、管理者に通知', enabled: true },
