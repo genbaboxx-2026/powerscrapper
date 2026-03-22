@@ -556,7 +556,6 @@ function AdminPageContent() {
   const [isSavingSiteSetting, setIsSavingSiteSetting] = useState(false);
   const [uploadingSiteSettingImage, setUploadingSiteSettingImage] = useState(false);
   const [eventPreviewMode, setEventPreviewMode] = useState<'withEvent' | 'withoutEvent'>('withEvent');
-  const [isSeedingSiteSettings, setIsSeedingSiteSettings] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -857,31 +856,6 @@ function AdminPageContent() {
       setError(err instanceof Error ? err.message : 'エラーが発生しました');
     } finally {
       setUploadingSiteSettingImage(false);
-    }
-  };
-
-  const handleSeedSiteSettings = async () => {
-    if (!confirm('全ての通知設定に理想的な初期値を投入しますか？\n既存の設定は上書きされます。')) {
-      return;
-    }
-
-    setIsSeedingSiteSettings(true);
-    try {
-      const res = await fetch('/api/admin/seed-site-settings', {
-        method: 'POST',
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || '初期値の投入に失敗しました');
-      }
-      const data = await res.json();
-      alert(`${data.successCount}件の設定を投入しました`);
-      // 設定を再読み込み
-      fetchNotificationSettings();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'エラーが発生しました');
-    } finally {
-      setIsSeedingSiteSettings(false);
     }
   };
 
@@ -2339,23 +2313,6 @@ function AdminPageContent() {
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {/* 初期値投入ボタン */}
-                      <div className="bg-white rounded-lg border border-[#E2E8F0] p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-bold text-[#1E293B]">通知設定の初期化</h3>
-                            <p className="text-sm text-[#64748B] mt-1">全ての通知に理想的な初期値を設定します</p>
-                          </div>
-                          <button
-                            onClick={handleSeedSiteSettings}
-                            disabled={isSeedingSiteSettings}
-                            className="px-4 py-2 bg-[#2563EB] text-white text-sm font-bold rounded-lg hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {isSeedingSiteSettings ? '投入中...' : '初期値を投入'}
-                          </button>
-                        </div>
-                      </div>
-
                       {NOTIFICATION_SECTIONS.map((section) => {
                         // 全カテゴリの通知設定をフラットにマージ
                         const allSettings = [
