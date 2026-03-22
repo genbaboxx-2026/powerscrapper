@@ -353,7 +353,7 @@ const NOTIFICATION_SECTIONS: NotificationSection[] = [
     number: '6',
     title: '「この企業に連絡する」を押した時',
     items: [
-      { key: 'b_match_contact', label: '連絡先交換通知', badge: '興味あり企業へ', badgeType: 'user' },
+      { key: 'b_match_contact', label: '連絡先交換通知', badge: '興味あり企業へ', badgeType: 'bidder' },
     ],
   },
   {
