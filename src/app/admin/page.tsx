@@ -210,9 +210,9 @@ const NOTIFICATION_DETAILS: Record<string, NotificationDetail> = {
     preview: '「案件の募集が終了しました」というタイトルで、案件名を表示。他の案件を探すリンクボタン付きFlex Message',
   },
   b_match_contact: {
-    recipient: '案件登録者 & 興味あり送信者（双方）',
-    timing: '「連絡する」ボタンでマッチングが成立した時',
-    preview: '相手の連絡先情報（会社名・代表者・電話・メール）を表示するFlex Message',
+    recipient: '興味あり送信者',
+    timing: '案件登録者が「この企業に連絡する」を押した時',
+    preview: '「案件の返答がありました」というタイトルで、案件名・登録者の連絡先情報（会社名・担当者・電話・メール）を表示するカード形式のFlex Message',
   },
   b_project_approved: {
     recipient: '案件登録者',
@@ -276,6 +276,97 @@ const EDITABLE_NOTIFICATIONS: Record<string, string> = {
 // 編集不要な通知（通知なしのもの）
 const NON_EDITABLE_NOTIFICATIONS = ['c_auto_close'];
 
+// 新UI用セクション定義
+type NotificationItem = {
+  key: string;
+  label: string;
+  badge: string;
+  badgeType: 'tap' | 'follower' | 'owner' | 'bidder' | 'rejected' | 'both' | 'admin' | 'all';
+  description?: string;
+  isGrayedOut?: boolean;
+  grayedOutReason?: string;
+  noToggle?: boolean;
+};
+
+type NotificationSection = {
+  number: string;
+  title: string;
+  isSpecial?: boolean; // *マークの定期実行
+  items: NotificationItem[];
+};
+
+// 送信先バッジの色設定
+const BADGE_COLORS: Record<string, { bg: string; text: string }> = {
+  tap: { bg: '#E6F1FB', text: '#185FA5' },      // タップした人へ
+  follower: { bg: '#E6F1FB', text: '#185FA5' }, // 新規フォロワーへ
+  owner: { bg: '#E1F5EE', text: '#0F6E56' },    // 案件登録者へ
+  bidder: { bg: '#E1F5EE', text: '#0F6E56' },   // 入札者へ
+  rejected: { bg: '#E1F5EE', text: '#0F6E56' }, // 落選した入札者へ
+  both: { bg: '#EEEDFE', text: '#534AB7' },     // 双方の企業へ
+  admin: { bg: '#FAEEDA', text: '#854F0B' },    // 管理者へ
+  all: { bg: '#FCEBEB', text: '#A32D2D' },      // 全会員へ
+};
+
+const NOTIFICATION_SECTIONS: NotificationSection[] = [
+  {
+    number: '1',
+    title: '友だち追加した時',
+    items: [
+      { key: 'a_welcome', label: 'ウェルカムメッセージ', badge: '新規フォロワーへ', badgeType: 'follower' },
+    ],
+  },
+  {
+    number: '2',
+    title: 'リッチメニューをタップした時',
+    items: [
+      { key: 'a_event_info', label: 'イベント案内', badge: 'タップした人へ', badgeType: 'tap' },
+      { key: 'a_contact_info', label: 'お問い合わせ', badge: 'タップした人へ', badgeType: 'tap' },
+      { key: '_consultation', label: 'パワスク相談', badge: '', badgeType: 'tap', isGrayedOut: true, grayedOutReason: 'Webアプリを直接開く（LINE通知なし）', noToggle: true },
+    ],
+  },
+  {
+    number: '3',
+    title: '案件を審査した時',
+    items: [
+      { key: 'b_project_approved', label: '承認通知', badge: '案件登録者へ', badgeType: 'owner' },
+      { key: 'b_project_rejected', label: '却下通知', badge: '案件登録者へ', badgeType: 'owner' },
+      { key: 'b_new_project_broadcast', label: '新着案件通知', badge: '全会員へ', badgeType: 'all', description: '※デフォルトOFF' },
+    ],
+  },
+  {
+    number: '4',
+    title: '興味ありが送信された時',
+    items: [
+      { key: 'b_bid_received', label: '興味あり受信通知', badge: '案件登録者へ', badgeType: 'owner' },
+    ],
+  },
+  {
+    number: '5',
+    title: '入札を採用/不採用した時',
+    items: [
+      { key: 'b_bid_selected', label: '採用通知', badge: '入札者へ', badgeType: 'bidder' },
+      { key: 'b_bid_selected_owner', label: '採用確認', badge: '案件登録者へ', badgeType: 'owner' },
+      { key: 'b_bid_rejected', label: '不採用通知', badge: '落選した入札者へ', badgeType: 'rejected' },
+    ],
+  },
+  {
+    number: '6',
+    title: '「この企業に連絡する」を押した時',
+    items: [
+      { key: 'b_match_contact', label: '連絡先交換通知', badge: '興味あり企業へ', badgeType: 'user' },
+    ],
+  },
+  {
+    number: '*',
+    title: '定期自動実行',
+    isSpecial: true,
+    items: [
+      { key: 'c_weekly_digest', label: '週次まとめ配信', badge: '全会員へ', badgeType: 'all', description: '毎週月曜9時' },
+      { key: 'c_auto_close', label: '期限切れ自動クローズ', badge: '通知なし', badgeType: 'tap', isGrayedOut: true, grayedOutReason: 'LINE通知なし', noToggle: true },
+    ],
+  },
+];
+
 // 通知の編集タイプを判定
 type NotificationEditType = 'postback' | 'category_a_other' | 'category_b' | 'category_c' | 'none';
 const getNotificationEditType = (key: string): NotificationEditType => {
@@ -286,25 +377,42 @@ const getNotificationEditType = (key: string): NotificationEditType => {
   return 'none';
 };
 
-// サイト設定の型定義
+// サイト設定の型定義（新構造）
 type ContactInfoSetting = {
-  companyName: string;
-  personName: string;
-  phone: string;
-  email: string;
-  lineId: string;
-  note: string;
+  format: 'simple' | 'card';
+  message: string;
+  buttonLabel: string;
+  buttonUrl: string;
   imageUrl: string | null;
 };
 
 type WelcomeMessageSetting = {
-  title: string;
-  body: string;
-  imageUrl: string | null;
+  format: 'simple' | 'card';
+  message: string;
   buttonLabel: string;
   buttonUrl: string;
+  imageUrl: string | null;
 };
 
+// イベント案内の設定（新構造）
+type EventInfoSetting = {
+  hasEvent: boolean; // イベントあり/なしの手動切り替え
+  withEvent: {
+    format: 'simple' | 'card';
+    headerText: string;
+    supplementText: string;
+    imageUrl: string | null;
+    buttonLabel: string;
+    buttonUrl: string;
+  };
+  withoutEvent: {
+    format: 'simple' | 'card';
+    message: string;
+    imageUrl: string | null;
+  };
+};
+
+// 旧型（後方互換用）
 type EventFallbackSetting = {
   message: string;
   imageUrl: string | null;
@@ -312,6 +420,7 @@ type EventFallbackSetting = {
 
 // Postback系通知の型定義
 type PostbackNotificationSetting = {
+  format: 'simple' | 'card';
   textMessage: string;      // ボタン押下前に表示されるテキスト
   buttonLabel: string;      // ボタンラベル
   buttonUrl: string;        // ボタンURL（遷移先）
@@ -320,6 +429,7 @@ type PostbackNotificationSetting = {
 
 // カテゴリB（システム自動通知）の型定義
 type SystemNotificationSetting = {
+  format: 'simple' | 'card';
   headingText: string;      // 見出しテキスト
   supplementMessage: string; // 補足メッセージ（末尾に追加）
   imageUrl: string | null;  // 画像（任意、heroに表示）
@@ -327,12 +437,13 @@ type SystemNotificationSetting = {
 
 // カテゴリC（週次まとめ配信）の型定義
 type WeeklyDigestSetting = {
+  format: 'simple' | 'card';
   headingText: string;      // 見出しテキスト
   supplementMessage: string; // 補足メッセージ
   imageUrl: string | null;  // 画像
 };
 
-type SiteSettingValue = ContactInfoSetting | WelcomeMessageSetting | EventFallbackSetting | PostbackNotificationSetting | SystemNotificationSetting | WeeklyDigestSetting;
+type SiteSettingValue = ContactInfoSetting | WelcomeMessageSetting | EventInfoSetting | EventFallbackSetting | PostbackNotificationSetting | SystemNotificationSetting | WeeklyDigestSetting;
 
 // 各通知のデフォルトURL（LIFF）
 const POSTBACK_DEFAULT_URLS: Record<string, string> = {
@@ -377,6 +488,7 @@ function AdminPageContent() {
   // URLクエリパラメータからタブを取得
   const mainTab = searchParams.get('tab') || 'overview';
   const setMainTab = (tab: string) => {
+    setError(null); // タブ切り替え時にエラーをクリア
     router.push(`/admin?tab=${tab}`);
   };
 
@@ -406,6 +518,7 @@ function AdminPageContent() {
   const [editingMemo, setEditingMemo] = useState<string | null>(null);
   const [memoText, setMemoText] = useState('');
   const [changingStatus, setChangingStatus] = useState<string | null>(null);
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
 
   // Broadcast state
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
@@ -442,6 +555,8 @@ function AdminPageContent() {
   const [isLoadingSiteSetting, setIsLoadingSiteSetting] = useState(false);
   const [isSavingSiteSetting, setIsSavingSiteSetting] = useState(false);
   const [uploadingSiteSettingImage, setUploadingSiteSettingImage] = useState(false);
+  const [eventPreviewMode, setEventPreviewMode] = useState<'withEvent' | 'withoutEvent'>('withEvent');
+  const [isSeedingSiteSettings, setIsSeedingSiteSettings] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -584,6 +699,7 @@ function AdminPageContent() {
       case 'postback': {
         const defaultPath = POSTBACK_DEFAULT_URLS[notificationKey] || '/';
         return {
+          format: 'card',
           textMessage: '',
           buttonLabel: '',
           buttonUrl: `https://liff.line.me/${liffId}${defaultPath}`,
@@ -592,12 +708,14 @@ function AdminPageContent() {
       }
       case 'category_b':
         return {
+          format: 'card',
           headingText: '',
           supplementMessage: '',
           imageUrl: null,
         } as SystemNotificationSetting;
       case 'category_c':
         return {
+          format: 'card',
           headingText: '',
           supplementMessage: '',
           imageUrl: null,
@@ -605,22 +723,37 @@ function AdminPageContent() {
       case 'category_a_other':
         if (notificationKey === 'a_contact_info') {
           return {
-            companyName: '',
-            personName: '',
-            phone: '',
-            email: '',
-            lineId: '',
-            note: '',
+            format: 'simple',
+            message: '',
+            buttonLabel: '',
+            buttonUrl: '',
             imageUrl: null,
           } as ContactInfoSetting;
         } else if (notificationKey === 'a_welcome') {
           return {
-            title: '',
-            body: '',
-            imageUrl: null,
+            format: 'simple',
+            message: '',
             buttonLabel: '',
             buttonUrl: `https://liff.line.me/${liffId}/profile/edit`,
+            imageUrl: null,
           } as WelcomeMessageSetting;
+        } else if (notificationKey === 'a_event_info') {
+          return {
+            hasEvent: false,
+            withEvent: {
+              format: 'simple',
+              headerText: 'イベントのお知らせ',
+              supplementText: '',
+              imageUrl: null,
+              buttonLabel: '申し込む',
+              buttonUrl: '',
+            },
+            withoutEvent: {
+              format: 'simple',
+              message: '現在予定されているイベントはありません。決まり次第お知らせします！',
+              imageUrl: null,
+            },
+          } as EventInfoSetting;
         } else {
           return {
             message: '',
@@ -645,7 +778,19 @@ function AdminPageContent() {
       const data = await res.json();
       // データがない場合は空のフォームを初期化
       if (data.value) {
-        setSiteSettingForm(data.value);
+        // contact_info と welcome_message は旧構造を新構造に変換
+        if (notificationKey === 'a_contact_info' || notificationKey === 'a_welcome') {
+          const val = data.value as Record<string, unknown>;
+          // 新構造（messageフィールドがある）かチェック
+          if ('message' in val) {
+            setSiteSettingForm(data.value);
+          } else {
+            // 旧構造の場合は空の新構造で初期化
+            setSiteSettingForm(getEmptyFormForNotification(notificationKey));
+          }
+        } else {
+          setSiteSettingForm(data.value);
+        }
       } else {
         setSiteSettingForm(getEmptyFormForNotification(notificationKey));
       }
@@ -712,6 +857,31 @@ function AdminPageContent() {
       setError(err instanceof Error ? err.message : 'エラーが発生しました');
     } finally {
       setUploadingSiteSettingImage(false);
+    }
+  };
+
+  const handleSeedSiteSettings = async () => {
+    if (!confirm('全ての通知設定に理想的な初期値を投入しますか？\n既存の設定は上書きされます。')) {
+      return;
+    }
+
+    setIsSeedingSiteSettings(true);
+    try {
+      const res = await fetch('/api/admin/seed-site-settings', {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '初期値の投入に失敗しました');
+      }
+      const data = await res.json();
+      alert(`${data.successCount}件の設定を投入しました`);
+      // 設定を再読み込み
+      fetchNotificationSettings();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsSeedingSiteSettings(false);
     }
   };
 
@@ -1228,17 +1398,43 @@ function AdminPageContent() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {matchProjects.map((project) => (
+                  {matchProjects.map((project) => {
+                    const isExpanded = expandedProjects.has(project.id);
+                    return (
                     <div key={project.id} className="bg-white rounded-lg border border-[#E2E8F0] overflow-hidden">
-                      {/* 案件ヘッダー */}
-                      <div className="p-4 border-b border-[#E2E8F0]">
-                        <h3 className="font-bold text-[#1E293B] mb-1">{project.title}</h3>
-                        <p className="text-xs text-[#64748B]">
-                          投稿者: {project.ownerCompanyName} | {project.location} | 興味あり {project.totalBids}社 → 連絡 {project.totalMatches}社
-                        </p>
-                      </div>
+                      {/* 案件ヘッダー（クリックで開閉） */}
+                      <button
+                        onClick={() => {
+                          setExpandedProjects(prev => {
+                            const next = new Set(prev);
+                            if (next.has(project.id)) {
+                              next.delete(project.id);
+                            } else {
+                              next.add(project.id);
+                            }
+                            return next;
+                          });
+                        }}
+                        className="w-full p-4 border-b border-[#E2E8F0] text-left hover:bg-[#F8FAFC] transition-colors flex items-center justify-between"
+                      >
+                        <div>
+                          <h3 className="font-bold text-[#1E293B] mb-1">{project.title}</h3>
+                          <p className="text-xs text-[#64748B]">
+                            投稿者: {project.ownerCompanyName} | {project.location} | 興味あり {project.totalBids}社 → 連絡 {project.totalMatches}社
+                          </p>
+                        </div>
+                        <svg
+                          className={`w-5 h-5 text-[#64748B] transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
 
-                      {/* 連絡済み企業 */}
+                      {/* 連絡済み企業（アコーディオン） */}
+                      {isExpanded && (
                       <div className="divide-y divide-[#E2E8F0]">
                         {project.matches.map((match) => (
                           <div key={match.id} className="p-4 bg-[#F8FAFC]">
@@ -1379,8 +1575,10 @@ function AdminPageContent() {
                           </div>
                         ))}
                       </div>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </>
@@ -1459,11 +1657,14 @@ function AdminPageContent() {
 
               {/* 配信フォーム */}
               {showBroadcastForm && (
-                <div className="bg-white rounded-lg border border-[#E2E8F0] p-4 mb-4">
-                  <h3 className="font-bold text-[#1E293B] mb-4">
-                    {editingBroadcast ? '配信を編集' : '新規配信を作成'}
-                  </h3>
-                  <form onSubmit={handleBroadcastSubmit} className="space-y-4">
+                <div className="mb-4">
+                  <div className="flex gap-6">
+                    {/* 左側: フォーム (60%) */}
+                    <div className="w-[60%] bg-white rounded-lg border border-[#E2E8F0] p-4">
+                      <h3 className="font-bold text-[#1E293B] mb-4">
+                        {editingBroadcast ? '配信を編集' : '新規配信を作成'}
+                      </h3>
+                      <form onSubmit={handleBroadcastSubmit} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-[#1E293B] mb-1">
                         種別
@@ -1904,26 +2105,146 @@ function AdminPageContent() {
                       />
                     </div>
 
-                    <div className="flex gap-2 pt-2">
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="px-4 py-2 bg-[#2563EB] text-white text-sm rounded-lg font-medium disabled:opacity-50"
-                      >
-                        {isSubmitting ? '保存中...' : '保存'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowBroadcastForm(false);
-                          setEditingBroadcast(null);
-                        }}
-                        className="px-4 py-2 bg-[#E2E8F0] text-[#64748B] text-sm rounded-lg font-medium"
-                      >
-                        キャンセル
-                      </button>
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="px-4 py-2 bg-[#2563EB] text-white text-sm rounded-lg font-medium disabled:opacity-50"
+                          >
+                            {isSubmitting ? '保存中...' : '保存'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowBroadcastForm(false);
+                              setEditingBroadcast(null);
+                            }}
+                            className="px-4 py-2 bg-[#E2E8F0] text-[#64748B] text-sm rounded-lg font-medium"
+                          >
+                            キャンセル
+                          </button>
+                        </div>
+                      </form>
                     </div>
-                  </form>
+
+                    {/* 右側: LINEプレビュー (40%) */}
+                    <div className="w-[40%]">
+                      <div className="sticky top-5">
+                        <div className="bg-white rounded-lg border border-[#E2E8F0] overflow-hidden">
+                          {/* LINEヘッダー */}
+                          <div className="bg-[#64748B] text-white px-4 py-3 flex items-center gap-3">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                            <span className="font-medium text-sm">PowerScrapper公式</span>
+                          </div>
+
+                          {/* トーク画面 */}
+                          <div className="bg-[#7494C0] p-4 min-h-[400px]">
+                            <div className="flex items-start gap-2">
+                              {/* アイコン */}
+                              <div className="w-10 h-10 bg-[#06C755] rounded-full flex items-center justify-center shrink-0">
+                                <span className="text-white text-xs font-bold">PS</span>
+                              </div>
+
+                              {/* 吹き出し */}
+                              <div className="flex-1 max-w-[85%]">
+                                {/* シンプル形式 */}
+                                {broadcastForm.format === 'simple' && (
+                                  <div className="space-y-2">
+                                    {/* テキスト吹き出し */}
+                                    <div className="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm">
+                                      <p className={`text-sm whitespace-pre-wrap ${!broadcastForm.title && !broadcastForm.body ? 'text-[#94A3B8]' : 'text-[#1E293B]'}`}>
+                                        {broadcastForm.title || broadcastForm.body
+                                          ? `${broadcastForm.title || ''}${broadcastForm.title && broadcastForm.body ? '\n\n' : ''}${broadcastForm.body || ''}`
+                                          : 'タイトルを入力...'}
+                                      </p>
+                                      {broadcastForm.formUrl && (
+                                        <p className="text-xs text-[#2563EB] mt-2 break-all">{broadcastForm.formUrl}</p>
+                                      )}
+                                    </div>
+                                    {/* 画像（あれば） */}
+                                    {broadcastForm.imageUrl && (
+                                      <div className="bg-white rounded-2xl rounded-tl-sm overflow-hidden shadow-sm">
+                                        <img src={broadcastForm.imageUrl} alt="Preview" className="w-full" />
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* カード形式 */}
+                                {broadcastForm.format === 'card' && (
+                                  <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+                                    {/* 画像（あれば） */}
+                                    {broadcastForm.imageUrl && (
+                                      <img src={broadcastForm.imageUrl} alt="Preview" className="w-full h-32 object-cover" />
+                                    )}
+                                    {/* ヘッダー */}
+                                    <div className="bg-[#2563EB] px-3 py-2">
+                                      <span className="text-white text-xs font-medium">
+                                        {broadcastForm.type === 'event' ? '📅 イベント' : broadcastForm.type === 'news' ? '📢 お知らせ' : '📄 記事'}
+                                      </span>
+                                    </div>
+                                    {/* コンテンツ */}
+                                    <div className="p-3">
+                                      <h4 className={`font-bold text-sm mb-1 ${!broadcastForm.title ? 'text-[#94A3B8]' : 'text-[#1E293B]'}`}>
+                                        {broadcastForm.title || 'タイトルを入力...'}
+                                      </h4>
+                                      {(broadcastForm.body || !broadcastForm.title) && (
+                                        <p className={`text-xs line-clamp-3 ${!broadcastForm.body ? 'text-[#94A3B8]' : 'text-[#64748B]'}`}>
+                                          {broadcastForm.body || '本文を入力...'}
+                                        </p>
+                                      )}
+                                      {broadcastForm.eventDate && (
+                                        <p className="text-xs text-[#64748B] mt-2">📅 {broadcastForm.eventDate}</p>
+                                      )}
+                                      {broadcastForm.eventVenue && (
+                                        <p className="text-xs text-[#64748B]">📍 {broadcastForm.eventVenue}</p>
+                                      )}
+                                    </div>
+                                    {/* ボタン */}
+                                    <div className="border-t border-[#E2E8F0]">
+                                      <div className="px-3 py-2 text-center text-[#2563EB] text-sm font-medium">
+                                        詳細を見る
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* クリエイティブ形式 */}
+                                {broadcastForm.format === 'creative' && (
+                                  <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+                                    {broadcastForm.imageUrl ? (
+                                      <img src={broadcastForm.imageUrl} alt="Preview" className="w-full" style={{ aspectRatio: '1.51/1', objectFit: 'cover' }} />
+                                    ) : (
+                                      <div className="w-full bg-[#E2E8F0] flex items-center justify-center" style={{ aspectRatio: '1.51/1' }}>
+                                        <div className="text-center text-[#94A3B8]">
+                                          <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                          </svg>
+                                          <p className="text-xs">画像を選択...</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {broadcastForm.title && (
+                                      <div className="p-3">
+                                        <p className="text-sm text-[#1E293B]">{broadcastForm.title}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* フッター */}
+                          <div className="bg-[#F1F5F9] px-4 py-2 text-center">
+                            <p className="text-xs text-[#64748B]">プレビュー</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -2018,146 +2339,122 @@ function AdminPageContent() {
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {(['A', 'B', 'C'] as const).map((category) => (
-                        <div key={category} className="bg-white rounded-lg border border-[#E2E8F0]">
-                          <div className="p-4 border-b border-[#E2E8F0]">
-                            <h3 className="font-bold text-[#1E293B]">
-                              カテゴリ {category}: {categoryLabels[category]}
-                            </h3>
+                      {/* 初期値投入ボタン */}
+                      <div className="bg-white rounded-lg border border-[#E2E8F0] p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-bold text-[#1E293B]">通知設定の初期化</h3>
+                            <p className="text-sm text-[#64748B] mt-1">全ての通知に理想的な初期値を設定します</p>
                           </div>
-                          <div className="divide-y divide-[#E2E8F0]">
-                            {notificationSettings[category].map((setting) => {
-                              const isExpanded = expandedNotification === setting.key;
-                              const details = NOTIFICATION_DETAILS[setting.key];
-                              return (
-                                <div key={setting.key} className="overflow-hidden">
-                                  {/* ヘッダー部分（常に表示） */}
+                          <button
+                            onClick={handleSeedSiteSettings}
+                            disabled={isSeedingSiteSettings}
+                            className="px-4 py-2 bg-[#2563EB] text-white text-sm font-bold rounded-lg hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSeedingSiteSettings ? '投入中...' : '初期値を投入'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {NOTIFICATION_SECTIONS.map((section) => {
+                        // 全カテゴリの通知設定をフラットにマージ
+                        const allSettings = [
+                          ...notificationSettings.A,
+                          ...notificationSettings.B,
+                          ...notificationSettings.C,
+                        ];
+
+                        return (
+                          <div key={section.number} className="bg-white rounded-lg border border-[#E2E8F0]">
+                            {/* セクションヘッダー */}
+                            <div className="p-4 border-b border-[#E2E8F0] flex items-center gap-3">
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 ${
+                                section.isSpecial ? 'bg-[#64748B]' : 'bg-[#2563EB]'
+                              }`}>
+                                {section.number}
+                              </div>
+                              <h3 className="font-bold text-[#1E293B]">{section.title}</h3>
+                            </div>
+
+                            {/* 通知カード一覧 */}
+                            <div className="divide-y divide-[#E2E8F0]">
+                              {section.items.map((item) => {
+                                const settingData = allSettings.find(s => s.key === item.key);
+                                const badgeColor = BADGE_COLORS[item.badgeType];
+                                const isEnabled = settingData?.enabled ?? false;
+
+                                return (
                                   <div
-                                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-[#F8FAFC] transition-colors"
-                                    onClick={() => setExpandedNotification(isExpanded ? null : setting.key)}
+                                    key={item.key}
+                                    className={`p-4 ${item.isGrayedOut ? 'opacity-60 bg-[#F8FAFC]' : ''}`}
                                   >
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                      <svg
-                                        className={`w-4 h-4 text-[#64748B] transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                      </svg>
-                                      <p className="text-sm font-medium text-[#1E293B] truncate">{setting.label}</p>
-                                    </div>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleToggleNotification(setting.key, !setting.enabled);
-                                      }}
-                                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${
-                                        setting.enabled ? 'bg-[#2563EB]' : 'bg-[#E2E8F0]'
-                                      }`}
-                                    >
-                                      <span
-                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                          setting.enabled ? 'translate-x-6' : 'translate-x-1'
-                                        }`}
-                                      />
-                                    </button>
-                                  </div>
-
-                                  {/* 展開時の詳細パネル */}
-                                  {isExpanded && details && (
-                                    <div className="px-4 pb-4 bg-[#F8FAFC] border-t border-[#E2E8F0]">
-                                      <div className="pt-4 space-y-4">
-                                        {/* 通知名（大きく） */}
-                                        <div>
-                                          <h4 className="text-lg font-bold text-[#1E293B]">{setting.label}</h4>
-                                          <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded ${
-                                            category === 'A' ? 'bg-[#E6F1FB] text-[#185FA5]' :
-                                            category === 'B' ? 'bg-[#FAEEDA] text-[#854F0B]' :
-                                            'bg-[#D1FAE5] text-[#1D9E75]'
-                                          }`}>
-                                            カテゴリ {category}
+                                    <div className="flex items-start justify-between gap-4">
+                                      {/* 左側: 通知名 + バッジ + 説明 */}
+                                      <div className="flex-1 min-w-0 pl-10">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <span className={`text-sm font-bold ${item.isGrayedOut ? 'text-[#94A3B8]' : 'text-[#1E293B]'}`}>
+                                            {item.label}
                                           </span>
-                                        </div>
-
-                                        {/* 説明文 */}
-                                        {setting.description && (
-                                          <div>
-                                            <p className="text-xs font-medium text-[#64748B] mb-1">説明</p>
-                                            <p className="text-sm text-[#1E293B]">{setting.description}</p>
-                                          </div>
-                                        )}
-
-                                        {/* 送信先 */}
-                                        <div>
-                                          <p className="text-xs font-medium text-[#64748B] mb-1">送信先</p>
-                                          <p className="text-sm text-[#1E293B] flex items-center gap-2">
-                                            <svg className="w-4 h-4 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                            </svg>
-                                            {details.recipient}
-                                          </p>
-                                        </div>
-
-                                        {/* 送信タイミング */}
-                                        <div>
-                                          <p className="text-xs font-medium text-[#64748B] mb-1">送信タイミング</p>
-                                          <p className="text-sm text-[#1E293B] flex items-center gap-2">
-                                            <svg className="w-4 h-4 text-[#1D9E75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            {details.timing}
-                                          </p>
-                                        </div>
-
-                                        {/* 送信内容のプレビュー */}
-                                        <div>
-                                          <p className="text-xs font-medium text-[#64748B] mb-1">送信内容</p>
-                                          <div className="bg-white rounded-lg border border-[#E2E8F0] p-3">
-                                            <div className="flex items-start gap-2">
-                                              <div className="w-8 h-8 bg-[#06C755] rounded-lg flex items-center justify-center shrink-0">
-                                                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                                  <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
-                                                </svg>
-                                              </div>
-                                              <p className="text-sm text-[#1E293B] leading-relaxed">{details.preview}</p>
-                                            </div>
-                                          </div>
-                                        </div>
-
-                                        {/* 編集可能な通知には編集ボタンを表示 */}
-                                        <div className="pt-2 border-t border-[#E2E8F0]">
-                                          {NON_EDITABLE_NOTIFICATIONS.includes(setting.key) ? (
-                                            <div className="bg-[#F1F5F9] rounded-lg p-3">
-                                              <p className="text-sm text-[#64748B]">
-                                                この通知は処理のみで通知送信は行われないため、編集項目はありません。
-                                              </p>
-                                            </div>
-                                          ) : (
-                                            <button
-                                              onClick={() => openSiteSettingEdit(setting.key)}
-                                              className="w-full px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8] transition-colors"
+                                          {item.badge && (
+                                            <span
+                                              className="px-2 py-0.5 text-xs rounded-full whitespace-nowrap"
+                                              style={{
+                                                backgroundColor: item.isGrayedOut ? '#F1F5F9' : badgeColor.bg,
+                                                color: item.isGrayedOut ? '#94A3B8' : badgeColor.text
+                                              }}
                                             >
-                                              送信内容を編集
-                                            </button>
+                                              {item.badge}
+                                            </span>
                                           )}
                                         </div>
+                                        {/* 説明文 or グレーアウト理由 */}
+                                        {(item.description || item.grayedOutReason) && (
+                                          <p className="text-xs text-[#64748B] mt-1">
+                                            {item.grayedOutReason || item.description}
+                                          </p>
+                                        )}
+                                      </div>
+
+                                      {/* 右側: 編集リンク + トグル */}
+                                      <div className="flex items-center gap-3 shrink-0">
+                                        {!item.noToggle && settingData && !NON_EDITABLE_NOTIFICATIONS.includes(item.key) && (
+                                          <button
+                                            onClick={() => openSiteSettingEdit(item.key)}
+                                            className="text-xs text-[#2563EB] hover:underline whitespace-nowrap"
+                                          >
+                                            編集
+                                          </button>
+                                        )}
+                                        {!item.noToggle && settingData && (
+                                          <button
+                                            onClick={() => handleToggleNotification(item.key, !isEnabled)}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${
+                                              isEnabled ? 'bg-[#2563EB]' : 'bg-[#E2E8F0]'
+                                            }`}
+                                          >
+                                            <span
+                                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                                isEnabled ? 'translate-x-6' : 'translate-x-1'
+                                              }`}
+                                            />
+                                          </button>
+                                        )}
                                       </div>
                                     </div>
-                                  )}
-                                </div>
-                              );
-                            })}
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
                   {/* サイト設定編集モーダル */}
                   {editingSiteSetting && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                      <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between">
                           <h3 className="font-bold text-[#1E293B]">送信内容を編集</h3>
                           <button
@@ -2175,66 +2472,90 @@ function AdminPageContent() {
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
                           </div>
                         ) : siteSettingForm && (
-                          <div className="p-4 space-y-4">
+                          <div className="flex">
+                            {/* 左側: フォーム */}
+                            <div className="w-[55%] p-4 space-y-4 border-r border-[#E2E8F0]">
+                              {/* フォーマット選択（a_event_info, b_match_contact以外） */}
+                              {editingSiteSetting !== 'a_event_info' && editingSiteSetting !== 'b_match_contact' && (
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-2">フォーマット</label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setSiteSettingForm({ ...siteSettingForm, format: 'simple' })}
+                                      className={`p-3 rounded-lg border-2 text-center transition-colors ${
+                                        (siteSettingForm as { format?: string }).format === 'simple'
+                                          ? 'border-[#2563EB] bg-[#EEF2FF]'
+                                          : 'border-[#E2E8F0] hover:border-[#94A3B8]'
+                                      }`}
+                                    >
+                                      <div className="text-lg mb-1">💬</div>
+                                      <div className="text-xs font-medium text-[#1E293B]">シンプル</div>
+                                      <div className="text-xs text-[#64748B]">テキスト形式</div>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSiteSettingForm({ ...siteSettingForm, format: 'card' })}
+                                      className={`p-3 rounded-lg border-2 text-center transition-colors ${
+                                        (siteSettingForm as { format?: string }).format !== 'simple'
+                                          ? 'border-[#2563EB] bg-[#EEF2FF]'
+                                          : 'border-[#E2E8F0] hover:border-[#94A3B8]'
+                                      }`}
+                                    >
+                                      <div className="text-lg mb-1">📋</div>
+                                      <div className="text-xs font-medium text-[#1E293B]">カード</div>
+                                      <div className="text-xs text-[#64748B]">Flex Message</div>
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                              {/* 連絡先交換通知は常にカード形式 */}
+                              {editingSiteSetting === 'b_match_contact' && (
+                                <div className="bg-[#EFF6FF] border border-[#2563EB]/30 rounded-lg p-3">
+                                  <p className="text-sm text-[#2563EB] font-medium flex items-center gap-2">
+                                    <span>📋</span>
+                                    この通知は常にカード形式で送信されます
+                                  </p>
+                                </div>
+                              )}
                             {/* お問い合わせ応答の編集フォーム */}
                             {editingSiteSetting === 'a_contact_info' && (
                               <>
                                 <div>
-                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">会社名</label>
-                                  <input
-                                    type="text"
-                                    value={(siteSettingForm as ContactInfoSetting).companyName || ''}
-                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, companyName: e.target.value })}
-                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">担当者名</label>
-                                  <input
-                                    type="text"
-                                    value={(siteSettingForm as ContactInfoSetting).personName || ''}
-                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, personName: e.target.value })}
-                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">電話番号</label>
-                                  <input
-                                    type="text"
-                                    value={(siteSettingForm as ContactInfoSetting).phone || ''}
-                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, phone: e.target.value })}
-                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                                    placeholder="03-xxxx-xxxx"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">メールアドレス</label>
-                                  <input
-                                    type="email"
-                                    value={(siteSettingForm as ContactInfoSetting).email || ''}
-                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, email: e.target.value })}
-                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">LINE ID</label>
-                                  <input
-                                    type="text"
-                                    value={(siteSettingForm as ContactInfoSetting).lineId || ''}
-                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, lineId: e.target.value })}
-                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                                    placeholder="@xxxxxxxx"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">補足メッセージ</label>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">メッセージ本文</label>
+                                  <p className="text-xs text-[#64748B] mb-1">連絡先情報も含めて自由に記述できます（改行可）</p>
                                   <textarea
-                                    value={(siteSettingForm as ContactInfoSetting).note || ''}
-                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, note: e.target.value })}
-                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                                    rows={3}
+                                    value={(siteSettingForm as ContactInfoSetting).message || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, message: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm font-mono"
+                                    rows={8}
+                                    placeholder="メッセージを入力..."
                                   />
                                 </div>
+                                {(siteSettingForm as ContactInfoSetting).format !== 'simple' && (
+                                  <>
+                                    <div>
+                                      <label className="block text-sm font-medium text-[#1E293B] mb-1">ボタンラベル（任意）</label>
+                                      <input
+                                        type="text"
+                                        value={(siteSettingForm as ContactInfoSetting).buttonLabel || ''}
+                                        onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, buttonLabel: e.target.value })}
+                                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                        placeholder="例: お問い合わせフォーム"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-[#1E293B] mb-1">ボタンURL（任意）</label>
+                                      <input
+                                        type="url"
+                                        value={(siteSettingForm as ContactInfoSetting).buttonUrl || ''}
+                                        onChange={(e) => setSiteSettingForm({ ...siteSettingForm as ContactInfoSetting, buttonUrl: e.target.value })}
+                                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                        placeholder="https://"
+                                      />
+                                    </div>
+                                  </>
+                                )}
                               </>
                             )}
 
@@ -2242,56 +2563,312 @@ function AdminPageContent() {
                             {editingSiteSetting === 'a_welcome' && (
                               <>
                                 <div>
-                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">タイトル</label>
-                                  <input
-                                    type="text"
-                                    value={(siteSettingForm as WelcomeMessageSetting).title || ''}
-                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WelcomeMessageSetting, title: e.target.value })}
-                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">本文</label>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">メッセージ本文</label>
+                                  <p className="text-xs text-[#64748B] mb-1">友だち追加時に表示するメッセージ（改行可）</p>
                                   <textarea
-                                    value={(siteSettingForm as WelcomeMessageSetting).body || ''}
-                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WelcomeMessageSetting, body: e.target.value })}
-                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                                    rows={4}
+                                    value={(siteSettingForm as WelcomeMessageSetting).message || ''}
+                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WelcomeMessageSetting, message: e.target.value })}
+                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm font-mono"
+                                    rows={8}
+                                    placeholder="メッセージを入力..."
                                   />
                                 </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">ボタンラベル</label>
-                                  <input
-                                    type="text"
-                                    value={(siteSettingForm as WelcomeMessageSetting).buttonLabel || ''}
-                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WelcomeMessageSetting, buttonLabel: e.target.value })}
-                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">ボタンURL</label>
-                                  <input
-                                    type="url"
-                                    value={(siteSettingForm as WelcomeMessageSetting).buttonUrl || ''}
-                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WelcomeMessageSetting, buttonUrl: e.target.value })}
-                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                                    placeholder="https://"
-                                  />
-                                </div>
+                                {(siteSettingForm as WelcomeMessageSetting).format !== 'simple' && (
+                                  <>
+                                    <div>
+                                      <label className="block text-sm font-medium text-[#1E293B] mb-1">ボタンラベル（任意）</label>
+                                      <input
+                                        type="text"
+                                        value={(siteSettingForm as WelcomeMessageSetting).buttonLabel || ''}
+                                        onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WelcomeMessageSetting, buttonLabel: e.target.value })}
+                                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                        placeholder="例: プロフィールを登録する"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-[#1E293B] mb-1">ボタンURL（任意）</label>
+                                      <input
+                                        type="url"
+                                        value={(siteSettingForm as WelcomeMessageSetting).buttonUrl || ''}
+                                        onChange={(e) => setSiteSettingForm({ ...siteSettingForm as WelcomeMessageSetting, buttonUrl: e.target.value })}
+                                        className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                        placeholder="https://"
+                                      />
+                                    </div>
+                                  </>
+                                )}
                               </>
                             )}
 
-                            {/* イベント案内応答の編集フォーム */}
+                            {/* イベント案内応答の編集フォーム（新UI） */}
                             {editingSiteSetting === 'a_event_info' && (
                               <>
-                                <div>
-                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">イベントがない時のメッセージ</label>
-                                  <textarea
-                                    value={(siteSettingForm as EventFallbackSetting).message || ''}
-                                    onChange={(e) => setSiteSettingForm({ ...siteSettingForm as EventFallbackSetting, message: e.target.value })}
-                                    className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
-                                    rows={4}
-                                  />
+                                {/* イベントあり/なし切り替え */}
+                                <div className="bg-white border border-[#E2E8F0] rounded-lg p-4 mb-4">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <h4 className="font-bold text-sm text-[#1E293B]">現在のイベント状態</h4>
+                                      <p className="text-xs text-[#64748B] mt-1">
+                                        {(siteSettingForm as EventInfoSetting).hasEvent
+                                          ? 'イベントがある時の表示が使用されます'
+                                          : 'イベントがない時の表示が使用されます'}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-xs ${!(siteSettingForm as EventInfoSetting).hasEvent ? 'font-bold text-[#1E293B]' : 'text-[#94A3B8]'}`}>なし</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => setSiteSettingForm({
+                                          ...siteSettingForm as EventInfoSetting,
+                                          hasEvent: !(siteSettingForm as EventInfoSetting).hasEvent
+                                        })}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                          (siteSettingForm as EventInfoSetting).hasEvent ? 'bg-[#2563EB]' : 'bg-[#E2E8F0]'
+                                        }`}
+                                      >
+                                        <span
+                                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                            (siteSettingForm as EventInfoSetting).hasEvent ? 'translate-x-6' : 'translate-x-1'
+                                          }`}
+                                        />
+                                      </button>
+                                      <span className={`text-xs ${(siteSettingForm as EventInfoSetting).hasEvent ? 'font-bold text-[#1E293B]' : 'text-[#94A3B8]'}`}>あり</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* セクション1: イベントがある時 */}
+                                <div className="bg-[#F8FAFC] rounded-lg p-4 space-y-3">
+                                  <h4 className="font-bold text-sm text-[#1E293B] flex items-center gap-2">
+                                    <span className="w-5 h-5 bg-[#2563EB] text-white text-xs rounded-full flex items-center justify-center">1</span>
+                                    イベントがある時の表示
+                                  </h4>
+                                  <div className="bg-[#E6F1FB] rounded p-2">
+                                    <p className="text-xs text-[#185FA5]">
+                                      💡 イベント名・日時・会場は配信管理で登録したイベントから自動取得されます
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-[#64748B] mb-1">フォーマット</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => setSiteSettingForm({
+                                          ...siteSettingForm as EventInfoSetting,
+                                          withEvent: { ...(siteSettingForm as EventInfoSetting).withEvent, format: 'simple' }
+                                        })}
+                                        className={`p-2 rounded border text-center text-xs ${
+                                          (siteSettingForm as EventInfoSetting).withEvent?.format === 'simple'
+                                            ? 'border-[#2563EB] bg-[#EEF2FF]'
+                                            : 'border-[#E2E8F0]'
+                                        }`}
+                                      >
+                                        💬 シンプル
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setSiteSettingForm({
+                                          ...siteSettingForm as EventInfoSetting,
+                                          withEvent: { ...(siteSettingForm as EventInfoSetting).withEvent, format: 'card' }
+                                        })}
+                                        className={`p-2 rounded border text-center text-xs ${
+                                          (siteSettingForm as EventInfoSetting).withEvent?.format !== 'simple'
+                                            ? 'border-[#2563EB] bg-[#EEF2FF]'
+                                            : 'border-[#E2E8F0]'
+                                        }`}
+                                      >
+                                        📋 カード
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-[#64748B] mb-1">ヘッダーテキスト</label>
+                                    <input
+                                      type="text"
+                                      value={(siteSettingForm as EventInfoSetting).withEvent?.headerText || ''}
+                                      onChange={(e) => setSiteSettingForm({
+                                        ...siteSettingForm as EventInfoSetting,
+                                        withEvent: { ...(siteSettingForm as EventInfoSetting).withEvent, headerText: e.target.value }
+                                      })}
+                                      className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                      placeholder="例: イベントのお知らせ"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-[#64748B] mb-1">補足メッセージ</label>
+                                    <textarea
+                                      value={(siteSettingForm as EventInfoSetting).withEvent?.supplementText || ''}
+                                      onChange={(e) => setSiteSettingForm({
+                                        ...siteSettingForm as EventInfoSetting,
+                                        withEvent: { ...(siteSettingForm as EventInfoSetting).withEvent, supplementText: e.target.value }
+                                      })}
+                                      className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                      rows={2}
+                                      placeholder="イベント情報の下に表示するテキスト"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-[#64748B] mb-1">ボタンラベル</label>
+                                    <input
+                                      type="text"
+                                      value={(siteSettingForm as EventInfoSetting).withEvent?.buttonLabel || ''}
+                                      onChange={(e) => setSiteSettingForm({
+                                        ...siteSettingForm as EventInfoSetting,
+                                        withEvent: { ...(siteSettingForm as EventInfoSetting).withEvent, buttonLabel: e.target.value }
+                                      })}
+                                      className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                      placeholder="例: 申し込む"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-[#64748B] mb-1">ボタンURL</label>
+                                    <input
+                                      type="text"
+                                      value={(siteSettingForm as EventInfoSetting).withEvent?.buttonUrl || ''}
+                                      onChange={(e) => setSiteSettingForm({
+                                        ...siteSettingForm as EventInfoSetting,
+                                        withEvent: { ...(siteSettingForm as EventInfoSetting).withEvent, buttonUrl: e.target.value }
+                                      })}
+                                      className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                      placeholder="例: https://forms.gle/..."
+                                    />
+                                  </div>
+                                  {(siteSettingForm as EventInfoSetting).withEvent?.format !== 'simple' && (
+                                    <div>
+                                      <label className="block text-xs font-medium text-[#64748B] mb-1">画像（任意）</label>
+                                      {(siteSettingForm as EventInfoSetting).withEvent?.imageUrl ? (
+                                        <div className="space-y-1">
+                                          <img src={(siteSettingForm as EventInfoSetting).withEvent.imageUrl || ''} alt="" className="w-full h-20 object-cover rounded" />
+                                          <button
+                                            type="button"
+                                            onClick={() => setSiteSettingForm({
+                                              ...siteSettingForm as EventInfoSetting,
+                                              withEvent: { ...(siteSettingForm as EventInfoSetting).withEvent, imageUrl: null }
+                                            })}
+                                            className="text-xs text-[#E24B4A]"
+                                          >
+                                            削除
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            const formData = new FormData();
+                                            formData.append('file', file);
+                                            formData.append('type', 'image');
+                                            const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+                                            if (res.ok) {
+                                              const data = await res.json();
+                                              setSiteSettingForm({
+                                                ...siteSettingForm as EventInfoSetting,
+                                                withEvent: { ...(siteSettingForm as EventInfoSetting).withEvent, imageUrl: data.url }
+                                              });
+                                            }
+                                          }}
+                                          className="w-full text-xs"
+                                        />
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* セクション2: イベントがない時 */}
+                                <div className="bg-[#F8FAFC] rounded-lg p-4 space-y-3">
+                                  <h4 className="font-bold text-sm text-[#1E293B] flex items-center gap-2">
+                                    <span className="w-5 h-5 bg-[#64748B] text-white text-xs rounded-full flex items-center justify-center">2</span>
+                                    イベントがない時の表示
+                                  </h4>
+                                  <div>
+                                    <label className="block text-xs font-medium text-[#64748B] mb-1">フォーマット</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => setSiteSettingForm({
+                                          ...siteSettingForm as EventInfoSetting,
+                                          withoutEvent: { ...(siteSettingForm as EventInfoSetting).withoutEvent, format: 'simple' }
+                                        })}
+                                        className={`p-2 rounded border text-center text-xs ${
+                                          (siteSettingForm as EventInfoSetting).withoutEvent?.format === 'simple'
+                                            ? 'border-[#2563EB] bg-[#EEF2FF]'
+                                            : 'border-[#E2E8F0]'
+                                        }`}
+                                      >
+                                        💬 シンプル
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setSiteSettingForm({
+                                          ...siteSettingForm as EventInfoSetting,
+                                          withoutEvent: { ...(siteSettingForm as EventInfoSetting).withoutEvent, format: 'card' }
+                                        })}
+                                        className={`p-2 rounded border text-center text-xs ${
+                                          (siteSettingForm as EventInfoSetting).withoutEvent?.format !== 'simple'
+                                            ? 'border-[#2563EB] bg-[#EEF2FF]'
+                                            : 'border-[#E2E8F0]'
+                                        }`}
+                                      >
+                                        📋 カード
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-[#64748B] mb-1">メッセージ</label>
+                                    <textarea
+                                      value={(siteSettingForm as EventInfoSetting).withoutEvent?.message || ''}
+                                      onChange={(e) => setSiteSettingForm({
+                                        ...siteSettingForm as EventInfoSetting,
+                                        withoutEvent: { ...(siteSettingForm as EventInfoSetting).withoutEvent, message: e.target.value }
+                                      })}
+                                      className="w-full p-2 border border-[#E2E8F0] rounded text-sm"
+                                      rows={3}
+                                      placeholder="例: 現在予定されているイベントはありません。"
+                                    />
+                                  </div>
+                                  {(siteSettingForm as EventInfoSetting).withoutEvent?.format !== 'simple' && (
+                                    <div>
+                                      <label className="block text-xs font-medium text-[#64748B] mb-1">画像（任意）</label>
+                                      {(siteSettingForm as EventInfoSetting).withoutEvent?.imageUrl ? (
+                                        <div className="space-y-1">
+                                          <img src={(siteSettingForm as EventInfoSetting).withoutEvent.imageUrl || ''} alt="" className="w-full h-20 object-cover rounded" />
+                                          <button
+                                            type="button"
+                                            onClick={() => setSiteSettingForm({
+                                              ...siteSettingForm as EventInfoSetting,
+                                              withoutEvent: { ...(siteSettingForm as EventInfoSetting).withoutEvent, imageUrl: null }
+                                            })}
+                                            className="text-xs text-[#E24B4A]"
+                                          >
+                                            削除
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            const formData = new FormData();
+                                            formData.append('file', file);
+                                            formData.append('type', 'image');
+                                            const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+                                            if (res.ok) {
+                                              const data = await res.json();
+                                              setSiteSettingForm({
+                                                ...siteSettingForm as EventInfoSetting,
+                                                withoutEvent: { ...(siteSettingForm as EventInfoSetting).withoutEvent, imageUrl: data.url }
+                                              });
+                                            }
+                                          }}
+                                          className="w-full text-xs"
+                                        />
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </>
                             )}
@@ -2395,53 +2972,270 @@ function AdminPageContent() {
                               </>
                             )}
 
-                            {/* 画像アップロード（共通） */}
-                            <div>
-                              <label className="block text-sm font-medium text-[#1E293B] mb-1">画像</label>
-                              {(siteSettingForm as { imageUrl?: string | null }).imageUrl ? (
-                                <div className="space-y-2">
-                                  <img
-                                    src={(siteSettingForm as { imageUrl?: string | null }).imageUrl || ''}
-                                    alt="Preview"
-                                    className="w-full h-32 object-cover rounded border border-[#E2E8F0]"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => setSiteSettingForm({ ...siteSettingForm, imageUrl: null })}
-                                    className="text-xs text-[#E24B4A] hover:underline"
-                                  >
-                                    画像を削除
-                                  </button>
+                              {/* 画像アップロード（共通・カード形式のみ） */}
+                              {(siteSettingForm as { format?: string }).format !== 'simple' && (
+                                <div>
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-1">画像</label>
+                                  {(siteSettingForm as { imageUrl?: string | null }).imageUrl ? (
+                                    <div className="space-y-2">
+                                      <img
+                                        src={(siteSettingForm as { imageUrl?: string | null }).imageUrl || ''}
+                                        alt="Preview"
+                                        className="w-full h-32 object-cover rounded border border-[#E2E8F0]"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => setSiteSettingForm({ ...siteSettingForm, imageUrl: null })}
+                                        className="text-xs text-[#E24B4A] hover:underline"
+                                      >
+                                        画像を削除
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={handleSiteSettingImageUpload}
+                                      disabled={uploadingSiteSettingImage}
+                                      className="w-full text-sm"
+                                    />
+                                  )}
+                                  {uploadingSiteSettingImage && (
+                                    <p className="text-xs text-[#64748B] mt-1">アップロード中...</p>
+                                  )}
                                 </div>
-                              ) : (
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={handleSiteSettingImageUpload}
-                                  disabled={uploadingSiteSettingImage}
-                                  className="w-full text-sm"
-                                />
                               )}
-                              {uploadingSiteSettingImage && (
-                                <p className="text-xs text-[#64748B] mt-1">アップロード中...</p>
-                              )}
+
+                              {/* 保存ボタン */}
+                              <div className="flex gap-2 pt-4 border-t border-[#E2E8F0]">
+                                <button
+                                  onClick={handleSiteSettingSave}
+                                  disabled={isSavingSiteSetting}
+                                  className="flex-1 px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8] disabled:opacity-50"
+                                >
+                                  {isSavingSiteSetting ? '保存中...' : '保存'}
+                                </button>
+                                <button
+                                  onClick={closeSiteSettingEdit}
+                                  className="px-4 py-2 bg-[#E2E8F0] text-[#64748B] text-sm font-medium rounded-lg hover:bg-[#D1D5DB]"
+                                >
+                                  キャンセル
+                                </button>
+                              </div>
                             </div>
 
-                            {/* 保存ボタン */}
-                            <div className="flex gap-2 pt-4 border-t border-[#E2E8F0]">
-                              <button
-                                onClick={handleSiteSettingSave}
-                                disabled={isSavingSiteSetting}
-                                className="flex-1 px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8] disabled:opacity-50"
-                              >
-                                {isSavingSiteSetting ? '保存中...' : '保存'}
-                              </button>
-                              <button
-                                onClick={closeSiteSettingEdit}
-                                className="px-4 py-2 bg-[#E2E8F0] text-[#64748B] text-sm font-medium rounded-lg hover:bg-[#D1D5DB]"
-                              >
-                                キャンセル
-                              </button>
+                            {/* 右側: LINEプレビュー */}
+                            <div className="w-[45%] p-4 bg-[#F8FAFC]">
+                              <div className="flex items-center justify-between mb-3">
+                                <p className="text-xs font-medium text-[#64748B]">プレビュー</p>
+                                {/* イベント案内の場合はトグルを表示 */}
+                                {editingSiteSetting === 'a_event_info' && (
+                                  <div className="flex bg-white rounded-lg border border-[#E2E8F0] p-0.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setEventPreviewMode('withEvent')}
+                                      className={`px-2 py-1 text-[10px] rounded ${
+                                        eventPreviewMode === 'withEvent' ? 'bg-[#2563EB] text-white' : 'text-[#64748B]'
+                                      }`}
+                                    >
+                                      イベントあり
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEventPreviewMode('withoutEvent')}
+                                      className={`px-2 py-1 text-[10px] rounded ${
+                                        eventPreviewMode === 'withoutEvent' ? 'bg-[#2563EB] text-white' : 'text-[#64748B]'
+                                      }`}
+                                    >
+                                      イベントなし
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="bg-white rounded-lg border border-[#E2E8F0] overflow-hidden">
+                                {/* LINEヘッダー */}
+                                <div className="bg-[#64748B] text-white px-3 py-2 flex items-center gap-2">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                  </svg>
+                                  <span className="text-xs font-medium">PowerScrapper公式</span>
+                                </div>
+
+                                {/* トーク画面 */}
+                                <div className="bg-[#7494C0] p-3 min-h-[300px]">
+                                  <div className="flex items-start gap-2">
+                                    <div className="w-8 h-8 bg-[#06C755] rounded-full flex items-center justify-center shrink-0">
+                                      <span className="text-white text-[10px] font-bold">PS</span>
+                                    </div>
+                                    <div className="flex-1 max-w-[85%]">
+                                      {/* イベント案内プレビュー */}
+                                      {editingSiteSetting === 'a_event_info' && (
+                                        <>
+                                          {/* イベントありプレビュー */}
+                                          {eventPreviewMode === 'withEvent' && (
+                                            <>
+                                              {(siteSettingForm as EventInfoSetting).withEvent?.format === 'simple' ? (
+                                                <div className="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm">
+                                                  <p className="text-sm text-[#1E293B] whitespace-pre-wrap">
+                                                    {(siteSettingForm as EventInfoSetting).withEvent?.headerText || 'ヘッダーテキスト'}
+                                                    {(siteSettingForm as EventInfoSetting).withEvent?.supplementText && `\n\n${(siteSettingForm as EventInfoSetting).withEvent.supplementText}`}
+                                                  </p>
+                                                  <p className="text-[10px] text-[#94A3B8] mt-2 border-t border-dashed border-[#E2E8F0] pt-2">
+                                                    ※ イベント名・日時・会場は配信管理のデータが自動挿入されます
+                                                  </p>
+                                                  {(siteSettingForm as EventInfoSetting).withEvent?.buttonLabel && (
+                                                    <p className="text-xs text-[#2563EB] mt-2 underline">
+                                                      {(siteSettingForm as EventInfoSetting).withEvent.buttonLabel}
+                                                    </p>
+                                                  )}
+                                                </div>
+                                              ) : (
+                                                <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+                                                  {(siteSettingForm as EventInfoSetting).withEvent?.imageUrl && (
+                                                    <img src={(siteSettingForm as EventInfoSetting).withEvent.imageUrl || ''} alt="" className="w-full h-20 object-cover" />
+                                                  )}
+                                                  <div className="bg-[#2563EB] px-2 py-1">
+                                                    <span className="text-white text-[10px] font-medium">📅 イベント</span>
+                                                  </div>
+                                                  <div className="p-2">
+                                                    <p className="text-[10px] text-[#64748B] mb-1">{(siteSettingForm as EventInfoSetting).withEvent?.headerText || 'ヘッダーテキスト'}</p>
+                                                    <p className="text-[10px] text-[#94A3B8] italic">※ イベント情報は配信管理から自動挿入</p>
+                                                    {(siteSettingForm as EventInfoSetting).withEvent?.supplementText && (
+                                                      <p className="text-[10px] text-[#64748B] mt-1">{(siteSettingForm as EventInfoSetting).withEvent.supplementText}</p>
+                                                    )}
+                                                  </div>
+                                                  <div className="border-t border-[#E2E8F0]">
+                                                    <div className="px-2 py-1.5 text-center text-[#2563EB] text-[10px] font-medium">
+                                                      {(siteSettingForm as EventInfoSetting).withEvent?.buttonLabel || 'ボタンラベル'}
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </>
+                                          )}
+                                          {/* イベントなしプレビュー */}
+                                          {eventPreviewMode === 'withoutEvent' && (
+                                            <>
+                                              {(siteSettingForm as EventInfoSetting).withoutEvent?.format === 'simple' ? (
+                                                <div className="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm">
+                                                  <p className="text-sm text-[#1E293B] whitespace-pre-wrap">
+                                                    {(siteSettingForm as EventInfoSetting).withoutEvent?.message || 'イベントがない時のメッセージ...'}
+                                                  </p>
+                                                </div>
+                                              ) : (
+                                                <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+                                                  {(siteSettingForm as EventInfoSetting).withoutEvent?.imageUrl && (
+                                                    <img src={(siteSettingForm as EventInfoSetting).withoutEvent.imageUrl || ''} alt="" className="w-full h-20 object-cover" />
+                                                  )}
+                                                  <div className="bg-[#64748B] px-2 py-1">
+                                                    <span className="text-white text-[10px] font-medium">📢 お知らせ</span>
+                                                  </div>
+                                                  <div className="p-2">
+                                                    <p className="text-xs text-[#1E293B]">
+                                                      {(siteSettingForm as EventInfoSetting).withoutEvent?.message || 'イベントがない時のメッセージ...'}
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </>
+                                          )}
+                                        </>
+                                      )}
+
+                                      {/* その他の通知プレビュー */}
+                                      {editingSiteSetting !== 'a_event_info' && (
+                                        <>
+                                          {/* シンプル形式 */}
+                                          {(siteSettingForm as { format?: string }).format === 'simple' && (
+                                            <div className="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm">
+                                              <p className="text-sm text-[#1E293B] whitespace-pre-wrap">
+                                                {(() => {
+                                                  const form = siteSettingForm as Record<string, unknown>;
+                                                  // contact_info と welcome は message フィールドのみ（フォールバックなし）
+                                                  if (editingSiteSetting === 'a_contact_info' || editingSiteSetting === 'a_welcome') {
+                                                    return (form.message as string) || 'メッセージを入力...';
+                                                  }
+                                                  // その他は旧構造にフォールバック
+                                                  const msg = (form.message as string) || '';
+                                                  if (msg) return msg;
+                                                  const text = (form.textMessage as string) || (form.headingText as string) || '';
+                                                  const body = (form.supplementMessage as string) || '';
+                                                  return text || body ? `${text}${text && body ? '\n\n' : ''}${body}` : 'メッセージを入力...';
+                                                })()}
+                                              </p>
+                                              {(() => {
+                                                const form = siteSettingForm as Record<string, unknown>;
+                                                const url = (form.buttonUrl as string) || '';
+                                                return url && <p className="text-xs text-[#2563EB] mt-2 break-all">{url}</p>;
+                                              })()}
+                                            </div>
+                                          )}
+
+                                          {/* カード形式 */}
+                                          {(siteSettingForm as { format?: string }).format !== 'simple' && (
+                                            <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+                                              {(siteSettingForm as { imageUrl?: string | null }).imageUrl && (
+                                                <img
+                                                  src={(siteSettingForm as { imageUrl?: string | null }).imageUrl || ''}
+                                                  alt="Preview"
+                                                  className="w-full h-24 object-cover"
+                                                />
+                                              )}
+                                              <div className="bg-[#2563EB] px-2 py-1">
+                                                <span className="text-white text-[10px] font-medium">
+                                                  {(() => {
+                                                    const form = siteSettingForm as Record<string, unknown>;
+                                                    // カテゴリB/Cは見出しテキストを表示
+                                                    if (form.headingText) {
+                                                      return `📢 ${form.headingText}`;
+                                                    }
+                                                    // その他は固定ラベル
+                                                    if (editingSiteSetting === 'a_welcome') return '👋 ようこそ';
+                                                    if (editingSiteSetting === 'a_contact_info') return '📞 お問い合わせ';
+                                                    return '📢 お知らせ';
+                                                  })()}
+                                                </span>
+                                              </div>
+                                              <div className="p-2">
+                                                <p className="text-[10px] text-[#1E293B] whitespace-pre-wrap line-clamp-6">
+                                                  {(() => {
+                                                    const form = siteSettingForm as Record<string, unknown>;
+                                                    // contact_info と welcome は message フィールドのみ（フォールバックなし）
+                                                    if (editingSiteSetting === 'a_contact_info' || editingSiteSetting === 'a_welcome') {
+                                                      return (form.message as string) || 'メッセージを入力...';
+                                                    }
+                                                    // カテゴリB/Cは補足メッセージを表示
+                                                    if (form.headingText) {
+                                                      return (form.supplementMessage as string) || '';
+                                                    }
+                                                    // その他は旧構造にフォールバック
+                                                    const msg = (form.message as string) || '';
+                                                    if (msg) return msg;
+                                                    const text = (form.textMessage as string) || '';
+                                                    const body = (form.supplementMessage as string) || '';
+                                                    return text || body ? `${text}${text && body ? '\n\n' : ''}${body}` : 'メッセージを入力...';
+                                                  })()}
+                                                </p>
+                                              </div>
+                                              {(() => {
+                                                const form = siteSettingForm as Record<string, unknown>;
+                                                const label = (form.buttonLabel as string) || '';
+                                                return label && (
+                                                  <div className="border-t border-[#E2E8F0]">
+                                                    <div className="px-2 py-1.5 text-center text-[#2563EB] text-[10px] font-medium">
+                                                      {label}
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })()}
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )}

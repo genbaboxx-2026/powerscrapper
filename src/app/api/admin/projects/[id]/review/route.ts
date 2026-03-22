@@ -4,11 +4,12 @@ import { cookies } from 'next/headers';
 import {
   pushMessage,
   broadcastMessage,
-  createApprovalNotification,
-  createRejectionNotification,
+  createApprovalNotificationV2,
+  createRejectionNotificationV2,
   createProjectNotification,
 } from '@/lib/line';
 import { isNotificationEnabled } from '@/lib/notification-helper';
+import { getSystemNotificationContent } from '@/lib/site-settings';
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -126,11 +127,13 @@ export async function POST(request: NextRequest, { params }: Params) {
     // LINE通知を送信
     try {
       if (action === 'approve') {
-        // B-7: 投稿者に承認通知（Flex Message）
+        // B-7: 投稿者に承認通知
         const isApprovalEnabled = await isNotificationEnabled('b_project_approved');
         if (isApprovalEnabled) {
+          // 設定を取得してフォーマットに応じたメッセージを作成
+          const approvalSettings = await getSystemNotificationContent('b_project_approved');
           await pushMessage(project.user.lineUserId, [
-            createApprovalNotification(project.title, projectId),
+            createApprovalNotificationV2(project.title, projectId, approvalSettings),
           ]);
         }
 
@@ -150,12 +153,14 @@ export async function POST(request: NextRequest, { params }: Params) {
           ]);
         }
       } else {
-        // B-8: 投稿者に却下通知（Flex Message）
+        // B-8: 投稿者に却下通知
         const isRejectionEnabled = await isNotificationEnabled('b_project_rejected');
         if (isRejectionEnabled) {
           const reason = rejectionReason || '詳細はお問い合わせください。';
+          // 設定を取得してフォーマットに応じたメッセージを作成
+          const rejectionSettings = await getSystemNotificationContent('b_project_rejected');
           await pushMessage(project.user.lineUserId, [
-            createRejectionNotification(project.title, reason),
+            createRejectionNotificationV2(project.title, reason, rejectionSettings),
           ]);
         }
       }

@@ -56,6 +56,12 @@ export default function ProjectBidsPage({ params }: Props) {
   const [selectedBid, setSelectedBid] = useState<Bid | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectSuccess, setConnectSuccess] = useState(false);
+  const [contactInfo, setContactInfo] = useState<{
+    companyName: string | null;
+    representativeName: string | null;
+    phone: string | null;
+    email: string | null;
+  } | null>(null);
 
   useEffect(() => {
     const fetchBids = async () => {
@@ -102,13 +108,17 @@ export default function ProjectBidsPage({ params }: Props) {
         method: 'POST',
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || '連絡に失敗しました');
       }
 
-      // 成功
+      // 成功 - 連絡先情報を保存
       setConnectSuccess(true);
+      if (data.contactInfo) {
+        setContactInfo(data.contactInfo);
+      }
 
       // bidsの該当入札を更新
       setBids(bids.map(b =>
@@ -134,6 +144,7 @@ export default function ProjectBidsPage({ params }: Props) {
     setShowConnectModal(false);
     setSelectedBid(null);
     setConnectSuccess(false);
+    setContactInfo(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -405,12 +416,13 @@ export default function ProjectBidsPage({ params }: Props) {
                   </h3>
                   <p className="text-sm text-[#1E293B] mb-3">
                     <span className="font-bold">{selectedBid.bidder.companyName}</span> に
-                    あなたの連絡先がLINEで届きます。
+                    あなたの連絡先をLINEで送信します。
                   </p>
                   <div className="bg-[#F8FAFC] rounded-lg p-3 mb-4 text-sm text-[#64748B]">
-                    <p className="font-medium text-[#1E293B] mb-1">送信される情報:</p>
+                    <p className="font-medium text-[#1E293B] mb-1">相手に送信される情報:</p>
                     <p>・会社名、担当者名</p>
                     <p>・電話番号、メールアドレス</p>
+                    <p className="mt-2 text-xs">※送信後、相手企業の連絡先が表示されます</p>
                   </div>
                   <div className="flex gap-3">
                     <button
@@ -450,9 +462,50 @@ export default function ProjectBidsPage({ params }: Props) {
                     <h3 className="text-lg font-bold text-[#1E293B] mb-2">
                       連絡先を送信しました！
                     </h3>
-                    <p className="text-sm text-[#64748B] mb-6">
-                      双方のLINEに連絡先が届いています。
+                    <p className="text-sm text-[#64748B] mb-4">
+                      相手企業にあなたの連絡先がLINEで届きました。
                     </p>
+
+                    {/* 相手の連絡先情報を表示 */}
+                    {contactInfo && (
+                      <div className="bg-[#F8FAFC] rounded-lg p-4 mb-4 text-left">
+                        <p className="text-sm font-bold text-[#1E293B] mb-3">
+                          {contactInfo.companyName || selectedBid?.bidder.companyName || '企業名未設定'} の連絡先
+                        </p>
+                        {contactInfo.representativeName && (
+                          <div className="flex items-center gap-2 mb-2">
+                            <svg className="w-4 h-4 text-[#64748B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <span className="text-sm text-[#1E293B]">{contactInfo.representativeName}</span>
+                          </div>
+                        )}
+                        {contactInfo.phone && (
+                          <div className="flex items-center gap-2 mb-2">
+                            <svg className="w-4 h-4 text-[#64748B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            <a href={`tel:${contactInfo.phone}`} className="text-sm text-[#2563EB] underline">
+                              {contactInfo.phone}
+                            </a>
+                          </div>
+                        )}
+                        {contactInfo.email && (
+                          <div className="flex items-center gap-2">
+                            <svg className="w-4 h-4 text-[#64748B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            <a href={`mailto:${contactInfo.email}`} className="text-sm text-[#2563EB] underline">
+                              {contactInfo.email}
+                            </a>
+                          </div>
+                        )}
+                        {!contactInfo.phone && !contactInfo.email && (
+                          <p className="text-sm text-[#64748B]">連絡先情報が登録されていません</p>
+                        )}
+                      </div>
+                    )}
+
                     <button
                       onClick={closeModal}
                       className="w-full py-3 bg-[#2563EB] text-white rounded-lg font-medium"

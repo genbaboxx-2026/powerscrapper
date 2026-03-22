@@ -8,12 +8,16 @@ import {
   createDynamicEventFallbackMessage,
   createBroadcastFlexMessage,
   createPostbackMessage,
+  createEventWithEventMessage,
+  createEventWithoutEventMessage,
+  createContactInfoMessageV2,
+  createWelcomeMessageV2,
   type WebhookEvent,
   type MessageEvent,
 } from '@/lib/line';
 import { prisma } from '@/lib/prisma';
 import { isNotificationEnabled } from '@/lib/notification-helper';
-import { getContactInfo, getWelcomeMessage, getEventFallback, getPostbackNotificationContent } from '@/lib/site-settings';
+import { getContactInfo, getWelcomeMessage, getEventFallback, getPostbackNotificationContent, getEventInfoSetting } from '@/lib/site-settings';
 
 /**
  * LINE Webhook エンドポイント
@@ -99,8 +103,13 @@ async function handleFollow(userId: string, replyToken: string): Promise<void> {
       // SiteSettingsからウェルカムメッセージを取得
       const welcomeMsg = await getWelcomeMessage();
       // 設定がない場合は何も送信しない
-      if (welcomeMsg && welcomeMsg.title) {
-        await replyMessage(replyToken, [createDynamicWelcomeMessage(welcomeMsg)]);
+      if (welcomeMsg && welcomeMsg.message) {
+        // 新構造: format, message, buttonLabel, buttonUrl, imageUrl
+        const messages = createWelcomeMessageV2(welcomeMsg);
+        await replyMessage(replyToken, messages);
+      } else if (welcomeMsg && (welcomeMsg as unknown as { title?: string }).title) {
+        // 旧構造: title, body, buttonLabel, buttonUrl, imageUrl
+        await replyMessage(replyToken, [createDynamicWelcomeMessage(welcomeMsg as unknown as { title: string; body: string; imageUrl: string | null; buttonLabel: string; buttonUrl: string })]);
       } else {
         console.log('Welcome message not configured, skipping');
       }
@@ -192,41 +201,39 @@ async function handleMessage(event: MessageEvent): Promise<void> {
 
   switch (text) {
     case 'イベント案内': {
-      // A-2: イベント案内応答（Broadcastテーブルから動的取得）
+      // A-2: イベント案内応答（手動設定に基づいて表示）
       const isEventInfoEnabled = await isNotificationEnabled('a_event_info');
       if (isEventInfoEnabled) {
-        // 最新のイベント配信を取得（送信済みまたは予約済み）
-        const latestEvent = await prisma.broadcast.findFirst({
-          where: {
-            type: 'event',
-            status: { in: ['sent', 'scheduled'] },
-          },
-          orderBy: { createdAt: 'desc' },
-        });
+        // 設定を取得
+        const eventInfoSetting = await getEventInfoSetting();
 
-        if (latestEvent) {
-          // Broadcastテーブルのイベント情報からFlex Messageを生成
-          const messages = createBroadcastFlexMessage({
-            type: latestEvent.type,
-            title: latestEvent.title,
-            body: latestEvent.body,
-            eventDate: latestEvent.eventDate,
-            eventVenue: latestEvent.eventVenue,
-            formUrl: latestEvent.formUrl,
-            imageUrl: latestEvent.imageUrl,
-            pdfUrl: latestEvent.pdfUrl,
-            youtubeUrl: latestEvent.youtubeUrl,
-          });
+        if (!eventInfoSetting) {
+          console.log('Event info setting not configured, skipping');
+          break;
+        }
+
+        // hasEventフラグで表示を切り替え（デフォルトはfalse）
+        const hasEvent = eventInfoSetting.hasEvent ?? false;
+
+        if (hasEvent && eventInfoSetting.withEvent) {
+          // イベントがある場合: withEvent設定とボタンURLを使用
+          const messages = createEventWithEventMessage(
+            {
+              title: eventInfoSetting.withEvent.headerText || 'イベントのお知らせ',
+              eventDate: null,
+              eventVenue: null,
+              formUrl: eventInfoSetting.withEvent.buttonUrl || null,
+              imageUrl: eventInfoSetting.withEvent.imageUrl,
+            },
+            eventInfoSetting.withEvent
+          );
+          await replyMessage(replyToken, messages);
+        } else if (eventInfoSetting.withoutEvent) {
+          // イベントがない場合: withoutEvent設定を使用
+          const messages = createEventWithoutEventMessage(eventInfoSetting.withoutEvent);
           await replyMessage(replyToken, messages);
         } else {
-          // イベントがない場合はSiteSettingsからフォールバックメッセージを取得
-          const fallback = await getEventFallback();
-          // 設定がない場合は何も送信しない
-          if (fallback && fallback.message) {
-            await replyMessage(replyToken, [createDynamicEventFallbackMessage(fallback)]);
-          } else {
-            console.log('Event fallback message not configured, skipping');
-          }
+          console.log('Event info withoutEvent not configured, skipping');
         }
       }
       break;
@@ -238,8 +245,13 @@ async function handleMessage(event: MessageEvent): Promise<void> {
       if (isContactInfoEnabled) {
         const contactInfo = await getContactInfo();
         // 設定がない場合は何も送信しない
-        if (contactInfo && (contactInfo.companyName || contactInfo.email || contactInfo.phone)) {
-          await replyMessage(replyToken, [createDynamicContactInfoMessage(contactInfo)]);
+        if (contactInfo && contactInfo.message) {
+          // 新構造: format, message, buttonLabel, buttonUrl, imageUrl
+          const messages = createContactInfoMessageV2(contactInfo);
+          await replyMessage(replyToken, messages);
+        } else if (contactInfo && ((contactInfo as unknown as { companyName?: string }).companyName || (contactInfo as unknown as { email?: string }).email || (contactInfo as unknown as { phone?: string }).phone)) {
+          // 旧構造: companyName, personName, phone, email, lineId, note, imageUrl
+          await replyMessage(replyToken, [createDynamicContactInfoMessage(contactInfo as unknown as { companyName: string; personName: string; phone: string; email: string; lineId: string; note: string; imageUrl: string | null })]);
         } else {
           console.log('Contact info not configured, skipping');
         }

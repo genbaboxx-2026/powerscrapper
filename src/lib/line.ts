@@ -1660,7 +1660,463 @@ export function createMatchNotification(
 }
 
 /**
+ * 連絡先交換通知メッセージを作成（設定に基づく）
+ */
+export function createMatchNotificationV2(
+  projectTitle: string,
+  partnerCompanyName: string,
+  partnerRepresentative: string | null,
+  partnerPhone: string | null,
+  partnerEmail: string | null,
+  partnerLineDisplayName: string | null,
+  settings?: SystemNotificationSettings | null
+) {
+  // 連絡先交換通知は常にカード形式で送信（format設定は無視）
+  const headingText = settings?.headingText || '案件の返答がありました';
+  const supplementMessage = settings?.supplementMessage || 'お早めにご連絡ください！';
+
+  // カードフォーマット（Flex Message）のみを使用
+  const contactInfoContents: unknown[] = [];
+
+  // 会社名
+  contactInfoContents.push({
+    type: 'text',
+    text: partnerCompanyName,
+    weight: 'bold',
+    size: 'xl',
+    color: TEXT_PRIMARY_COLOR,
+  });
+
+  // 担当者名
+  if (partnerRepresentative) {
+    contactInfoContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'lg',
+      contents: [
+        {
+          type: 'text',
+          text: '担当者',
+          size: 'sm',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 2,
+        },
+        {
+          type: 'text',
+          text: partnerRepresentative,
+          size: 'sm',
+          color: TEXT_PRIMARY_COLOR,
+          flex: 5,
+          weight: 'bold',
+        },
+      ],
+    });
+  }
+
+  // 電話番号
+  if (partnerPhone) {
+    contactInfoContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'md',
+      action: {
+        type: 'uri',
+        label: 'Call',
+        uri: `tel:${partnerPhone.replace(/-/g, '')}`,
+      },
+      contents: [
+        {
+          type: 'text',
+          text: '電話番号',
+          size: 'sm',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 2,
+        },
+        {
+          type: 'text',
+          text: partnerPhone,
+          size: 'sm',
+          color: TEXT_ACCENT_COLOR,
+          flex: 5,
+          decoration: 'underline',
+        },
+      ],
+    });
+  }
+
+  // メールアドレス
+  if (partnerEmail) {
+    contactInfoContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'md',
+      action: {
+        type: 'uri',
+        label: 'Email',
+        uri: `mailto:${partnerEmail}`,
+      },
+      contents: [
+        {
+          type: 'text',
+          text: 'メール',
+          size: 'sm',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 2,
+        },
+        {
+          type: 'text',
+          text: partnerEmail,
+          size: 'sm',
+          color: TEXT_ACCENT_COLOR,
+          flex: 5,
+          decoration: 'underline',
+          wrap: true,
+        },
+      ],
+    });
+  }
+
+  const bodyContents: unknown[] = [
+    {
+      type: 'text',
+      text: '案件名',
+      weight: 'bold',
+      size: 'sm',
+      color: TEXT_PRIMARY_COLOR,
+    },
+    {
+      type: 'text',
+      text: projectTitle,
+      size: 'md',
+      color: TEXT_PRIMARY_COLOR,
+      wrap: true,
+      margin: 'sm',
+    },
+    {
+      type: 'separator',
+      margin: 'lg',
+    },
+    {
+      type: 'text',
+      text: '相手企業の連絡先',
+      size: 'sm',
+      color: TEXT_SECONDARY_COLOR,
+      margin: 'lg',
+      weight: 'bold',
+    },
+    {
+      type: 'box',
+      layout: 'vertical',
+      margin: 'md',
+      contents: contactInfoContents,
+    },
+  ];
+
+  // 補足メッセージ
+  if (supplementMessage) {
+    bodyContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'xl',
+      backgroundColor: '#FEF3C7',
+      cornerRadius: '8px',
+      paddingAll: '12px',
+      contents: [
+        {
+          type: 'text',
+          text: `💡 ${supplementMessage}`,
+          size: 'sm',
+          color: '#92400E',
+          weight: 'bold',
+          wrap: true,
+        },
+      ],
+    });
+  }
+
+  bodyContents.push(
+    {
+      type: 'separator',
+      margin: 'lg',
+    },
+    {
+      type: 'text',
+      text: '※ PowerScrapper公式からの自動送信です',
+      size: 'xxs',
+      color: TEXT_SECONDARY_COLOR,
+      margin: 'md',
+      align: 'center',
+    }
+  );
+
+  return {
+    type: 'flex',
+    altText: `${headingText}: ${projectTitle}`,
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_SUCCESS_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: headingText,
+            color: '#FFFFFF',
+            size: 'lg',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        contents: bodyContents,
+      },
+    },
+  };
+}
+
+/**
+ * お問い合わせメッセージを作成（新構造対応）
+ */
+export function createContactInfoMessageV2(info: {
+  format: 'simple' | 'card';
+  message: string;
+  buttonLabel: string;
+  buttonUrl: string;
+  imageUrl: string | null;
+}) {
+  if (info.format === 'simple') {
+    // シンプル形式: テキストメッセージ
+    const messages: unknown[] = [{ type: 'text', text: info.message }];
+    if (info.imageUrl) {
+      messages.push({
+        type: 'image',
+        originalContentUrl: info.imageUrl,
+        previewImageUrl: info.imageUrl,
+      });
+    }
+    return messages;
+  }
+
+  // カード形式: Flex Message
+  const hero: Record<string, unknown> = info.imageUrl
+    ? {
+        type: 'image',
+        url: info.imageUrl,
+        size: 'full',
+        aspectRatio: '20:9',
+        aspectMode: 'cover',
+      }
+    : {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: 'お問い合わせ',
+            color: '#FFFFFF',
+            size: 'lg',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      };
+
+  const bubble: Record<string, unknown> = {
+    type: 'bubble',
+    hero,
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '20px',
+      contents: [
+        ...(info.imageUrl
+          ? [
+              {
+                type: 'text',
+                text: 'お問い合わせ',
+                weight: 'bold',
+                size: 'lg',
+                color: TEXT_PRIMARY_COLOR,
+              },
+            ]
+          : []),
+        {
+          type: 'text',
+          text: info.message,
+          size: 'sm',
+          color: TEXT_PRIMARY_COLOR,
+          wrap: true,
+          margin: info.imageUrl ? 'lg' : undefined,
+        },
+      ],
+    },
+  };
+
+  // ボタンがある場合はフッターを追加
+  if (info.buttonLabel && info.buttonUrl) {
+    bubble.footer = {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '12px',
+      contents: [
+        {
+          type: 'button',
+          action: {
+            type: 'uri',
+            label: info.buttonLabel,
+            uri: info.buttonUrl,
+          },
+          style: 'primary',
+          color: BUTTON_PRIMARY_COLOR,
+          height: 'sm',
+        },
+      ],
+    };
+  }
+
+  return [
+    {
+      type: 'flex',
+      altText: 'お問い合わせ',
+      contents: bubble,
+    },
+  ];
+}
+
+/**
+ * ウェルカムメッセージを作成（新構造対応）
+ */
+export function createWelcomeMessageV2(msg: {
+  format: 'simple' | 'card';
+  message: string;
+  buttonLabel: string;
+  buttonUrl: string;
+  imageUrl: string | null;
+}) {
+  if (msg.format === 'simple') {
+    // シンプル形式: テキストメッセージ
+    let text = msg.message;
+    if (msg.buttonUrl) {
+      text += '\n\n' + msg.buttonUrl;
+    }
+    const messages: unknown[] = [{ type: 'text', text }];
+    if (msg.imageUrl) {
+      messages.push({
+        type: 'image',
+        originalContentUrl: msg.imageUrl,
+        previewImageUrl: msg.imageUrl,
+      });
+    }
+    return messages;
+  }
+
+  // カード形式: Flex Message
+  const hero: Record<string, unknown> = msg.imageUrl
+    ? {
+        type: 'image',
+        url: msg.imageUrl,
+        size: 'full',
+        aspectRatio: '20:9',
+        aspectMode: 'cover',
+      }
+    : {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: 'ようこそ！',
+            color: '#FFFFFF',
+            size: 'lg',
+            align: 'center',
+          },
+          {
+            type: 'text',
+            text: 'PowerScrapperの集い',
+            color: '#FFFFFF',
+            size: 'xxl',
+            weight: 'bold',
+            align: 'center',
+            margin: 'sm',
+          },
+        ],
+      };
+
+  const bubble: Record<string, unknown> = {
+    type: 'bubble',
+    hero,
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '20px',
+      contents: [
+        ...(msg.imageUrl
+          ? [
+              {
+                type: 'text',
+                text: 'ようこそ！',
+                weight: 'bold',
+                size: 'lg',
+                color: TEXT_PRIMARY_COLOR,
+              },
+            ]
+          : []),
+        {
+          type: 'text',
+          text: msg.message,
+          size: 'sm',
+          color: TEXT_PRIMARY_COLOR,
+          wrap: true,
+          margin: msg.imageUrl ? 'lg' : undefined,
+        },
+      ],
+    },
+  };
+
+  // ボタンがある場合はフッターを追加
+  if (msg.buttonLabel && msg.buttonUrl) {
+    bubble.footer = {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '12px',
+      contents: [
+        {
+          type: 'button',
+          action: {
+            type: 'uri',
+            label: msg.buttonLabel,
+            uri: msg.buttonUrl,
+          },
+          style: 'primary',
+          color: BUTTON_PRIMARY_COLOR,
+          height: 'sm',
+        },
+      ],
+    };
+  }
+
+  return [
+    {
+      type: 'flex',
+      altText: 'ようこそ！',
+      contents: bubble,
+    },
+  ];
+}
+
+/**
  * お問い合わせメッセージを作成（デフォルト）
+ * @deprecated Use createContactInfoMessageV2 instead
  */
 export function createContactInfoMessage() {
   return createDynamicContactInfoMessage({
@@ -2068,6 +2524,277 @@ export function createDynamicEventFallbackMessage(fallback: {
       },
     },
   };
+}
+
+/**
+ * イベント案内メッセージを作成（イベントがある場合）
+ * withEvent設定に基づいて、フォーマットに応じたメッセージを生成
+ */
+export function createEventWithEventMessage(
+  event: {
+    title: string;
+    eventDate?: string | null;
+    eventVenue?: string | null;
+    formUrl?: string | null;
+    imageUrl?: string | null;
+  },
+  setting: {
+    format: 'simple' | 'card';
+    headerText: string;
+    supplementText: string;
+    imageUrl: string | null;
+    buttonLabel: string;
+  }
+) {
+  if (setting.format === 'simple') {
+    // シンプル形式: テキストメッセージ
+    let text = setting.headerText || 'イベントのお知らせ';
+    text += '\n\n' + event.title;
+    if (event.eventDate) {
+      text += '\n📅 ' + event.eventDate;
+    }
+    if (event.eventVenue) {
+      text += '\n📍 ' + event.eventVenue;
+    }
+    if (setting.supplementText) {
+      text += '\n\n' + setting.supplementText;
+    }
+    if (event.formUrl) {
+      text += '\n\n' + event.formUrl;
+    }
+
+    const messages: unknown[] = [{ type: 'text', text }];
+
+    // 設定の画像またはイベントの画像
+    const imageUrl = setting.imageUrl || event.imageUrl;
+    if (imageUrl) {
+      messages.push({
+        type: 'image',
+        originalContentUrl: imageUrl,
+        previewImageUrl: imageUrl,
+      });
+    }
+
+    return messages;
+  }
+
+  // カード形式: Flex Message
+  const bodyContents: unknown[] = [
+    {
+      type: 'text',
+      text: event.title,
+      weight: 'bold',
+      size: 'lg',
+      color: TEXT_PRIMARY_COLOR,
+      wrap: true,
+    },
+    {
+      type: 'separator',
+      margin: 'lg',
+    },
+  ];
+
+  if (event.eventDate) {
+    bodyContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'lg',
+      contents: [
+        { type: 'text', text: '📅', size: 'sm', flex: 0 },
+        { type: 'text', text: event.eventDate, size: 'sm', color: TEXT_PRIMARY_COLOR, margin: 'sm', flex: 1 },
+      ],
+    });
+  }
+
+  if (event.eventVenue) {
+    bodyContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'sm',
+      contents: [
+        { type: 'text', text: '📍', size: 'sm', flex: 0 },
+        { type: 'text', text: event.eventVenue, size: 'sm', color: TEXT_PRIMARY_COLOR, margin: 'sm', flex: 1 },
+      ],
+    });
+  }
+
+  if (setting.supplementText) {
+    bodyContents.push({
+      type: 'text',
+      text: setting.supplementText,
+      size: 'sm',
+      color: TEXT_PRIMARY_COLOR,
+      wrap: true,
+      margin: 'lg',
+    });
+  }
+
+  // Hero部分
+  const imageUrl = setting.imageUrl || event.imageUrl;
+  const hero: Record<string, unknown> = imageUrl
+    ? {
+        type: 'image',
+        url: imageUrl,
+        size: 'full',
+        aspectRatio: '20:9',
+        aspectMode: 'cover',
+      }
+    : {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: setting.headerText || 'イベントのお知らせ',
+            color: '#FFFFFF',
+            size: 'lg',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      };
+
+  const bubble: Record<string, unknown> = {
+    type: 'bubble',
+    hero,
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '20px',
+      contents: imageUrl
+        ? [
+            {
+              type: 'text',
+              text: setting.headerText || 'イベントのお知らせ',
+              weight: 'bold',
+              size: 'md',
+              color: TEXT_SECONDARY_COLOR,
+            },
+            ...bodyContents,
+          ]
+        : bodyContents,
+    },
+  };
+
+  // 申し込みボタン
+  if (event.formUrl) {
+    bubble.footer = {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '12px',
+      contents: [
+        {
+          type: 'button',
+          action: {
+            type: 'uri',
+            label: setting.buttonLabel || '申し込む',
+            uri: event.formUrl,
+          },
+          style: 'primary',
+          color: BUTTON_PRIMARY_COLOR,
+          height: 'sm',
+        },
+      ],
+    };
+  }
+
+  return [
+    {
+      type: 'flex',
+      altText: `${setting.headerText || 'イベントのお知らせ'}: ${event.title}`,
+      contents: bubble,
+    },
+  ];
+}
+
+/**
+ * イベント案内メッセージを作成（イベントがない場合）
+ * withoutEvent設定に基づいて、フォーマットに応じたメッセージを生成
+ */
+export function createEventWithoutEventMessage(setting: {
+  format: 'simple' | 'card';
+  message: string;
+  imageUrl: string | null;
+}) {
+  if (setting.format === 'simple') {
+    // シンプル形式: テキストメッセージ
+    const messages: unknown[] = [{ type: 'text', text: setting.message }];
+
+    if (setting.imageUrl) {
+      messages.push({
+        type: 'image',
+        originalContentUrl: setting.imageUrl,
+        previewImageUrl: setting.imageUrl,
+      });
+    }
+
+    return messages;
+  }
+
+  // カード形式: Flex Message
+  const hero: Record<string, unknown> = setting.imageUrl
+    ? {
+        type: 'image',
+        url: setting.imageUrl,
+        size: 'full',
+        aspectRatio: '20:9',
+        aspectMode: 'cover',
+      }
+    : {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: 'イベント案内',
+            color: '#FFFFFF',
+            size: 'lg',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      };
+
+  return [
+    {
+      type: 'flex',
+      altText: 'イベント案内',
+      contents: {
+        type: 'bubble',
+        hero,
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          paddingAll: '20px',
+          contents: [
+            ...(setting.imageUrl
+              ? [
+                  {
+                    type: 'text',
+                    text: 'イベント案内',
+                    weight: 'bold',
+                    size: 'lg',
+                    color: TEXT_PRIMARY_COLOR,
+                  },
+                ]
+              : []),
+            {
+              type: 'text',
+              text: setting.message,
+              size: 'sm',
+              color: TEXT_PRIMARY_COLOR,
+              wrap: true,
+              margin: setting.imageUrl ? 'lg' : undefined,
+            },
+          ],
+        },
+      },
+    },
+  ];
 }
 
 /**
@@ -2839,6 +3566,217 @@ export function createCustomWeeklyDigestMessage(
               type: 'uri',
               label: '全ての案件を見る',
               uri: `https://liff.line.me/${liffId}/projects?tab=project`,
+            },
+            style: 'primary',
+            color: BUTTON_PRIMARY_COLOR,
+            height: 'sm',
+          },
+        ],
+      },
+    },
+  };
+}
+
+/**
+ * システム通知設定の型
+ */
+type SystemNotificationSettings = {
+  format?: 'simple' | 'card';
+  headingText?: string;
+  supplementMessage?: string | null;
+  imageUrl?: string | null;
+};
+
+/**
+ * 案件承認通知メッセージを作成（設定に基づく）
+ */
+export function createApprovalNotificationV2(
+  projectTitle: string,
+  projectId: string,
+  settings?: SystemNotificationSettings | null
+) {
+  const liffId = getLiffId();
+  const format = settings?.format || 'card';
+  const headingText = settings?.headingText || '案件が公開されました';
+  const supplementMessage = settings?.supplementMessage || '管理者の審査を通過し、案件一覧に掲載されました。興味ありが届いたらLINEで通知します。';
+
+  // シンプルフォーマット（テキストメッセージ）
+  if (format === 'simple') {
+    let message = `${headingText}\n\n${projectTitle}`;
+    if (supplementMessage) {
+      message += `\n\n${supplementMessage}`;
+    }
+    message += `\n\n案件を確認する:\nhttps://liff.line.me/${liffId}/projects/${projectId}`;
+
+    return createTextMessage(message);
+  }
+
+  // カードフォーマット（Flex Message）
+  return {
+    type: 'flex',
+    altText: `${headingText}: ${projectTitle}`,
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: headingText,
+            color: '#FFFFFF',
+            size: 'lg',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: projectTitle,
+            weight: 'bold',
+            size: 'lg',
+            color: TEXT_PRIMARY_COLOR,
+            wrap: true,
+          },
+          ...(supplementMessage ? [{
+            type: 'text' as const,
+            text: supplementMessage,
+            size: 'sm' as const,
+            color: TEXT_SECONDARY_COLOR,
+            wrap: true,
+            margin: 'lg' as const,
+          }] : []),
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '12px',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '案件を確認する',
+              uri: `https://liff.line.me/${liffId}/projects/${projectId}`,
+            },
+            style: 'primary',
+            color: BUTTON_PRIMARY_COLOR,
+            height: 'sm',
+          },
+        ],
+      },
+    },
+  };
+}
+
+/**
+ * 案件却下通知メッセージを作成（設定に基づく）
+ */
+export function createRejectionNotificationV2(
+  projectTitle: string,
+  rejectionReason: string,
+  settings?: SystemNotificationSettings | null
+) {
+  const liffId = getLiffId();
+  const format = settings?.format || 'card';
+  const headingText = settings?.headingText || '案件が承認されませんでした';
+  const supplementMessage = settings?.supplementMessage || '内容を修正して再投稿できます。';
+
+  // シンプルフォーマット（テキストメッセージ）
+  if (format === 'simple') {
+    let message = `${headingText}\n\n${projectTitle}\n\n【却下理由】\n${rejectionReason}`;
+    if (supplementMessage) {
+      message += `\n\n${supplementMessage}`;
+    }
+    message += `\n\n修正して再投稿する:\nhttps://liff.line.me/${liffId}/projects/new`;
+
+    return createTextMessage(message);
+  }
+
+  // カードフォーマット（Flex Message）
+  return {
+    type: 'flex',
+    altText: `${headingText}: ${projectTitle}`,
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: DANGER_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: headingText,
+            color: '#FFFFFF',
+            size: 'lg',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: projectTitle,
+            weight: 'bold',
+            size: 'lg',
+            color: TEXT_PRIMARY_COLOR,
+            wrap: true,
+          },
+          {
+            type: 'separator',
+            margin: 'lg',
+          },
+          {
+            type: 'text',
+            text: '却下理由',
+            size: 'xs',
+            color: TEXT_SECONDARY_COLOR,
+            margin: 'lg',
+          },
+          {
+            type: 'text',
+            text: rejectionReason,
+            size: 'sm',
+            color: TEXT_PRIMARY_COLOR,
+            wrap: true,
+            margin: 'sm',
+          },
+          ...(supplementMessage ? [{
+            type: 'text' as const,
+            text: supplementMessage,
+            size: 'sm' as const,
+            color: TEXT_SECONDARY_COLOR,
+            wrap: true,
+            margin: 'lg' as const,
+          }] : []),
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '12px',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '修正して再投稿する',
+              uri: `https://liff.line.me/${liffId}/projects/new`,
             },
             style: 'primary',
             color: BUTTON_PRIMARY_COLOR,

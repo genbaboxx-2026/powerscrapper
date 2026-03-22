@@ -1,27 +1,43 @@
 import { prisma } from '@/lib/prisma';
 
-// 型定義
+// 型定義（新構造）
 export type ContactInfo = {
-  companyName: string;
-  personName: string;
-  phone: string;
-  email: string;
-  lineId: string;
-  note: string;
+  format: 'simple' | 'card';
+  message: string;
+  buttonLabel: string;
+  buttonUrl: string;
   imageUrl: string | null;
 };
 
 export type WelcomeMessage = {
-  title: string;
-  body: string;
-  imageUrl: string | null;
+  format: 'simple' | 'card';
+  message: string;
   buttonLabel: string;
   buttonUrl: string;
+  imageUrl: string | null;
 };
 
 export type EventFallback = {
   message: string;
   imageUrl: string | null;
+};
+
+// イベント案内通知の型定義（新構造）
+export type EventInfoSetting = {
+  hasEvent: boolean; // イベントあり/なしの手動切り替え
+  withEvent: {
+    format: 'simple' | 'card';
+    headerText: string;
+    supplementText: string;
+    imageUrl: string | null;
+    buttonLabel: string;
+    buttonUrl: string;
+  };
+  withoutEvent: {
+    format: 'simple' | 'card';
+    message: string;
+    imageUrl: string | null;
+  };
 };
 
 // Postback系通知の型定義
@@ -134,7 +150,15 @@ export async function getWelcomeMessage(): Promise<WelcomeMessage | null> {
 
 /**
  * イベントフォールバックメッセージを取得（フォールバックなし）
+ * @deprecated Use getEventInfoSetting instead
  */
 export async function getEventFallback(): Promise<EventFallback | null> {
   return getSiteSetting<EventFallback>('event_fallback');
+}
+
+/**
+ * イベント案内設定を取得（新構造）
+ */
+export async function getEventInfoSetting(): Promise<EventInfoSetting | null> {
+  return getSiteSetting<EventInfoSetting>('event_fallback');
 }
