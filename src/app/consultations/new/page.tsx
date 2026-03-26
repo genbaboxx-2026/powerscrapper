@@ -154,7 +154,7 @@ export default function NewConsultationPage() {
   };
 
   return (
-    <AuthGuard>
+    <AuthGuard requireApproval requireMember>
       <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
         <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
@@ -180,8 +180,8 @@ export default function NewConsultationPage() {
         </header>
 
         <main className="p-4 pb-24">
-          <div className="card p-4 mb-4">
-            <h1 className="text-lg font-bold text-[#1E293B] mb-2">
+          <div className="mb-4">
+            <h1 className="text-lg font-bold text-[#1E293B] mb-1">
               相談を投稿する
             </h1>
             <p className="text-sm text-[#64748B]">
@@ -325,7 +325,7 @@ export default function NewConsultationPage() {
             </div>
 
             {/* 注意事項 */}
-            <div className="card p-4 mb-4 bg-[#F8FAFC] border-[#E2E8F0]">
+            <div className="mb-4">
               <p className="text-xs text-[#64748B]">
                 ※ 投稿内容は会員全員に公開されます。
                 <br />※ 個人情報や機密情報は記載しないでください。

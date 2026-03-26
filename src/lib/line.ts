@@ -4207,3 +4207,461 @@ export function createRejectionNotificationV2(
     },
   };
 }
+
+// ==============================================
+// リッチメニュー関連
+// ==============================================
+
+/**
+ * ユーザーにリッチメニューを紐付け
+ */
+export async function linkRichMenuToUser(userId: string, richMenuId: string) {
+  const token = process.env.LINE_MESSAGING_CHANNEL_TOKEN;
+
+  if (!token) {
+    console.error('LINE_MESSAGING_CHANNEL_TOKEN is not set');
+    return { error: 'LINE configuration error' };
+  }
+
+  try {
+    const res = await fetch(`${LINE_API_BASE}/user/${userId}/richmenu/${richMenuId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const errorBody = await res.text();
+      console.error('LINE link rich menu error:', res.status, errorBody);
+      return { error: `Failed to link rich menu: ${res.status}` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to link rich menu:', error);
+    return { error: 'Failed to link rich menu' };
+  }
+}
+
+/**
+ * 未承認者用リッチメニュー（リッチメニューA）を紐付け
+ */
+export async function setRichMenuA(userId: string) {
+  const richMenuId = process.env.LINE_RICH_MENU_A_ID;
+  if (!richMenuId) {
+    console.log('LINE_RICH_MENU_A_ID is not set, skipping rich menu link');
+    return { skipped: true };
+  }
+  return linkRichMenuToUser(userId, richMenuId);
+}
+
+/**
+ * 承認者用リッチメニュー（リッチメニューB）を紐付け
+ */
+export async function setRichMenuB(userId: string) {
+  const richMenuId = process.env.LINE_RICH_MENU_B_ID;
+  if (!richMenuId) {
+    console.log('LINE_RICH_MENU_B_ID is not set, skipping rich menu link');
+    return { skipped: true };
+  }
+  return linkRichMenuToUser(userId, richMenuId);
+}
+
+// ==============================================
+// 入会審査関連通知メッセージ
+// ==============================================
+
+/**
+ * 入会申請通知メッセージを作成（管理者向け）
+ */
+export function createMemberApplicationNotification(
+  applicantName: string,
+  companyName: string | null,
+  applicationNote: string | null,
+  referrerName: string | null
+) {
+  const liffId = getLiffId();
+
+  const bodyContents: unknown[] = [
+    {
+      type: 'text',
+      text: applicantName,
+      weight: 'bold',
+      size: 'lg',
+      color: TEXT_PRIMARY_COLOR,
+    },
+  ];
+
+  if (companyName) {
+    bodyContents.push({
+      type: 'text',
+      text: companyName,
+      size: 'sm',
+      color: TEXT_SECONDARY_COLOR,
+      margin: 'sm',
+    });
+  }
+
+  bodyContents.push({
+    type: 'separator',
+    margin: 'lg',
+  });
+
+  if (applicationNote) {
+    bodyContents.push({
+      type: 'box',
+      layout: 'vertical',
+      margin: 'lg',
+      contents: [
+        {
+          type: 'text',
+          text: '入会理由',
+          size: 'xs',
+          color: TEXT_SECONDARY_COLOR,
+        },
+        {
+          type: 'text',
+          text: applicationNote,
+          size: 'sm',
+          color: TEXT_PRIMARY_COLOR,
+          wrap: true,
+          margin: 'sm',
+        },
+      ],
+    });
+  }
+
+  if (referrerName) {
+    bodyContents.push({
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'md',
+      contents: [
+        {
+          type: 'text',
+          text: '紹介者',
+          size: 'xs',
+          color: TEXT_SECONDARY_COLOR,
+          flex: 0,
+        },
+        {
+          type: 'text',
+          text: referrerName,
+          size: 'sm',
+          color: TEXT_PRIMARY_COLOR,
+          flex: 1,
+          margin: 'md',
+        },
+      ],
+    });
+  }
+
+  return {
+    type: 'flex',
+    altText: '新規入会申請がありました',
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: '新規入会申請',
+            color: '#FFFFFF',
+            size: 'lg',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        contents: bodyContents,
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '12px',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '審査画面を開く',
+              uri: `https://liff.line.me/${liffId}/admin?tab=members`,
+            },
+            style: 'primary',
+            color: BUTTON_PRIMARY_COLOR,
+            height: 'sm',
+          },
+        ],
+      },
+    },
+  };
+}
+
+/**
+ * 入会承認通知メッセージを作成（ユーザー向け）
+ */
+export function createMemberApprovalNotification() {
+  const liffId = getLiffId();
+
+  return {
+    type: 'flex',
+    altText: 'パワスクへようこそ！入会が承認されました',
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: 'パワスクへようこそ！🎉',
+            color: '#FFFFFF',
+            size: 'xl',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: '入会申請が承認されました！',
+            weight: 'bold',
+            size: 'md',
+            color: TEXT_PRIMARY_COLOR,
+          },
+          {
+            type: 'text',
+            text: 'すべての機能がご利用いただけます。',
+            size: 'sm',
+            color: TEXT_SECONDARY_COLOR,
+            wrap: true,
+            margin: 'md',
+          },
+          {
+            type: 'separator',
+            margin: 'xl',
+          },
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            spacing: 'sm',
+            contents: [
+              {
+                type: 'text',
+                text: '・パワスク相談で情報交換',
+                size: 'sm',
+                color: TEXT_PRIMARY_COLOR,
+              },
+              {
+                type: 'text',
+                text: '・案件の投稿・マッチング',
+                size: 'sm',
+                color: TEXT_PRIMARY_COLOR,
+              },
+              {
+                type: 'text',
+                text: '・会員一覧で仲間を見つける',
+                size: 'sm',
+                color: TEXT_PRIMARY_COLOR,
+              },
+            ],
+          },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '12px',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: 'さっそく使ってみる',
+              uri: `https://liff.line.me/${liffId}/projects`,
+            },
+            style: 'primary',
+            color: BUTTON_PRIMARY_COLOR,
+            height: 'sm',
+          },
+        ],
+      },
+    },
+  };
+}
+
+/**
+ * 入会却下通知メッセージを作成（ユーザー向け）
+ */
+export function createMemberRejectionNotification(rejectionReason: string | null) {
+  return {
+    type: 'flex',
+    altText: '入会申請について',
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: DANGER_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: '入会申請結果',
+            color: '#FFFFFF',
+            size: 'lg',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: '申請が承認されませんでした',
+            weight: 'bold',
+            size: 'md',
+            color: TEXT_PRIMARY_COLOR,
+          },
+          {
+            type: 'text',
+            text: '誠に申し訳ございませんが、今回の入会申請は承認されませんでした。',
+            size: 'sm',
+            color: TEXT_SECONDARY_COLOR,
+            wrap: true,
+            margin: 'lg',
+          },
+          ...(rejectionReason ? [
+            {
+              type: 'separator' as const,
+              margin: 'lg' as const,
+            },
+            {
+              type: 'box' as const,
+              layout: 'vertical' as const,
+              margin: 'lg' as const,
+              contents: [
+                {
+                  type: 'text' as const,
+                  text: '理由',
+                  size: 'xs' as const,
+                  color: TEXT_SECONDARY_COLOR,
+                },
+                {
+                  type: 'text' as const,
+                  text: rejectionReason,
+                  size: 'sm' as const,
+                  color: TEXT_PRIMARY_COLOR,
+                  wrap: true,
+                  margin: 'sm' as const,
+                },
+              ],
+            },
+          ] : []),
+        ],
+      },
+    },
+  };
+}
+
+/**
+ * 入会申請誘導ウェルカムメッセージを作成（友だち追加時）
+ */
+export function createApplicationWelcomeMessage() {
+  const liffId = getLiffId();
+
+  return {
+    type: 'flex',
+    altText: 'パワスクへようこそ！',
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: HERO_COLOR,
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: 'パワスクへようこそ！🔨',
+            color: '#FFFFFF',
+            size: 'xl',
+            weight: 'bold',
+            align: 'center',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        contents: [
+          {
+            type: 'text',
+            text: '解体業界の仲間とつながる\nコミュニティ＆プラットフォームです。',
+            size: 'sm',
+            color: TEXT_PRIMARY_COLOR,
+            wrap: true,
+          },
+          {
+            type: 'separator',
+            margin: 'xl',
+          },
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            contents: [
+              {
+                type: 'text',
+                text: 'サービスをご利用いただくには\n入会申請が必要です。\n下のボタンから申請してください👇',
+                size: 'sm',
+                color: TEXT_PRIMARY_COLOR,
+                wrap: true,
+              },
+            ],
+          },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '12px',
+        contents: [
+          {
+            type: 'button',
+            action: {
+              type: 'uri',
+              label: '入会申請する',
+              uri: `https://liff.line.me/${liffId}/apply`,
+            },
+            style: 'primary',
+            color: BUTTON_PRIMARY_COLOR,
+            height: 'sm',
+          },
+        ],
+      },
+    },
+  };
+}

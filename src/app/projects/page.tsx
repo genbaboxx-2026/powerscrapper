@@ -281,7 +281,7 @@ function MainContent() {
 
 export default function ProjectsPage() {
   return (
-    <AuthGuard>
+    <AuthGuard requireApproval requireMember>
       <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
         <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 flex items-center justify-between">

@@ -33,10 +33,10 @@ export async function GET(req: NextRequest) {
       recentProjects,
       recentConsultations,
     ] = await Promise.all([
-      // 会員数
-      prisma.user.count({ where: { isActive: true } }),
-      // 今週の新規会員
-      prisma.user.count({ where: { createdAt: { gte: oneWeekAgo } } }),
+      // 会員数（承認済みのみ）
+      prisma.user.count({ where: { isActive: true, approvalStatus: 'approved' } }),
+      // 今週の新規会員（承認済みのみ）
+      prisma.user.count({ where: { approvalStatus: 'approved', createdAt: { gte: oneWeekAgo } } }),
       // 案件総数
       prisma.project.count(),
       // 公開中案件
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
       prisma.match.count({ where: { adminStatus: 'closed_won' } }),
       // 企業別活動状況
       prisma.user.findMany({
-        where: { isActive: true, profileCompleted: true },
+        where: { isActive: true, profileCompleted: true, approvalStatus: 'approved' },
         select: {
           id: true,
           companyName: true,

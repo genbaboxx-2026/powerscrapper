@@ -19,6 +19,9 @@ const NOTIFICATION_SETTINGS = [
   { key: 'b_project_rejected', label: '案件却下通知', category: 'B', description: '案件が却下された時、登録者に通知', enabled: true },
   { key: 'b_new_project_admin', label: '新規案件（管理者向け）', category: 'B', description: '新規案件登録時、管理者に通知', enabled: true },
   { key: 'b_new_project_broadcast', label: '新着案件（全会員）', category: 'B', description: '案件承認時、全会員に通知（デフォルトOFF）', enabled: false },
+  { key: 'b_member_application', label: '入会申請通知（管理者向け）', category: 'B', description: '入会申請時、管理者に通知', enabled: true },
+  { key: 'b_member_approved', label: '入会承認通知', category: 'B', description: '入会が承認された時、申請者に通知', enabled: true },
+  { key: 'b_member_rejected', label: '入会却下通知', category: 'B', description: '入会が却下された時、申請者に通知', enabled: true },
 
   // カテゴリC（運営配信・定期）
   { key: 'c_weekly_digest', label: '週次まとめ配信', category: 'C', description: '毎週月曜9時に全会員へ週次まとめを配信', enabled: true },

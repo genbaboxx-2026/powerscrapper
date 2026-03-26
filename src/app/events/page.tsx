@@ -44,7 +44,7 @@ export default function EventsPage() {
   };
 
   return (
-    <AuthGuard>
+    <AuthGuard requireApproval allowPending>
       <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
         <header className="bg-white border-b border-[#E2E8F0] px-4 py-3">

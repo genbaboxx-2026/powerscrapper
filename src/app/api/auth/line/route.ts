@@ -46,6 +46,9 @@ export async function POST(req: NextRequest) {
         profileCompleted: user.profileCompleted,
         role: user.role,
         companyName: user.companyName,
+        approvalStatus: user.approvalStatus,
+        memberRank: user.memberRank,
+        rejectionReason: user.rejectionReason,
       },
     });
   } catch (error) {

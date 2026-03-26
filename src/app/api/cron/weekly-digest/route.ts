@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
     const members = await prisma.user.findMany({
       where: {
         isActive: true,
+        approvalStatus: 'approved',
       },
       select: {
         lineUserId: true,

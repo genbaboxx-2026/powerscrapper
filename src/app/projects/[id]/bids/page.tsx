@@ -142,7 +142,7 @@ export default function ProjectBidsPage({ params }: Props) {
 
   if (isLoading) {
     return (
-      <AuthGuard>
+      <AuthGuard requireApproval allowPending>
         <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563EB] mx-auto"></div>
@@ -155,7 +155,7 @@ export default function ProjectBidsPage({ params }: Props) {
 
   if (error && !project) {
     return (
-      <AuthGuard>
+      <AuthGuard requireApproval allowPending>
         <div className="min-h-screen bg-[#F8FAFC]">
           <header className="bg-white border-b border-[#E2E8F0] px-4 py-3">
             <button
@@ -191,7 +191,7 @@ export default function ProjectBidsPage({ params }: Props) {
   const connectedCount = bids.filter(b => b.isMatched).length;
 
   return (
-    <AuthGuard>
+    <AuthGuard requireApproval allowPending>
       <div className="min-h-screen bg-[#F8FAFC]">
         {/* ヘッダー */}
         <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">

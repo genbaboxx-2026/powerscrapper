@@ -12,6 +12,7 @@ import {
   createEventWithoutEventMessage,
   createContactInfoMessageV2,
   createWelcomeMessageV2,
+  createApplicationWelcomeMessage,
   type WebhookEvent,
   type MessageEvent,
 } from '@/lib/line';
@@ -71,7 +72,7 @@ async function handleEvent(event: WebhookEvent): Promise<void> {
       break;
 
     case 'message':
-      await handleMessage(event);
+      await handleMessage(event, userId);
       break;
 
     default:
@@ -86,57 +87,37 @@ async function handleFollow(userId: string, replyToken: string): Promise<void> {
   console.log('Follow event:', userId);
 
   try {
-    // ユーザーを作成または更新（isActive = true）
-    await prisma.user.upsert({
+    // 既存ユーザーを確認
+    const existingUser = await prisma.user.findUnique({
+      where: { lineUserId: userId },
+    });
+
+    // ユーザーを作成または更新（isActive = true, approvalStatus設定）
+    const user = await prisma.user.upsert({
       where: { lineUserId: userId },
       update: { isActive: true },
       create: {
         lineUserId: userId,
         isActive: true,
         role: 'member',
+        approvalStatus: 'none',
       },
     });
 
-    // A-1: ウェルカムメッセージを送信
+    // ウェルカムメッセージのみ送信（イベント情報・PDFは送らない）
     const isWelcomeEnabled = await isNotificationEnabled('a_welcome');
     if (isWelcomeEnabled) {
-      // SiteSettingsからウェルカムメッセージを取得
-      const welcomeMsg = await getWelcomeMessage();
-      // 設定がない場合は何も送信しない
-      if (welcomeMsg && welcomeMsg.message) {
-        // 新構造: format, message, buttonLabel, buttonUrl, imageUrl
-        const messages = createWelcomeMessageV2(welcomeMsg);
-
-        // イベント案内も同時送信する場合
-        if (welcomeMsg.sendEventInfo) {
-          const eventInfoSetting = await getEventInfoSetting();
-          if (eventInfoSetting) {
-            const hasEvent = eventInfoSetting.hasEvent ?? false;
-            if (hasEvent && eventInfoSetting.withEvent) {
-              const eventMessages = createEventWithEventMessage(
-                {
-                  title: eventInfoSetting.withEvent.headerText || 'イベントのお知らせ',
-                  eventDate: null,
-                  eventVenue: null,
-                  formUrl: eventInfoSetting.withEvent.buttonUrl || null,
-                  imageUrl: eventInfoSetting.withEvent.imageUrl,
-                },
-                eventInfoSetting.withEvent
-              );
-              messages.push(...eventMessages);
-            } else if (eventInfoSetting.withoutEvent) {
-              const eventMessages = createEventWithoutEventMessage(eventInfoSetting.withoutEvent);
-              messages.push(...eventMessages);
-            }
-          }
+      if (existingUser && existingUser.approvalStatus === 'approved') {
+        // 承認済みユーザーの再フォロー: 通常のウェルカムメッセージのみ
+        const welcomeMsg = await getWelcomeMessage();
+        if (welcomeMsg && welcomeMsg.message) {
+          await replyMessage(replyToken, createWelcomeMessageV2(welcomeMsg));
+        } else if (welcomeMsg && (welcomeMsg as unknown as { title?: string }).title) {
+          await replyMessage(replyToken, [createDynamicWelcomeMessage(welcomeMsg as unknown as { title: string; body: string; imageUrl: string | null; buttonLabel: string; buttonUrl: string })]);
         }
-
-        await replyMessage(replyToken, messages);
-      } else if (welcomeMsg && (welcomeMsg as unknown as { title?: string }).title) {
-        // 旧構造: title, body, buttonLabel, buttonUrl, imageUrl
-        await replyMessage(replyToken, [createDynamicWelcomeMessage(welcomeMsg as unknown as { title: string; body: string; imageUrl: string | null; buttonLabel: string; buttonUrl: string })]);
       } else {
-        console.log('Welcome message not configured, skipping');
+        // 新規ユーザーまたは未承認ユーザー: 入会申請誘導のウェルカムメッセージ
+        await replyMessage(replyToken, [createApplicationWelcomeMessage()]);
       }
     }
   } catch (error) {
@@ -215,7 +196,7 @@ async function handlePostback(
 /**
  * メッセージイベント処理
  */
-async function handleMessage(event: MessageEvent): Promise<void> {
+async function handleMessage(event: MessageEvent, userId: string): Promise<void> {
   const { replyToken, message } = event;
 
   if (message.type !== 'text' || !message.text) {
@@ -226,6 +207,13 @@ async function handleMessage(event: MessageEvent): Promise<void> {
 
   switch (text) {
     case 'イベント案内': {
+      // 未承認ユーザーには入会申請を促す
+      const user = await prisma.user.findUnique({ where: { lineUserId: userId } });
+      if (!user || user.approvalStatus !== 'approved') {
+        await replyMessage(replyToken, [createApplicationWelcomeMessage()]);
+        break;
+      }
+
       // A-2: イベント案内応答（手動設定に基づいて表示）
       const isEventInfoEnabled = await isNotificationEnabled('a_event_info');
       if (isEventInfoEnabled) {
@@ -260,6 +248,36 @@ async function handleMessage(event: MessageEvent): Promise<void> {
         } else {
           console.log('Event info withoutEvent not configured, skipping');
         }
+      }
+      break;
+    }
+
+    case 'パワスク相談': {
+      const consultUser = await prisma.user.findUnique({ where: { lineUserId: userId } });
+      if (!consultUser || consultUser.approvalStatus !== 'approved') {
+        // 未申請/審査待ち/却下 → 入会申請誘導
+        await replyMessage(replyToken, [createApplicationWelcomeMessage()]);
+      } else if (consultUser.memberRank !== 'member') {
+        // ゲスト会員 → 準備中テキスト
+        await replyMessage(replyToken, [createTextMessage('現在準備中です🙇\nご利用開始までしばらくお待ちください。')]);
+      } else {
+        // メンバー会員 → LIFFリンク
+        const liffId = process.env.NEXT_PUBLIC_LIFF_ID || '2009511132-2ruFmQGp';
+        await replyMessage(replyToken, [{
+          type: 'template',
+          altText: 'パワスク相談はこちら👇',
+          template: {
+            type: 'buttons',
+            text: 'パワスク相談はこちら👇',
+            actions: [
+              {
+                type: 'uri',
+                label: 'パワスク相談を開く',
+                uri: `https://liff.line.me/${liffId}/consultations`,
+              },
+            ],
+          },
+        }]);
       }
       break;
     }

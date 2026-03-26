@@ -345,7 +345,7 @@ export default function ProjectNewPage() {
   }
 
   return (
-    <AuthGuard requireProfile>
+    <AuthGuard requireProfile requireApproval requireMember>
       <div className="min-h-screen bg-[#F8FAFC] overflow-x-hidden">
         {/* ヘッダー */}
         <header className="bg-white border-b border-[#E2E8F0] px-4 py-3 sticky top-0 z-10">
@@ -440,11 +440,11 @@ export default function ProjectNewPage() {
           {/* Step 2: プロフィール確認 */}
           {currentStep === 2 && profile && (
             <div className="space-y-4">
-              <div className="card p-4">
+              <div className="py-3 border-b border-[#F1F5F9]">
                 <h3 className="text-sm font-medium text-[#64748B] mb-1">会社名</h3>
                 <p className="text-[#1E293B]">{profile.companyName || '未登録'}</p>
               </div>
-              <div className="card p-4">
+              <div className="py-3 border-b border-[#F1F5F9]">
                 <h3 className="text-sm font-medium text-[#64748B] mb-1">業種</h3>
                 <p className="text-[#1E293B]">
                   {profile.businessType
@@ -452,16 +452,16 @@ export default function ProjectNewPage() {
                     : '未登録'}
                 </p>
               </div>
-              <div className="card p-4">
+              <div className="py-3 border-b border-[#F1F5F9]">
                 <h3 className="text-sm font-medium text-[#64748B] mb-1">代表者名</h3>
                 <p className="text-[#1E293B]">{profile.representativeName || '未登録'}</p>
               </div>
-              <div className="card p-4">
+              <div className="py-3 border-b border-[#F1F5F9]">
                 <h3 className="text-sm font-medium text-[#64748B] mb-1">連絡先</h3>
                 <p className="text-[#1E293B]">{profile.phone || '未登録'}</p>
                 <p className="text-[#64748B] text-sm">{profile.email || ''}</p>
               </div>
-              <div className="card p-4">
+              <div className="py-3">
                 <h3 className="text-sm font-medium text-[#64748B] mb-1">対応エリア</h3>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {profile.coverageAreas.length > 0 ? (

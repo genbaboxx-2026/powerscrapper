@@ -13,6 +13,9 @@ type LiffContextType = {
   isFriend: boolean | null;
   profileCompleted: boolean;
   role: string | null;
+  approvalStatus: string | null;
+  memberRank: string | null;
+  rejectionReason: string | null;
   error: string | null;
   logout: () => void;
 };
@@ -27,6 +30,9 @@ const LiffContext = createContext<LiffContextType>({
   isFriend: null,
   profileCompleted: false,
   role: null,
+  approvalStatus: null,
+  memberRank: null,
+  rejectionReason: null,
   error: null,
   logout: () => {},
 });
@@ -42,6 +48,9 @@ export function LiffProvider({ children }: { children: ReactNode }) {
     isFriend: null,
     profileCompleted: false,
     role: null,
+    approvalStatus: null,
+    memberRank: null,
+    rejectionReason: null,
     error: null,
   });
 
@@ -111,6 +120,9 @@ export function LiffProvider({ children }: { children: ReactNode }) {
           isFriend: data.isFriend,
           profileCompleted: data.user?.profileCompleted ?? false,
           role: data.user?.role ?? null,
+          approvalStatus: data.user?.approvalStatus ?? null,
+          memberRank: data.user?.memberRank ?? null,
+          rejectionReason: data.user?.rejectionReason ?? null,
           error: null,
         });
       } catch (err) {
