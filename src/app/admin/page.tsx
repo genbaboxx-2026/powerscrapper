@@ -2819,7 +2819,7 @@ function AdminPageContent() {
                   <div>
                     <h3 className="text-sm font-bold text-[#1E293B] mb-3 flex items-center gap-2">
                       下書き・予約
-                      <span className="w-5 h-5 rounded-full bg-[#F59E0B] flex items-center justify-center text-white text-xs">
+                      <span className="w-5 h-5 rounded-full bg-[#E2E8F0] flex items-center justify-center text-[#64748B] text-xs">
                         {broadcasts.filter(b => b.status !== 'sent').length}
                       </span>
                     </h3>
@@ -2905,7 +2905,7 @@ function AdminPageContent() {
                         className="w-full text-sm font-bold text-[#1E293B] mb-3 flex items-center gap-2 hover:opacity-80 transition-opacity"
                       >
                         送信済み
-                        <span className="w-5 h-5 rounded-full bg-[#1D9E75] flex items-center justify-center text-white text-xs">
+                        <span className="w-5 h-5 rounded-full bg-[#E2E8F0] flex items-center justify-center text-[#64748B] text-xs">
                           {broadcasts.filter(b => b.status === 'sent').length}
                         </span>
                         <svg
