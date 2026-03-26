@@ -585,6 +585,7 @@ function AdminPageContent() {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [broadcastSubTab, setBroadcastSubTab] = useState<'broadcasts' | 'settings'>('broadcasts');
   const [expandedNotification, setExpandedNotification] = useState<string | null>(null);
+  const [showSentBroadcasts, setShowSentBroadcasts] = useState(false);
 
   // Site settings edit state
   const [editingSiteSetting, setEditingSiteSetting] = useState<string | null>(null);
@@ -2896,15 +2897,27 @@ function AdminPageContent() {
                     </div>
                   )}
 
-                  {/* 送信済みセクション */}
+                  {/* 送信済みセクション（アコーディオン） */}
                   {broadcasts.filter(b => b.status === 'sent').length > 0 && (
                     <div>
-                      <h3 className="text-sm font-bold text-[#1E293B] mb-3 flex items-center gap-2">
+                      <button
+                        onClick={() => setShowSentBroadcasts(!showSentBroadcasts)}
+                        className="w-full text-sm font-bold text-[#1E293B] mb-3 flex items-center gap-2 hover:opacity-80 transition-opacity"
+                      >
                         <span className="w-5 h-5 rounded-full bg-[#1D9E75] flex items-center justify-center text-white text-xs">
                           {broadcasts.filter(b => b.status === 'sent').length}
                         </span>
                         送信済み
-                      </h3>
+                        <svg
+                          className={`w-4 h-4 text-[#64748B] transition-transform ${showSentBroadcasts ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {showSentBroadcasts && (
                       <div className="space-y-3">
                         {broadcasts.filter(b => b.status === 'sent').map((broadcast) => (
                           <div
@@ -2973,6 +2986,7 @@ function AdminPageContent() {
                           </div>
                         ))}
                       </div>
+                      )}
                     </div>
                   )}
                 </div>
