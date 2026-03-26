@@ -2813,21 +2813,21 @@ function AdminPageContent() {
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
                 </div>
-              ) : broadcasts.length === 0 ? (
-                <div className="text-center py-12 text-[#64748B]">
-                  <p>配信はまだありません</p>
-                </div>
               ) : (
                 <div className="space-y-6">
                   {/* 下書き・予約セクション */}
-                  {broadcasts.filter(b => b.status !== 'sent').length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-bold text-[#1E293B] mb-3 flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-[#F59E0B] flex items-center justify-center text-white text-xs">
-                          {broadcasts.filter(b => b.status !== 'sent').length}
-                        </span>
-                        下書き・予約
-                      </h3>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#1E293B] mb-3 flex items-center gap-2">
+                      下書き・予約
+                      <span className="w-5 h-5 rounded-full bg-[#F59E0B] flex items-center justify-center text-white text-xs">
+                        {broadcasts.filter(b => b.status !== 'sent').length}
+                      </span>
+                    </h3>
+                    {broadcasts.filter(b => b.status !== 'sent').length === 0 ? (
+                      <div className="text-center py-8 text-[#64748B] bg-white rounded-lg border border-[#E2E8F0]">
+                        <p>下書き・予約はありません</p>
+                      </div>
+                    ) : (
                       <div className="space-y-3">
                         {broadcasts.filter(b => b.status !== 'sent').map((broadcast) => (
                           <div
@@ -2894,8 +2894,8 @@ function AdminPageContent() {
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {/* 送信済みセクション（アコーディオン） */}
                   {broadcasts.filter(b => b.status === 'sent').length > 0 && (
@@ -2904,10 +2904,10 @@ function AdminPageContent() {
                         onClick={() => setShowSentBroadcasts(!showSentBroadcasts)}
                         className="w-full text-sm font-bold text-[#1E293B] mb-3 flex items-center gap-2 hover:opacity-80 transition-opacity"
                       >
+                        送信済み
                         <span className="w-5 h-5 rounded-full bg-[#1D9E75] flex items-center justify-center text-white text-xs">
                           {broadcasts.filter(b => b.status === 'sent').length}
                         </span>
-                        送信済み
                         <svg
                           className={`w-4 h-4 text-[#64748B] transition-transform ${showSentBroadcasts ? 'rotate-180' : ''}`}
                           fill="none"
