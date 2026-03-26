@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
       pdfUrl,
       youtubeUrl,
       scheduledAt,
+      targetAudience,
     } = body;
 
     // バリデーション
@@ -98,6 +99,7 @@ export async function POST(req: NextRequest) {
         imageUrl: imageUrl || null,
         pdfUrl: pdfUrl || null,
         youtubeUrl: youtubeUrl || null,
+        targetAudience: targetAudience || 'all',
         scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         status: scheduledAt ? 'scheduled' : 'draft',
       },

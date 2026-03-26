@@ -104,6 +104,28 @@ type StatusCounts = {
   closed_lost: number;
 };
 
+type MemberApplication = {
+  id: string;
+  lineUserId: string;
+  lineDisplayName: string | null;
+  linePictureUrl: string | null;
+  companyName: string | null;
+  representativeName: string | null;
+  jobTitle: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  coverageAreas: string[];
+  applicationNote: string | null;
+  referrerName: string | null;
+  approvalStatus: string;
+  appliedAt: string | null;
+  approvedAt: string | null;
+  rejectedAt: string | null;
+  rejectionReason: string | null;
+  memberRank: string;
+};
+
 type Broadcast = {
   id: string;
   type: string;
@@ -117,6 +139,7 @@ type Broadcast = {
   imageUrl: string | null;
   pdfUrl: string | null;
   youtubeUrl: string | null;
+  targetAudience: string;
   scheduledAt: string | null;
   sentAt: string | null;
   sentCount: number | null;
@@ -218,6 +241,21 @@ const NOTIFICATION_DETAILS: Record<string, NotificationDetail> = {
     recipient: '全会員（ブロードキャスト）',
     timing: '案件が承認された時',
     preview: '「新着案件のお知らせ」というタイトルで、案件名・現場所在地・工期を表示。案件詳細ページへのリンクボタン付きFlex Message',
+  },
+  b_member_application: {
+    recipient: '管理者（role=admin）',
+    timing: '新規入会申請が送信された時',
+    preview: '「新規入会申請」というタイトルで、申請者名・会社名・入会理由・紹介者名を表示。審査画面へのリンクボタン付きFlex Message',
+  },
+  b_member_approved: {
+    recipient: '入会申請者',
+    timing: '管理者が入会を承認した時',
+    preview: '「入会承認」というタイトルで、歓迎メッセージと案件一覧へのリンクボタン付きFlex Message',
+  },
+  b_member_rejected: {
+    recipient: '入会申請者',
+    timing: '管理者が入会を却下した時',
+    preview: '「入会申請結果」というタイトルで、却下された旨と理由を表示するFlex Message',
   },
   // カテゴリC: 定期配信
   c_weekly_digest: {
@@ -330,6 +368,15 @@ const NOTIFICATION_SECTIONS: NotificationSection[] = [
     ],
   },
   {
+    number: '6',
+    title: '会員を審査した時',
+    items: [
+      { key: 'b_member_application', label: '入会申請通知', badge: '管理者へ', badgeType: 'admin' },
+      { key: 'b_member_approved', label: '入会承認通知', badge: '申請者へ', badgeType: 'bidder' },
+      { key: 'b_member_rejected', label: '入会却下通知', badge: '申請者へ', badgeType: 'bidder' },
+    ],
+  },
+  {
     number: '*',
     title: '定期自動実行',
     isSpecial: true,
@@ -431,6 +478,7 @@ const POSTBACK_DEFAULT_URLS: Record<string, string> = {
 
 // Constants
 const MAIN_TABS = [
+  { value: 'members', label: '会員審査' },
   { value: 'overview', label: '概要' },
   { value: 'review', label: '案件審査' },
   { value: 'matching', label: 'マッチング管理' },
@@ -462,7 +510,7 @@ function AdminPageContent() {
   const searchParams = useSearchParams();
 
   // URLクエリパラメータからタブを取得
-  const mainTab = searchParams.get('tab') || 'overview';
+  const mainTab = searchParams.get('tab') || 'members';
   const setMainTab = (tab: string) => {
     setError(null); // タブ切り替え時にエラーをクリア
     router.push(`/admin?tab=${tab}`);
@@ -480,6 +528,18 @@ function AdminPageContent() {
   // Review state
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+
+  // Members state
+  const [membersTab, setMembersTab] = useState('pending');
+  const [memberApplications, setMemberApplications] = useState<MemberApplication[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(true);
+  const [selectedMember, setSelectedMember] = useState<MemberApplication | null>(null);
+  const [showMemberDetail, setShowMemberDetail] = useState(false);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState('');
+  const [isProcessingMember, setIsProcessingMember] = useState(false);
+  const [approveRank, setApproveRank] = useState<'guest' | 'member'>('guest');
+  const [showApproveStep, setShowApproveStep] = useState(false);
+  const [pendingMemberCount, setPendingMemberCount] = useState(0);
 
   // Matching state
   const [matchProjects, setMatchProjects] = useState<MatchProject[]>([]);
@@ -514,6 +574,7 @@ function AdminPageContent() {
     pdfUrl: '',
     youtubeUrl: '',
     scheduledAt: '',
+    targetAudience: 'all',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingFile, setUploadingFile] = useState<'image' | 'pdf' | null>(null);
@@ -534,6 +595,15 @@ function AdminPageContent() {
   const [eventPreviewMode, setEventPreviewMode] = useState<'withEvent' | 'withoutEvent'>('withEvent');
 
   const [error, setError] = useState<string | null>(null);
+
+  // 送信確認モーダル用ステート
+  const [sendConfirmModal, setSendConfirmModal] = useState<{
+    isOpen: boolean;
+    broadcastId: string;
+    broadcastTitle: string;
+    targetAudience: string;
+  } | null>(null);
+  const [isSending, setIsSending] = useState(false);
 
   // Fetch overview data
   useEffect(() => {
@@ -578,6 +648,41 @@ function AdminPageContent() {
 
     fetchProjects();
   }, [mainTab, reviewTab]);
+
+  // Fetch member applications
+  const fetchMemberApplications = useCallback(async () => {
+    setIsLoadingMembers(true);
+    try {
+      const res = await fetch(`/api/admin/members/applications?status=${membersTab}`);
+      if (!res.ok) throw new Error('データの取得に失敗しました');
+      const data = await res.json();
+      setMemberApplications(data.applications);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsLoadingMembers(false);
+    }
+  }, [membersTab]);
+
+  // Fetch pending member count for badge
+  const fetchPendingMemberCount = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/members/applications?status=pending');
+      if (res.ok) {
+        const data = await res.json();
+        setPendingMemberCount(data.applications?.length ?? 0);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchPendingMemberCount();
+  }, [fetchPendingMemberCount]);
+
+  useEffect(() => {
+    if (mainTab !== 'members') return;
+    fetchMemberApplications();
+  }, [mainTab, membersTab, fetchMemberApplications]);
 
   // Fetch matches
   const fetchMatches = useCallback(async () => {
@@ -897,19 +1002,32 @@ function AdminPageContent() {
     }
   };
 
-  const handleSendBroadcast = async (id: string) => {
-    if (!confirm('この配信を今すぐ送信しますか？')) return;
+  const handleSendBroadcast = (broadcast: Broadcast) => {
+    setSendConfirmModal({
+      isOpen: true,
+      broadcastId: broadcast.id,
+      broadcastTitle: broadcast.title,
+      targetAudience: broadcast.targetAudience || 'all',
+    });
+  };
+
+  const confirmSendBroadcast = async () => {
+    if (!sendConfirmModal) return;
+    setIsSending(true);
     try {
-      const res = await fetch(`/api/admin/broadcasts/${id}/send`, { method: 'POST' });
+      const res = await fetch(`/api/admin/broadcasts/${sendConfirmModal.broadcastId}/send`, { method: 'POST' });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || '送信に失敗しました');
       }
       const data = await res.json();
+      setSendConfirmModal(null);
       alert(`${data.sentCount}名に配信しました`);
       fetchBroadcasts();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -971,6 +1089,7 @@ function AdminPageContent() {
       pdfUrl: broadcast.pdfUrl || '',
       youtubeUrl: broadcast.youtubeUrl || '',
       scheduledAt: broadcast.scheduledAt ? broadcast.scheduledAt.slice(0, 16) : '',
+      targetAudience: broadcast.targetAudience || 'all',
     });
     setShowBroadcastForm(true);
   };
@@ -1027,6 +1146,74 @@ function AdminPageContent() {
       fetchMatches();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    }
+  };
+
+  // Member approval handlers
+  const handleApproveMember = async (memberId: string, rank: 'guest' | 'member' = 'guest') => {
+    setIsProcessingMember(true);
+    try {
+      const res = await fetch(`/api/admin/members/${memberId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberRank: rank }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '承認に失敗しました');
+      }
+      setShowMemberDetail(false); setShowApproveStep(false); setApproveRank('guest');
+      setSelectedMember(null);
+      fetchMemberApplications();
+      fetchPendingMemberCount();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsProcessingMember(false);
+    }
+  };
+
+  const handleRejectMember = async (memberId: string) => {
+    setIsProcessingMember(true);
+    try {
+      const res = await fetch(`/api/admin/members/${memberId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rejectionReason: rejectionReasonInput }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '却下に失敗しました');
+      }
+      setShowMemberDetail(false); setShowApproveStep(false); setApproveRank('guest');
+      setSelectedMember(null);
+      setRejectionReasonInput('');
+      fetchMemberApplications();
+      fetchPendingMemberCount();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsProcessingMember(false);
+    }
+  };
+
+  const handleChangeRank = async (memberId: string, newRank: 'guest' | 'member') => {
+    setIsProcessingMember(true);
+    try {
+      const res = await fetch(`/api/admin/members/${memberId}/rank`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberRank: newRank }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'ランク変更に失敗しました');
+      }
+      fetchMemberApplications();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsProcessingMember(false);
     }
   };
 
@@ -1094,6 +1281,11 @@ function AdminPageContent() {
                   style={mainTab === tab.value ? { borderColor: activeColor, color: activeColor } : {}}
                 >
                   {tab.label}
+                  {tab.value === 'members' && pendingMemberCount > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold text-white bg-[#E24B4A] rounded-full min-w-[20px]">
+                      {pendingMemberCount}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -1313,6 +1505,389 @@ function AdminPageContent() {
                       </div>
                     </Link>
                   ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* 会員審査タブ */}
+          {mainTab === 'members' && (
+            <>
+              {/* サブタブ */}
+              <div className="flex gap-2 mb-4">
+                {[
+                  { value: 'pending', label: '未審査' },
+                  { value: 'approved', label: '承認済み' },
+                  { value: 'rejected', label: '却下' },
+                ].map((tab) => (
+                  <button
+                    key={tab.value}
+                    onClick={() => setMembersTab(tab.value)}
+                    className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+                      membersTab === tab.value
+                        ? 'bg-[#1E293B] text-white'
+                        : 'bg-[#E2E8F0] text-[#64748B]'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {isLoadingMembers ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
+                </div>
+              ) : memberApplications.length === 0 ? (
+                <div className="text-center py-12 text-[#64748B]">
+                  <p>
+                    {membersTab === 'pending'
+                      ? '未審査の申請はありません'
+                      : membersTab === 'approved'
+                      ? '承認済みの会員はいません'
+                      : '却下された申請はありません'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {memberApplications.map((member) => (
+                    <button
+                      key={member.id}
+                      onClick={() => {
+                        setSelectedMember(member);
+                        setShowMemberDetail(true);
+                      }}
+                      className="card block p-4 w-full text-left hover:bg-[#F8FAFC] transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        {member.linePictureUrl ? (
+                          <img
+                            src={member.linePictureUrl}
+                            alt=""
+                            className="w-12 h-12 rounded-full"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold">
+                            {(member.representativeName || member.lineDisplayName || '?').charAt(0)}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-[#1E293B]">
+                            {member.companyName || '会社名未設定'}
+                          </p>
+                          <p className="text-sm text-[#64748B]">
+                            {member.representativeName || member.lineDisplayName}
+                            {member.jobTitle && ` / ${member.jobTitle}`}
+                          </p>
+                          {member.referrerName && (
+                            <p className="text-xs text-[#64748B]">
+                              紹介者: {member.referrerName}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <span className={`px-2 py-1 text-xs rounded ${
+                            member.approvalStatus === 'pending'
+                              ? 'bg-[#FEF3C7] text-[#D97706]'
+                              : member.approvalStatus === 'approved'
+                              ? 'bg-[#D1FAE5] text-[#1D9E75]'
+                              : 'bg-[#FEE2E2] text-[#DC2626]'
+                          }`}>
+                            {member.approvalStatus === 'pending'
+                              ? '審査待ち'
+                              : member.approvalStatus === 'approved'
+                              ? '承認済み'
+                              : '却下'}
+                          </span>
+                          {member.approvalStatus === 'approved' && (
+                            <span className={`ml-1 px-2 py-1 text-xs rounded ${
+                              member.memberRank === 'member'
+                                ? 'bg-[#DBEAFE] text-[#2563EB]'
+                                : 'bg-[#F1F5F9] text-[#64748B]'
+                            }`}>
+                              {member.memberRank === 'member' ? 'メンバー' : 'ゲスト'}
+                            </span>
+                          )}
+                          {member.appliedAt && (
+                            <p className="text-xs text-[#94A3B8] mt-1">
+                              申請: {formatDate(member.appliedAt)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* 会員詳細モーダル */}
+              {showMemberDetail && selectedMember && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                  <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                    <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between">
+                      <h3 className="font-bold text-[#1E293B]">会員詳細</h3>
+                      <button
+                        onClick={() => {
+                          setShowMemberDetail(false); setShowApproveStep(false); setApproveRank('guest');
+                          setSelectedMember(null);
+                          setRejectionReasonInput('');
+                        }}
+                        className="text-[#64748B] hover:text-[#1E293B]"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="p-4">
+                      {/* プロフィール */}
+                      <div className="flex items-center gap-3 mb-4">
+                        {selectedMember.linePictureUrl ? (
+                          <img
+                            src={selectedMember.linePictureUrl}
+                            alt=""
+                            className="w-16 h-16 rounded-full"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-full bg-[#2563EB] text-white flex items-center justify-center text-xl font-bold">
+                            {(selectedMember.representativeName || selectedMember.lineDisplayName || '?').charAt(0)}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-bold text-lg text-[#1E293B]">
+                            {selectedMember.companyName || '会社名未設定'}
+                          </p>
+                          <p className="text-[#64748B]">
+                            {selectedMember.representativeName}
+                            {selectedMember.jobTitle && ` / ${selectedMember.jobTitle}`}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* 基本情報 */}
+                      <div className="bg-[#F8FAFC] rounded-lg p-4 mb-4">
+                        <h4 className="text-sm font-medium text-[#1E293B] mb-2">基本情報</h4>
+                        <div className="space-y-2 text-sm">
+                          {selectedMember.phone && (
+                            <div className="flex">
+                              <span className="text-[#64748B] w-24">電話番号</span>
+                              <span className="text-[#1E293B]">{selectedMember.phone}</span>
+                            </div>
+                          )}
+                          {selectedMember.email && (
+                            <div className="flex">
+                              <span className="text-[#64748B] w-24">メール</span>
+                              <span className="text-[#1E293B]">{selectedMember.email}</span>
+                            </div>
+                          )}
+                          {selectedMember.address && (
+                            <div className="flex">
+                              <span className="text-[#64748B] w-24">所在地</span>
+                              <span className="text-[#1E293B]">{selectedMember.address}</span>
+                            </div>
+                          )}
+                          {selectedMember.coverageAreas && selectedMember.coverageAreas.length > 0 && (
+                            <div className="flex">
+                              <span className="text-[#64748B] w-24">対応エリア</span>
+                              <span className="text-[#1E293B]">{selectedMember.coverageAreas.join(', ')}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 入会理由 */}
+                      {selectedMember.applicationNote && (
+                        <div className="bg-[#EFF6FF] rounded-lg p-4 mb-4">
+                          <h4 className="text-sm font-medium text-[#1E293B] mb-2">入会理由</h4>
+                          <p className="text-sm text-[#1E293B] whitespace-pre-wrap">
+                            {selectedMember.applicationNote}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* 紹介者 */}
+                      {selectedMember.referrerName && (
+                        <div className="bg-[#F0FDF4] rounded-lg p-4 mb-4">
+                          <h4 className="text-sm font-medium text-[#1E293B] mb-1">紹介者</h4>
+                          <p className="text-sm text-[#1E293B]">{selectedMember.referrerName}</p>
+                        </div>
+                      )}
+
+                      {/* 却下理由（却下済みの場合） */}
+                      {selectedMember.approvalStatus === 'rejected' && selectedMember.rejectionReason && (
+                        <div className="bg-[#FEF2F2] rounded-lg p-4 mb-4">
+                          <h4 className="text-sm font-medium text-[#DC2626] mb-1">却下理由</h4>
+                          <p className="text-sm text-[#1E293B]">{selectedMember.rejectionReason}</p>
+                        </div>
+                      )}
+
+                      {/* アクションボタン */}
+                      <div className="border-t border-[#E2E8F0] pt-4 mt-4">
+                        {/* 承認済み: ランク切替 */}
+                        {selectedMember.approvalStatus === 'approved' && (
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                              会員ランク
+                            </label>
+                            <div className="flex gap-2 mb-4">
+                              <button
+                                onClick={() => handleChangeRank(selectedMember.id, 'guest')}
+                                disabled={isProcessingMember || selectedMember.memberRank === 'guest'}
+                                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                  selectedMember.memberRank === 'guest'
+                                    ? 'bg-[#64748B] text-white'
+                                    : 'bg-white border border-[#E2E8F0] text-[#1E293B] hover:bg-[#F1F5F9]'
+                                } disabled:opacity-50`}
+                              >
+                                ゲスト会員
+                              </button>
+                              <button
+                                onClick={() => handleChangeRank(selectedMember.id, 'member')}
+                                disabled={isProcessingMember || selectedMember.memberRank === 'member'}
+                                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                  selectedMember.memberRank === 'member'
+                                    ? 'bg-[#2563EB] text-white'
+                                    : 'bg-white border border-[#E2E8F0] text-[#1E293B] hover:bg-[#F1F5F9]'
+                                } disabled:opacity-50`}
+                              >
+                                メンバー会員
+                              </button>
+                            </div>
+                            <div className="bg-[#F8FAFC] rounded-lg p-3 text-xs text-[#64748B] space-y-1">
+                              <p><span className="font-medium text-[#1E293B]">ゲスト会員:</span> 案件・相談の閲覧のみ</p>
+                              <p><span className="font-medium text-[#1E293B]">メンバー会員:</span> 全機能利用可（投稿・マッチング等）</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 未承認: 承認ステップ or 初期ボタン */}
+                        {selectedMember.approvalStatus !== 'approved' && (
+                          <>
+                            {showApproveStep ? (
+                              <>
+                                <div className="mb-4">
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                                    会員ランクを選択してください
+                                  </label>
+                                  <div className="flex gap-2 mb-3">
+                                    <button
+                                      type="button"
+                                      onClick={() => setApproveRank('guest')}
+                                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        approveRank === 'guest'
+                                          ? 'bg-[#64748B] text-white'
+                                          : 'bg-white border border-[#E2E8F0] text-[#1E293B]'
+                                      }`}
+                                    >
+                                      ゲスト会員
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setApproveRank('member')}
+                                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        approveRank === 'member'
+                                          ? 'bg-[#2563EB] text-white'
+                                          : 'bg-white border border-[#E2E8F0] text-[#1E293B]'
+                                      }`}
+                                    >
+                                      メンバー会員
+                                    </button>
+                                  </div>
+                                  <div className="bg-[#F8FAFC] rounded-lg p-3 text-xs text-[#64748B] space-y-1 mb-4">
+                                    <p><span className="font-medium text-[#1E293B]">ゲスト会員:</span> 案件・相談の閲覧のみ</p>
+                                    <p><span className="font-medium text-[#1E293B]">メンバー会員:</span> 全機能利用可（投稿・マッチング等）</p>
+                                  </div>
+                                </div>
+                                <div className="flex gap-3">
+                                  <button
+                                    onClick={() => { setShowApproveStep(false); setApproveRank('guest'); }}
+                                    className="flex-1 py-3 bg-white border border-[#E2E8F0] text-[#1E293B] rounded-lg font-medium hover:bg-[#F1F5F9]"
+                                  >
+                                    戻る
+                                  </button>
+                                  <button
+                                    onClick={() => handleApproveMember(selectedMember.id, approveRank)}
+                                    disabled={isProcessingMember}
+                                    className="flex-1 py-3 bg-[#1D9E75] text-white rounded-lg font-medium hover:bg-[#178A66] disabled:opacity-50"
+                                  >
+                                    {isProcessingMember ? '処理中...' : `${approveRank === 'member' ? 'メンバー' : 'ゲスト'}で承認`}
+                                  </button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="mb-4">
+                                  <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                                    却下理由（却下する場合）
+                                  </label>
+                                  <textarea
+                                    value={rejectionReasonInput}
+                                    onChange={(e) => setRejectionReasonInput(e.target.value)}
+                                    className="w-full p-3 border border-[#E2E8F0] rounded-lg text-sm"
+                                    placeholder="却下する場合は理由を入力してください"
+                                    rows={3}
+                                  />
+                                </div>
+                                <div className="flex gap-3">
+                                  <button
+                                    onClick={() => setShowApproveStep(true)}
+                                    className="flex-1 py-3 bg-[#1D9E75] text-white rounded-lg font-medium hover:bg-[#178A66]"
+                                  >
+                                    承認する
+                                  </button>
+                                  <button
+                                    onClick={() => handleRejectMember(selectedMember.id)}
+                                    disabled={isProcessingMember}
+                                    className="flex-1 py-3 bg-[#DC2626] text-white rounded-lg font-medium hover:bg-[#B91C1C] disabled:opacity-50"
+                                  >
+                                    {isProcessingMember ? '処理中...' : '却下する'}
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </>
+                        )}
+
+                        {/* 承認済み: 却下ボタン */}
+                        {selectedMember.approvalStatus === 'approved' && (
+                          <div className="mt-4">
+                            <div className="mb-4">
+                              <label className="block text-sm font-medium text-[#1E293B] mb-2">
+                                却下理由
+                              </label>
+                              <textarea
+                                value={rejectionReasonInput}
+                                onChange={(e) => setRejectionReasonInput(e.target.value)}
+                                className="w-full p-3 border border-[#E2E8F0] rounded-lg text-sm"
+                                placeholder="却下する場合は理由を入力してください"
+                                rows={2}
+                              />
+                            </div>
+                            <button
+                              onClick={() => handleRejectMember(selectedMember.id)}
+                              disabled={isProcessingMember}
+                              className="w-full py-3 bg-[#DC2626] text-white rounded-lg font-medium hover:bg-[#B91C1C] disabled:opacity-50"
+                            >
+                              {isProcessingMember ? '処理中...' : '承認取消（却下）'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 日時情報 */}
+                      <div className="text-xs text-[#94A3B8] mt-4 space-y-1">
+                        {selectedMember.appliedAt && (
+                          <p>申請日時: {formatDate(selectedMember.appliedAt)}</p>
+                        )}
+                        {selectedMember.approvedAt && (
+                          <p>承認日時: {formatDate(selectedMember.approvedAt)}</p>
+                        )}
+                        {selectedMember.rejectedAt && (
+                          <p>却下日時: {formatDate(selectedMember.rejectedAt)}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </>
@@ -2036,6 +2611,47 @@ function AdminPageContent() {
 
                     <div>
                       <label className="block text-sm font-medium text-[#1E293B] mb-1">
+                        配信対象
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setBroadcastForm({ ...broadcastForm, targetAudience: 'all' })}
+                          className={`p-2 rounded-lg border-2 text-center transition-colors ${
+                            broadcastForm.targetAudience === 'all'
+                              ? 'border-[#2563EB] bg-[#EEF2FF]'
+                              : 'border-[#E2E8F0] hover:border-[#94A3B8]'
+                          }`}
+                        >
+                          <div className="text-xs font-medium text-[#1E293B]">全員</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBroadcastForm({ ...broadcastForm, targetAudience: 'member' })}
+                          className={`p-2 rounded-lg border-2 text-center transition-colors ${
+                            broadcastForm.targetAudience === 'member'
+                              ? 'border-[#2563EB] bg-[#EEF2FF]'
+                              : 'border-[#E2E8F0] hover:border-[#94A3B8]'
+                          }`}
+                        >
+                          <div className="text-xs font-medium text-[#1E293B]">メンバーのみ</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBroadcastForm({ ...broadcastForm, targetAudience: 'guest' })}
+                          className={`p-2 rounded-lg border-2 text-center transition-colors ${
+                            broadcastForm.targetAudience === 'guest'
+                              ? 'border-[#2563EB] bg-[#EEF2FF]'
+                              : 'border-[#E2E8F0] hover:border-[#94A3B8]'
+                          }`}
+                        >
+                          <div className="text-xs font-medium text-[#1E293B]">ゲストのみ</div>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[#1E293B] mb-1">
                         予約配信日時（空欄の場合は下書き保存）
                       </label>
                       <input
@@ -2216,7 +2832,7 @@ function AdminPageContent() {
                             className="bg-white rounded-lg border border-[#E2E8F0] p-4"
                           >
                             <div className="flex items-start justify-between mb-2">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <span className={`px-2 py-0.5 text-xs rounded ${
                                   broadcast.type === 'event' ? 'bg-[#E6F1FB] text-[#185FA5]' :
                                   broadcast.type === 'news' ? 'bg-[#FAEEDA] text-[#854F0B]' :
@@ -2229,6 +2845,14 @@ function AdminPageContent() {
                                   'bg-[#E2E8F0] text-[#64748B]'
                                 }`}>
                                   {broadcast.status === 'scheduled' ? '予約済み' : '下書き'}
+                                </span>
+                                <span className={`px-2 py-0.5 text-xs rounded ${
+                                  broadcast.targetAudience === 'member' ? 'bg-[#D1FAE5] text-[#1D9E75]' :
+                                  broadcast.targetAudience === 'guest' ? 'bg-[#FEE2E2] text-[#DC2626]' :
+                                  'bg-[#F3E8FF] text-[#7C3AED]'
+                                }`}>
+                                  {broadcast.targetAudience === 'member' ? 'メンバー' :
+                                   broadcast.targetAudience === 'guest' ? 'ゲスト' : '全員'}
                                 </span>
                               </div>
                               <span className="text-xs text-[#94A3B8]">
@@ -2252,7 +2876,7 @@ function AdminPageContent() {
                                 編集
                               </button>
                               <button
-                                onClick={() => handleSendBroadcast(broadcast.id)}
+                                onClick={() => handleSendBroadcast(broadcast)}
                                 className="px-3 py-1 text-xs bg-[#2563EB] text-white rounded hover:bg-[#1D4ED8]"
                               >
                                 今すぐ送信
@@ -2286,7 +2910,7 @@ function AdminPageContent() {
                             className="bg-white rounded-lg border border-[#E2E8F0] p-4"
                           >
                             <div className="flex items-start justify-between mb-2">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <span className={`px-2 py-0.5 text-xs rounded ${
                                   broadcast.type === 'event' ? 'bg-[#E6F1FB] text-[#185FA5]' :
                                   broadcast.type === 'news' ? 'bg-[#FAEEDA] text-[#854F0B]' :
@@ -2296,6 +2920,14 @@ function AdminPageContent() {
                                 </span>
                                 <span className="px-2 py-0.5 text-xs rounded bg-[#D1FAE5] text-[#1D9E75]">
                                   送信済み
+                                </span>
+                                <span className={`px-2 py-0.5 text-xs rounded ${
+                                  broadcast.targetAudience === 'member' ? 'bg-[#D1FAE5] text-[#1D9E75]' :
+                                  broadcast.targetAudience === 'guest' ? 'bg-[#FEE2E2] text-[#DC2626]' :
+                                  'bg-[#F3E8FF] text-[#7C3AED]'
+                                }`}>
+                                  {broadcast.targetAudience === 'member' ? 'メンバー' :
+                                   broadcast.targetAudience === 'guest' ? 'ゲスト' : '全員'}
                                 </span>
                               </div>
                               <span className="text-xs text-[#94A3B8]">
@@ -2314,7 +2946,6 @@ function AdminPageContent() {
                             <div className="flex gap-2 pt-2 border-t border-[#E2E8F0]">
                               <button
                                 onClick={() => {
-                                  // 送信済みを複製して新規作成
                                   setEditingBroadcast(null);
                                   setBroadcastForm({
                                     type: broadcast.type,
@@ -2328,6 +2959,7 @@ function AdminPageContent() {
                                     pdfUrl: broadcast.pdfUrl || '',
                                     youtubeUrl: broadcast.youtubeUrl || '',
                                     scheduledAt: '',
+                                    targetAudience: broadcast.targetAudience || 'all',
                                   });
                                   setShowBroadcastForm(true);
                                 }}
@@ -3471,6 +4103,48 @@ function AdminPageContent() {
         </main>
 
       </div>
+
+      {/* 送信確認モーダル */}
+      {sendConfirmModal?.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-bold text-[#1E293B] mb-4">配信を送信しますか？</h3>
+            <div className="space-y-3 mb-6">
+              <div className="bg-[#F8FAFC] rounded-lg p-3">
+                <p className="text-sm text-[#64748B] mb-1">タイトル</p>
+                <p className="text-sm font-medium text-[#1E293B]">{sendConfirmModal.broadcastTitle}</p>
+              </div>
+              <div className="bg-[#F8FAFC] rounded-lg p-3">
+                <p className="text-sm text-[#64748B] mb-1">配信対象</p>
+                <p className="text-sm font-medium text-[#1E293B]">
+                  {sendConfirmModal.targetAudience === 'all' && '全員'}
+                  {sendConfirmModal.targetAudience === 'member' && 'メンバーのみ'}
+                  {sendConfirmModal.targetAudience === 'guest' && 'ゲストのみ'}
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-[#E24B4A] mb-4">
+              ※ この操作は取り消せません。送信してもよろしいですか？
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSendConfirmModal(null)}
+                disabled={isSending}
+                className="flex-1 px-4 py-2 bg-[#E2E8F0] text-[#64748B] rounded-lg font-medium hover:bg-[#D1D5DB] disabled:opacity-50"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={confirmSendBroadcast}
+                disabled={isSending}
+                className="flex-1 px-4 py-2 bg-[#2563EB] text-white rounded-lg font-medium hover:bg-[#1D4ED8] disabled:opacity-50"
+              >
+                {isSending ? '送信中...' : '送信する'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminAuthGuard>
   );
 }

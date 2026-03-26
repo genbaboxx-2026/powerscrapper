@@ -30,6 +30,14 @@ model User {
   lineFriendLinkConsent Boolean  @default(false) @map("line_friend_link_consent")
   role                  String   @default("member")
   isActive              Boolean  @default(true) @map("is_active")
+  approvalStatus        String   @default("none") @map("approval_status")
+  applicationNote       String?  @map("application_note")
+  referrerName          String?  @map("referrer_name")
+  appliedAt             DateTime? @map("applied_at")
+  approvedAt            DateTime? @map("approved_at")
+  rejectedAt            DateTime? @map("rejected_at")
+  rejectionReason       String?  @map("rejection_reason")
+  memberRank            String   @default("guest") @map("member_rank")
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 
@@ -239,6 +247,9 @@ model Broadcast {
   imageUrl      String?   @map("image_url")
   pdfUrl        String?   @map("pdf_url")
   youtubeUrl    String?   @map("youtube_url")
+
+  // 配信対象
+  targetAudience String   @default("all") @map("target_audience") // all | member | guest
 
   // 配信関連
   scheduledAt   DateTime? @map("scheduled_at")

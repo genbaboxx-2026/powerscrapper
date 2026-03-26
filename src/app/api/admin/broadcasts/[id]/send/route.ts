@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAdminFromRequest } from '@/lib/auth';
-import { broadcastMessage, createBroadcastMessage } from '@/lib/line';
+import { broadcastMessage, multicastMessage, createBroadcastMessage } from '@/lib/line';
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -27,7 +27,6 @@ export async function POST(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: '配信が見つかりません' }, { status: 404 });
     }
 
-    // 既に送信済みの場合
     if (broadcast.status === 'sent') {
       return NextResponse.json(
         { error: 'この配信は既に送信済みです' },
@@ -35,12 +34,6 @@ export async function POST(req: NextRequest, { params }: Params) {
       );
     }
 
-    // アクティブな会員数を取得
-    const memberCount = await prisma.user.count({
-      where: { isActive: true },
-    });
-
-    // フォーマットに応じたメッセージを作成
     const messages = createBroadcastMessage({
       format: broadcast.format || 'card',
       type: broadcast.type,
@@ -54,23 +47,50 @@ export async function POST(req: NextRequest, { params }: Params) {
       youtubeUrl: broadcast.youtubeUrl,
     });
 
-    // 配信を送信
-    await broadcastMessage(messages);
+    const targetAudience = broadcast.targetAudience || 'all';
+    let sentCount = 0;
 
-    // ステータスを更新
+    if (targetAudience === 'all') {
+      const memberCount = await prisma.user.count({
+        where: { isActive: true, approvalStatus: 'approved' },
+      });
+      await broadcastMessage(messages);
+      sentCount = memberCount;
+    } else {
+      const memberRankFilter = targetAudience === 'member' ? 'member' : 'guest';
+      const targetUsers = await prisma.user.findMany({
+        where: {
+          isActive: true,
+          approvalStatus: 'approved',
+          memberRank: memberRankFilter,
+        },
+        select: { lineUserId: true },
+      });
+
+      if (targetUsers.length > 0) {
+        const lineUserIds = targetUsers.map(u => u.lineUserId);
+        const chunkSize = 500;
+        for (let i = 0; i < lineUserIds.length; i += chunkSize) {
+          const chunk = lineUserIds.slice(i, i + chunkSize);
+          await multicastMessage(chunk, messages);
+        }
+      }
+      sentCount = targetUsers.length;
+    }
+
     const updated = await prisma.broadcast.update({
       where: { id },
       data: {
         status: 'sent',
         sentAt: new Date(),
-        sentCount: memberCount,
+        sentCount,
       },
     });
 
     return NextResponse.json({
       message: '配信を送信しました',
       broadcast: updated,
-      sentCount: memberCount,
+      sentCount,
     });
   } catch (error) {
     console.error('Send broadcast error:', error);

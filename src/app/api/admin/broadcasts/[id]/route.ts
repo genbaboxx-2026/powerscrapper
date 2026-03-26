@@ -75,6 +75,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
       youtubeUrl,
       scheduledAt,
       status,
+      targetAudience,
     } = body;
 
     // ステータス遷移のバリデーション
@@ -115,9 +116,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
     if (pdfUrl !== undefined) updateData.pdfUrl = pdfUrl;
     if (youtubeUrl !== undefined) updateData.youtubeUrl = youtubeUrl;
+    if (targetAudience !== undefined) updateData.targetAudience = targetAudience;
     if (scheduledAt !== undefined) {
       updateData.scheduledAt = scheduledAt ? new Date(scheduledAt) : null;
-      // スケジュール設定時は自動的にscheduledステータスに
       if (scheduledAt && !status) {
         updateData.status = 'scheduled';
       }

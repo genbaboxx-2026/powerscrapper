@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { broadcastMessage, createBroadcastMessage } from '@/lib/line';
+import { broadcastMessage, multicastMessage, createBroadcastMessage } from '@/lib/line';
 
 /**
  * POST /api/cron/send-scheduled - スケジュールされた配信を送信
@@ -10,7 +10,6 @@ import { broadcastMessage, createBroadcastMessage } from '@/lib/line';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Cron認証
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
 
@@ -20,7 +19,6 @@ export async function POST(request: NextRequest) {
 
     const now = new Date();
 
-    // スケジュール済みで、送信時刻を過ぎた配信を取得
     const scheduledBroadcasts = await prisma.broadcast.findMany({
       where: {
         status: 'scheduled',
@@ -41,17 +39,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // アクティブな会員数を取得
-    const memberCount = await prisma.user.count({
-      where: { isActive: true },
-    });
+    const results: Array<{ id: string; title: string; success: boolean; sentCount?: number; error?: string }> = [];
 
-    const results: Array<{ id: string; title: string; success: boolean; error?: string }> = [];
-
-    // 各配信を送信
     for (const broadcast of scheduledBroadcasts) {
       try {
-        // フォーマットに応じたメッセージを作成
         const messages = createBroadcastMessage({
           format: broadcast.format || 'card',
           type: broadcast.type,
@@ -65,16 +56,43 @@ export async function POST(request: NextRequest) {
           youtubeUrl: broadcast.youtubeUrl,
         });
 
-        // 配信を送信
-        await broadcastMessage(messages);
+        const targetAudience = broadcast.targetAudience || 'all';
+        let sentCount = 0;
 
-        // ステータスを更新
+        if (targetAudience === 'all') {
+          const memberCount = await prisma.user.count({
+            where: { isActive: true, approvalStatus: 'approved' },
+          });
+          await broadcastMessage(messages);
+          sentCount = memberCount;
+        } else {
+          const memberRankFilter = targetAudience === 'member' ? 'member' : 'guest';
+          const targetUsers = await prisma.user.findMany({
+            where: {
+              isActive: true,
+              approvalStatus: 'approved',
+              memberRank: memberRankFilter,
+            },
+            select: { lineUserId: true },
+          });
+
+          if (targetUsers.length > 0) {
+            const lineUserIds = targetUsers.map(u => u.lineUserId);
+            const chunkSize = 500;
+            for (let i = 0; i < lineUserIds.length; i += chunkSize) {
+              const chunk = lineUserIds.slice(i, i + chunkSize);
+              await multicastMessage(chunk, messages);
+            }
+          }
+          sentCount = targetUsers.length;
+        }
+
         await prisma.broadcast.update({
           where: { id: broadcast.id },
           data: {
             status: 'sent',
             sentAt: new Date(),
-            sentCount: memberCount,
+            sentCount,
           },
         });
 
@@ -82,9 +100,10 @@ export async function POST(request: NextRequest) {
           id: broadcast.id,
           title: broadcast.title,
           success: true,
+          sentCount,
         });
 
-        console.log(`Sent scheduled broadcast: ${broadcast.id} - ${broadcast.title}`);
+        console.log(`Sent scheduled broadcast: ${broadcast.id} - ${broadcast.title} to ${sentCount} users`);
       } catch (error) {
         console.error(`Failed to send broadcast ${broadcast.id}:`, error);
         results.push({
