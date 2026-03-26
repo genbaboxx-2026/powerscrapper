@@ -993,6 +993,7 @@ function AdminPageContent() {
         pdfUrl: '',
         youtubeUrl: '',
         scheduledAt: '',
+        targetAudience: 'all',
       });
       fetchBroadcasts();
     } catch (err) {
@@ -2162,6 +2163,7 @@ function AdminPageContent() {
                           pdfUrl: '',
                           youtubeUrl: '',
                           scheduledAt: '',
+                          targetAudience: 'all',
                         });
                         setShowBroadcastForm(true);
                       }}
