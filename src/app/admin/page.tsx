@@ -2618,14 +2618,14 @@ function AdminPageContent() {
                       <div className="grid grid-cols-3 gap-2">
                         <button
                           type="button"
-                          onClick={() => setBroadcastForm({ ...broadcastForm, targetAudience: 'all' })}
+                          onClick={() => setBroadcastForm({ ...broadcastForm, targetAudience: 'guest' })}
                           className={`p-2 rounded-lg border-2 text-center transition-colors ${
-                            broadcastForm.targetAudience === 'all'
+                            broadcastForm.targetAudience === 'guest'
                               ? 'border-[#2563EB] bg-[#EEF2FF]'
                               : 'border-[#E2E8F0] hover:border-[#94A3B8]'
                           }`}
                         >
-                          <div className="text-xs font-medium text-[#1E293B]">全員</div>
+                          <div className="text-xs font-medium text-[#1E293B]">ゲストのみ</div>
                         </button>
                         <button
                           type="button"
@@ -2640,14 +2640,14 @@ function AdminPageContent() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setBroadcastForm({ ...broadcastForm, targetAudience: 'guest' })}
+                          onClick={() => setBroadcastForm({ ...broadcastForm, targetAudience: 'all' })}
                           className={`p-2 rounded-lg border-2 text-center transition-colors ${
-                            broadcastForm.targetAudience === 'guest'
+                            broadcastForm.targetAudience === 'all'
                               ? 'border-[#2563EB] bg-[#EEF2FF]'
                               : 'border-[#E2E8F0] hover:border-[#94A3B8]'
                           }`}
                         >
-                          <div className="text-xs font-medium text-[#1E293B]">ゲストのみ</div>
+                          <div className="text-xs font-medium text-[#1E293B]">全員</div>
                         </button>
                       </div>
                     </div>
