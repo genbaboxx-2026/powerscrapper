@@ -2843,12 +2843,11 @@ function AdminPageContent() {
                                 }`}>
                                   {broadcast.type === 'event' ? 'イベント' : broadcast.type === 'news' ? 'お知らせ' : '記事'}
                                 </span>
-                                <span className={`px-2 py-0.5 text-xs rounded ${
-                                  broadcast.status === 'scheduled' ? 'bg-[#E6F1FB] text-[#185FA5]' :
-                                  'bg-[#E2E8F0] text-[#64748B]'
-                                }`}>
-                                  {broadcast.status === 'scheduled' ? '予約済み' : '下書き'}
-                                </span>
+                                {broadcast.status === 'scheduled' && (
+                                  <span className="px-2 py-0.5 text-xs rounded bg-[#E6F1FB] text-[#185FA5]">
+                                    予約済み
+                                  </span>
+                                )}
                                 <span className={`px-2 py-0.5 text-xs rounded ${
                                   broadcast.targetAudience === 'member' ? 'bg-[#D1FAE5] text-[#1D9E75]' :
                                   broadcast.targetAudience === 'guest' ? 'bg-[#FEE2E2] text-[#DC2626]' :
@@ -2871,7 +2870,7 @@ function AdminPageContent() {
                                 {formatDate(broadcast.scheduledAt)} に送信予定
                               </p>
                             )}
-                            <div className="flex gap-2 pt-2 border-t border-[#E2E8F0]">
+                            <div className="flex justify-end gap-2 pt-2 border-t border-[#E2E8F0]">
                               <button
                                 onClick={() => openEditForm(broadcast)}
                                 className="px-3 py-1 text-xs bg-[#E2E8F0] text-[#64748B] rounded hover:bg-[#D1D5DB]"
